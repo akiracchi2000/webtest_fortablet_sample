@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "question": "(-3) \\times (-8)",
+    "correct_answer": "24",
+    "explanation": "マイナス同士の掛け算はプラスになります。<br> $3 \\times 8 = 24$ です。"
+  },
+  {
+    "id": 2,
+    "question": "\\text{半径}4\\text{cmの円の面積}",
+    "correct_answer": "16π",
+    "explanation": "円の面積の公式は $\\pi r^2$ です。<br> $4 \\times 4 \\times \\pi = 16\\pi$ となります。"
+  },
+  {
+    "id": 3,
+    "question": "\\sqrt{18} \\div \\sqrt{2}",
+    "correct_answer": "3",
+    "explanation": "ルートの中で割り算ができます。<br> $\\sqrt{18 \\div 2} = \\sqrt{9} = 3$ です。"
+  },
+  {
+    "id": 4,
+    "question": "1 - \\frac{2}{3}",
+    "correct_answer": "1/3",
+    "explanation": "通分して計算します。<br> $\\frac{3}{3} - \\frac{2}{3} = \\frac{1}{3}$ です。"
+  },
+  {
+    "id": 5,
+    "question": "\\sqrt{2} + \\sqrt{8}",
+    "correct_answer": "3√2",
+    "explanation": "$\\sqrt{8} = 2\\sqrt{2}$ に直してから足します。<br> $\\sqrt{2} + 2\\sqrt{2} = 3\\sqrt{2}$ となります。"
+  }
+]
