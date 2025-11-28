@@ -1,28 +1,107 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数学動画講座＆確認テスト</title>
-    
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        body { 
-            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
-            max-width: 500px; /* スマホ幅を想定 */
-            margin: 0 auto; 
-            padding: 10px; 
-            text-align: center; 
-            background-color: #f4f4f4; 
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "MS PGothic", sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f4f4f4;
             color: #333;
-            overflow-x: hidden; /* 横揺れアニメーションのはみ出し防止 */
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+            width: 100vw;
         }
-        
+
+        #left-panel {
+            width: 35%;
+            min-width: 150px;
+            height: 100%;
+            overflow-y: auto;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #resizer {
+            width: 12px;
+            background: #e0e0e0;
+            cursor: col-resize;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-left: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+        }
+
+        #resizer::after {
+            content: "||";
+            color: #999;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        #resizer:hover {
+            background: #d0d0d0;
+        }
+
+        #right-panel {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        #memo-toolbar {
+            height: 50px;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            border-bottom: 1px solid #ccc;
+            justify-content: flex-end;
+        }
+
+        #memo-pad {
+            flex: 1;
+            width: 100%;
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        .memo-btn {
+            padding: 8px 16px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .memo-btn:hover {
+            background: #f0f0f0;
+        }
+
         /* --- 動画エリア --- */
         #video-section {
             width: 100%;
@@ -30,42 +109,123 @@
             background: #000;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: block; /* 初期状態は表示 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: block;
+            /* 初期状態は表示 */
         }
-        .video-container { position: relative; width: 100%; aspect-ratio: 16 / 9; }
-        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
 
         /* --- 動画切り替えボタン --- */
-        .toggle-btn-area { margin-bottom: 20px; }
-        .skip-btn, .show-video-btn {
-            width: 100%; padding: 10px; border-radius: 8px; font-size: 0.9em; cursor: pointer; border: none;
+        .toggle-btn-area {
+            margin-bottom: 20px;
+        }
+
+        .skip-btn,
+        .show-video-btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: none;
             transition: opacity 0.2s;
         }
-        .skip-btn { background: #666; color: #fff; }
-        .show-video-btn { background: #fff; color: #007bff; border: 2px solid #007bff; display: none; font-weight: bold;}
-        .skip-btn:hover, .show-video-btn:hover { opacity: 0.8; }
+
+        .skip-btn {
+            background: #666;
+            color: #fff;
+        }
+
+        .show-video-btn {
+            background: #fff;
+            color: #007bff;
+            border: 2px solid #007bff;
+            display: none;
+            font-weight: bold;
+        }
+
+        .skip-btn:hover,
+        .show-video-btn:hover {
+            opacity: 0.8;
+        }
 
         /* --- テストエリア --- */
         #quiz-container {
             background: #fff;
             padding: 20px 15px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: transform 0.1s;
         }
+
         /* 不正解時の揺れアニメーション */
-        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
         }
 
-        h3 { margin-top: 0; color: #444; font-size: 1.1em; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;}
-        #question-area { font-size: 1.8em; margin-bottom: 20px; min-height: 50px;}
-        
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+
+        h3 {
+            margin-top: 0;
+            color: #444;
+            font-size: 1.1em;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        #question-area {
+            font-size: clamp(0.9rem, 2vw, 1.25rem);
+            margin-bottom: 20px;
+            min-height: 50px;
+            overflow-wrap: break-word;
+            line-height: 1.8;
+            text-align: left;
+            padding: 0 5px;
+            font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "MS PGothic", sans-serif;
+        }
+
+        /* KaTeXのフォントをゴシックで上書き（数式もゴシック調になります） */
+        #question-area .katex {
+            font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "MS PGothic", sans-serif;
+        }
+
         /* 入力表示枠 */
         .input-container {
             background: #fdfdfd;
@@ -73,42 +233,110 @@
             border-radius: 8px;
             margin-bottom: 15px;
             padding: 5px 12px;
-            text-align: right; 
+            text-align: right;
         }
-        .input-container.active { border-color: #007bff; } /* アクティブ時は青枠 */
 
-        #raw-input { font-size: 0.9em; color: #aaa; height: 1.2em; letter-spacing: 1px; margin-bottom: 2px;}
-        #math-preview { font-size: 2em; height: 1.5em; color: #000; overflow-x: auto; overflow-y: hidden; white-space: nowrap;}
+        .input-container.active {
+            border-color: #007bff;
+        }
+
+        /* アクティブ時は青枠 */
+
+        #raw-input {
+            font-size: 0.9em;
+            color: #aaa;
+            height: 1.2em;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        #math-preview {
+            font-size: 2em;
+            height: 1.5em;
+            color: #000;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+        }
 
         /* --- 結果・解説ボックス --- */
         #result-box {
-            display: none; 
+            display: none;
             text-align: left;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
             animation: fadeIn 0.3s ease-in;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .res-correct { background-color: #f6ffed; border: 1px solid #b7eb8f; }
-        .res-correct .res-header { color: #52c41a; }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
 
-        .res-wrong { background-color: #fff1f0; border: 1px solid #ffccc7; }
-        .res-wrong .res-header { color: #f5222d; }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-        .res-header { font-weight: bold; font-size: 1.2em; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .res-body { font-size: 0.95em; line-height: 1.6; color: #444; }
-        .res-ans-label { font-size: 0.85em; color: #666; margin-top: 10px; display: block; border-top: 1px dashed #ccc; padding-top: 8px;}
-        .res-correct-math { font-size: 1.4em; color: #d32f2f; margin-left: 5px; }
+        .res-correct {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+        }
+
+        .res-correct .res-header {
+            color: #52c41a;
+        }
+
+        .res-wrong {
+            background-color: #fff1f0;
+            border: 1px solid #ffccc7;
+        }
+
+        .res-wrong .res-header {
+            color: #f5222d;
+        }
+
+        .res-header {
+            font-weight: bold;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .res-body {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .res-ans-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 10px;
+            display: block;
+            border-top: 1px dashed #ccc;
+            padding-top: 8px;
+        }
+
+        .res-correct-math {
+            font-size: 1.4em;
+            color: #d32f2f;
+            margin-left: 5px;
+        }
 
         /* 結果ボックス内の「次へ」ボタンエリア */
         .res-footer {
             margin-top: 15px;
-            text-align: right; 
-            border-top: 1px dashed #ccc; 
+            text-align: right;
+            border-top: 1px dashed #ccc;
             padding-top: 10px;
         }
+
         .next-btn-in-box {
             background-color: #333;
             color: #fff;
@@ -122,71 +350,241 @@
             align-items: center;
             gap: 5px;
         }
-        .next-btn-in-box:hover { background-color: #555; }
+
+        .next-btn-in-box:hover {
+            background-color: #555;
+        }
 
         /* --- キーパッド --- */
-        #keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .key-btn {
-            padding: 14px 0; font-size: 1.4em; border: none; border-radius: 8px;
-            background-color: #f0f2f5; box-shadow: 0 4px #ced0d4; color: #333; cursor: pointer; touch-action: manipulation; transition: all 0.1s;
+        #keypad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            width: 100%;
         }
-        .key-btn:active { box-shadow: 0 2px #b0b3b8; transform: translateY(2px); }
-        
-        .btn-num { background-color: #fff; font-weight: bold; font-family: sans-serif; }
-        .btn-op { background-color: #e4e6eb; font-weight: bold;} 
-        .btn-blue { background-color: #e7f5ff; color: #007bff; font-family: sans-serif; box-shadow: 0 4px #badbeb;}
-        .btn-red { background-color: #ffeef0; color: #d32f2f; font-family: sans-serif; box-shadow: 0 4px #f5c2c7;}
-        .grid-span-2 { grid-column: span 2; }
-        
+
+        .key-btn {
+            padding: 10px 0;
+            font-size: clamp(1rem, 4vw, 1.4em);
+            border: none;
+            border-radius: 8px;
+            background-color: #f0f2f5;
+            box-shadow: 0 4px #ced0d4;
+            color: #333;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.1s;
+            min-width: 0;
+            /* Flex/Grid child shrinking fix */
+        }
+
+        .key-btn:active {
+            box-shadow: 0 2px #b0b3b8;
+            transform: translateY(2px);
+        }
+
+        .btn-num {
+            background-color: #fff;
+            font-weight: bold;
+            font-family: sans-serif;
+        }
+
+        .btn-op {
+            background-color: #e4e6eb;
+            font-weight: bold;
+        }
+
+        .btn-blue {
+            background-color: #e7f5ff;
+            color: #007bff;
+            font-family: sans-serif;
+            box-shadow: 0 4px #badbeb;
+        }
+
+        .btn-red {
+            background-color: #ffeef0;
+            color: #d32f2f;
+            font-family: sans-serif;
+            box-shadow: 0 4px #f5c2c7;
+        }
+
+        .grid-span-2 {
+            grid-column: span 2;
+        }
+
+        .grid-span-2 {
+            grid-column: span 2;
+        }
+
+        /* --- AI分析モーダル --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: left;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .ai-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .ai-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .api-key-btn {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.8em;
+            background: #eee;
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .api-key-btn:hover {
+            opacity: 1;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #764ba2;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <div id="video-section">
-        <div class="video-container">
-            <iframe src="https://www.youtube.com/embed/gHjJ_G-N_nU?si=dummy" title="Lecture Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <div id="left-panel">
+        <div id="video-section">
+            <div class="video-container">
+                <iframe src="https://www.youtube.com/embed/gHjJ_G-N_nU?si=dummy" title="Lecture Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+            </div>
+        </div>
+
+        <div class="toggle-btn-area">
+            <button id="skip-btn" class="skip-btn" onclick="toggleVideo(false)">▼ 動画を閉じてテストへ</button>
+            <button id="show-btn" class="show-video-btn" onclick="toggleVideo(true)">▲ 動画講義をもう一度見る</button>
+        </div>
+
+        <div id="quiz-container">
+            <h3>確認テスト：第 <span id="q-number">1</span> 問</h3>
+
+            <div id="question-area">読み込み中...</div>
+
+            <div class="input-container" id="input-box">
+                <div id="raw-input">答えを入力</div>
+                <div id="math-preview"></div>
+            </div>
+
+            <div id="result-box"></div>
+
+            <div id="keypad">
+                <button class="key-btn btn-num" onclick="inputKey('7')">7</button>
+                <button class="key-btn btn-num" onclick="inputKey('8')">8</button>
+                <button class="key-btn btn-num" onclick="inputKey('9')">9</button>
+                <button class="key-btn btn-red" onclick="deleteLast()">BS</button>
+
+                <button class="key-btn btn-num" onclick="inputKey('4')">4</button>
+                <button class="key-btn btn-num" onclick="inputKey('5')">5</button>
+                <button class="key-btn btn-num" onclick="inputKey('6')">6</button>
+                <button class="key-btn btn-op" onclick="inputKey('/')">/分</button>
+
+                <button class="key-btn btn-num" onclick="inputKey('1')">1</button>
+                <button class="key-btn btn-num" onclick="inputKey('2')">2</button>
+                <button class="key-btn btn-num" onclick="inputKey('3')">3</button>
+                <button class="key-btn btn-op" onclick="inputKey('√')">√</button>
+
+                <button class="key-btn btn-num" onclick="inputKey('0')">0</button>
+                <button class="key-btn btn-op" onclick="inputKey('π')">π</button>
+                <button class="key-btn btn-op" onclick="inputKey('-')">-</button>
+                <button class="key-btn btn-blue" onclick="submitAnswer()">決定</button>
+            </div>
+        </div>
+    </div> <!-- End left-panel -->
+
+    <div id="resizer"></div>
+
+    <div id="right-panel">
+        <div id="memo-toolbar">
+            <button class="memo-btn" onclick="clearMemo()">🗑️ メモを消去</button>
+        </div>
+        <canvas id="memo-pad"></canvas>
+    </div>
+
+    <!-- AI分析モーダル -->
+    <div id="ai-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAiModal()">&times;</span>
+            <h3>🤖 AI分析レポート</h3>
+            <div id="ai-content">
+                <!-- ここに結果が表示されます -->
+            </div>
         </div>
     </div>
 
-    <div class="toggle-btn-area">
-        <button id="skip-btn" class="skip-btn" onclick="toggleVideo(false)">▼ 動画を閉じてテストへ</button>
-        <button id="show-btn" class="show-video-btn" onclick="toggleVideo(true)">▲ 動画講義をもう一度見る</button>
-    </div>
-
-    <div id="quiz-container">
-        <h3>確認テスト：第 <span id="q-number">1</span> 問</h3>
-        
-        <div id="question-area">読み込み中...</div>
-
-        <div class="input-container" id="input-box">
-            <div id="raw-input">答えを入力</div>
-            <div id="math-preview"></div>
-        </div>
-
-        <div id="result-box"></div>
-
-        <div id="keypad">
-            <button class="key-btn btn-num" onclick="inputKey('7')">7</button>
-            <button class="key-btn btn-num" onclick="inputKey('8')">8</button>
-            <button class="key-btn btn-num" onclick="inputKey('9')">9</button>
-            <button class="key-btn btn-red" onclick="deleteLast()">BS</button>
-            
-            <button class="key-btn btn-num" onclick="inputKey('4')">4</button>
-            <button class="key-btn btn-num" onclick="inputKey('5')">5</button>
-            <button class="key-btn btn-num" onclick="inputKey('6')">6</button>
-            <button class="key-btn btn-op" onclick="inputKey('/')">/分</button> 
-            
-            <button class="key-btn btn-num" onclick="inputKey('1')">1</button>
-            <button class="key-btn btn-num" onclick="inputKey('2')">2</button>
-            <button class="key-btn btn-num" onclick="inputKey('3')">3</button>
-            <button class="key-btn btn-op" onclick="inputKey('√')">√</button> 
-            
-            <button class="key-btn btn-num" onclick="inputKey('0')">0</button>
-            <button class="key-btn btn-op" onclick="inputKey('π')">π</button>
-            <button class="key-btn btn-op" onclick="inputKey('-')">-</button>
-            <button class="key-btn btn-blue" onclick="submitAnswer()">決定</button>
-        </div>
-    </div>
+    <button class="api-key-btn" onclick="setApiKey()">🔑 API設定</button>
 
     <script>
         // --- 設定 ---
@@ -279,26 +677,26 @@
         function showQuestion() {
             const qData = quizSet[currentIndex];
             document.getElementById('q-number').innerText = currentIndex + 1;
-            
+
             // UIリセット
             const resultBox = document.getElementById('result-box');
             resultBox.style.display = "none";
             resultBox.className = "";
             document.getElementById('keypad').style.pointerEvents = "auto";
             document.getElementById('keypad').style.opacity = "1";
-            document.getElementById('input-box').classList.add('active'); 
+            document.getElementById('input-box').classList.add('active');
             document.getElementById('quiz-container').classList.remove('shake');
 
             currentInput = "";
             updateDisplay();
-            
+
             // 問題文描画
             katex.render(qData.question, document.getElementById('question-area'), { displayMode: true });
         }
 
         // キー入力処理
         function inputKey(char) {
-            if(currentInput.length > 15) return;
+            if (currentInput.length > 15) return;
             currentInput += char;
             updateDisplay();
         }
@@ -312,7 +710,7 @@
         function updateDisplay() {
             const rawDisplay = document.getElementById('raw-input');
             const previewDisplay = document.getElementById('math-preview');
-            
+
             rawDisplay.innerText = currentInput === "" ? "答えを入力" : currentInput;
             if (currentInput === "") {
                 previewDisplay.innerText = "";
@@ -338,16 +736,16 @@
 
         // --- 判定ロジック ---
         function submitAnswer() {
-            if(currentInput === "") return;
-            
+            if (currentInput === "") return;
+
             const qData = quizSet[currentIndex];
             const resultBox = document.getElementById('result-box');
-            
+
             // 操作ロック
             document.getElementById('keypad').style.pointerEvents = "none";
             document.getElementById('keypad').style.opacity = "0.5";
-            document.getElementById('input-box').classList.remove('active'); 
-            
+            document.getElementById('input-box').classList.remove('active');
+
             const isCorrect = (currentInput === qData.correct_answer);
             let contentHTML = "";
 
@@ -380,6 +778,7 @@
                     <div class="res-body">
                         ${qData.explanation}
                         <span class="res-ans-label">正解は：<span class="res-correct-math" id="correct-display"></span></span>
+                        <button class="ai-btn" onclick="analyzeError()">✨ 間違いをAI分析</button>
                     </div>
                     ${nextButtonHTML}
                 `;
@@ -396,8 +795,8 @@
             // 解説文の中の数式 ($...$) をレンダリング
             renderMathInElement(resultBox, {
                 delimiters: [
-                    {left: "$$", right: "$$", display: true},
-                    {left: "$", right: "$", display: false}
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false }
                 ]
             });
 
@@ -413,12 +812,203 @@
                 confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
                 playSound('correct');
                 setTimeout(() => {
-                    if(confirm("全問終了！お疲れ様でした。\nもう一度挑戦しますか？")) {
+                    if (confirm("全問終了！お疲れ様でした。\nもう一度挑戦しますか？")) {
                         location.reload();
                     }
                 }, 1000);
             }
         }
+
+        // --- メモ帳機能 ---
+        const canvas = document.getElementById('memo-pad');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        function resizeCanvas() {
+            const parent = document.getElementById('right-panel');
+            const toolbar = document.getElementById('memo-toolbar');
+            if (parent && toolbar && canvas) {
+                canvas.width = parent.clientWidth;
+                canvas.height = parent.clientHeight - toolbar.clientHeight;
+
+                // 設定リセットされるので再設定
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#000';
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        // 初期化時に少し遅延させてサイズ合わせ（レイアウト確定後）
+        setTimeout(resizeCanvas, 100);
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+            if (e.changedTouches) {
+                clientX = e.changedTouches[0].clientX;
+                clientY = e.changedTouches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const pos = getPos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault(); // スクロール防止
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        // マウスイベント
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // タッチイベント
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function clearMemo() {
+            if (confirm("メモを消去しますか？")) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // --- リサイズ機能 ---
+        const resizer = document.getElementById('resizer');
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.body.style.cursor = 'col-resize';
+            // iframeのイベント干渉を防ぐ
+            document.querySelectorAll('iframe').forEach(f => f.style.pointerEvents = 'none');
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const containerWidth = document.body.clientWidth;
+            const newLeftWidth = (e.clientX / containerWidth) * 100;
+
+            // 最小・最大幅の制限 (例えば 20% ~ 80%)
+            if (newLeftWidth > 20 && newLeftWidth < 80) {
+                leftPanel.style.width = `${newLeftWidth}%`;
+                // 右パネルは flex: 1 なので自動調整されるが、
+                // Canvasのリサイズが必要
+                resizeCanvas();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = 'default';
+                document.querySelectorAll('iframe').forEach(f => f.style.pointerEvents = 'auto');
+                resizeCanvas(); // 最終調整
+            }
+        });
+
+        // --- AI分析機能 ---
+        function setApiKey() {
+            const currentKey = localStorage.getItem('gemini_api_key') || "";
+            const newKey = prompt("Gemini APIキーを入力してください:", currentKey);
+            if (newKey !== null) {
+                localStorage.setItem('gemini_api_key', newKey);
+                alert("APIキーを保存しました。");
+            }
+        }
+
+        function closeAiModal() {
+            document.getElementById('ai-modal').style.display = 'none';
+        }
+
+        async function analyzeError() {
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) {
+                alert("AI分析機能を使うにはAPIキーの設定が必要です。\n左下の「🔑 API設定」からキーを入力してください。");
+                return;
+            }
+
+            const modal = document.getElementById('ai-modal');
+            const content = document.getElementById('ai-content');
+            modal.style.display = 'flex';
+            content.innerHTML = '<div class="loading-spinner"></div><p style="text-align:center">メモを分析中...</p>';
+
+            // 画像データの取得
+            const imageData = canvas.toDataURL("image/png").split(',')[1]; // Base64部分のみ
+            const qData = quizSet[currentIndex];
+
+            const promptText = `
+あなたは数学の家庭教師です。中学生の生徒が問題を解きましたが、間違えてしまいました。
+以下の情報と、添付された手書きメモの画像を元に、生徒がどこで間違えたのか、またはどのような考え違いをしている可能性があるかを分析し、優しくアドバイスしてください。
+正解そのものを教えるだけでなく、次につながるヒントを重視してください。
+
+問題: ${qData.question}
+正解: ${qData.correct_answer}
+解説: ${qData.explanation}
+`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: promptText },
+                                { inline_data: { mime_type: "image/png", data: imageData } }
+                            ]
+                        }]
+                    })
+                });
+
+                if (!response.ok) throw new Error("APIリクエスト失敗");
+
+                const data = await response.json();
+                const aiText = data.candidates[0].content.parts[0].text;
+
+                // Markdownを簡易HTML変換 (改行と太字程度)
+                const formattedText = aiText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+
+                content.innerHTML = `<div style="line-height:1.6;">${formattedText}</div>`;
+
+            } catch (error) {
+                console.error(error);
+                content.innerHTML = '<p style="color:red">分析中にエラーが発生しました。APIキーが正しいか確認してください。</p>';
+            }
+        }
     </script>
 </body>
+
 </html>
