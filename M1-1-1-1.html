@@ -60,6 +60,7 @@
             --link-color: #8ab4f8;
         }
 
+        html,
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -96,6 +97,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            touch-action: none;
             overscroll-behavior: none;
         }
 
@@ -106,7 +108,9 @@
             align-items: center;
             justify-content: flex-end;
             padding: 0 15px;
+            padding: 0 15px;
             border-bottom: 1px solid var(--border-color);
+            touch-action: manipulation;
             transition: background-color 0.3s, border-color 0.3s;
         }
 
@@ -151,6 +155,20 @@
             transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
+        #eraser-cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #555;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            display: none;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+
         .tool-btn {
             background: var(--btn-bg);
             border: 1px solid var(--border-color);
@@ -159,6 +177,7 @@
             cursor: pointer;
             font-size: 0.9em;
             color: var(--btn-text);
+            touch-action: manipulation;
             transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
@@ -475,11 +494,11 @@
             <h1>数と式：様々な用語</h1>
             <div>
                 <button id="fullscreen-toggle" class="tool-btn" onclick="toggleFullscreen()"
-                    style="padding: 5px 10px; font-size: 1.2em;">⛶</button>
+                    style="padding: 5px 10px; font-size: 1.2em;" title="フルスクリーン／フルスクリーン解除">⛶</button>
                 <button id="dark-mode-toggle" class="tool-btn" onclick="toggleDarkMode()"
-                    style="padding: 5px 10px; font-size: 1.2em;">🌙</button>
+                    style="padding: 5px 10px; font-size: 1.2em;" title="ダークモード／ライトモード">🌙</button>
                 <button id="sound-toggle" class="tool-btn" onclick="toggleSound()"
-                    style="padding: 5px 10px; font-size: 1.2em;">🔊</button>
+                    style="padding: 5px 10px; font-size: 1.2em;" title="効果音の有／無">🔊</button>
             </div>
         </header>
         <main>
@@ -544,6 +563,7 @@
         </div>
         <div id="memo-container">
             <div id="memo-question-overlay"></div>
+            <div id="eraser-cursor"></div>
             <canvas id="memo-pad"></canvas>
         </div>
     </div>
@@ -975,11 +995,21 @@
                         return;
                     }
                     if (e.pointerType === 'touch') e.preventDefault(); // スクロール防止
+                    updateCursor(e);
                     draw(e);
                 });
                 canvas.addEventListener('pointerup', (e) => {
                     canvas.releasePointerCapture(e.pointerId);
                     stopDrawing();
+                    updateCursor(e);
+                });
+                canvas.addEventListener('pointerenter', (e) => {
+                    if (currentTool === 'eraser') {
+                        document.getElementById('eraser-cursor').style.display = 'block';
+                    }
+                });
+                canvas.addEventListener('pointerleave', (e) => {
+                    document.getElementById('eraser-cursor').style.display = 'none';
                 });
                 canvas.addEventListener('pointercancel', (e) => {
                     canvas.releasePointerCapture(e.pointerId);
@@ -1058,6 +1088,26 @@
             ctx.globalCompositeOperation = 'source-over';
         }
 
+        function updateCursor(e) {
+            const cursor = document.getElementById('eraser-cursor');
+            if (currentTool === 'eraser') {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // キャンバス内にあるか確認
+                if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+                    cursor.style.display = 'block';
+                    cursor.style.left = x + 'px';
+                    cursor.style.top = y + 'px';
+                } else {
+                    cursor.style.display = 'none';
+                }
+            } else {
+                cursor.style.display = 'none';
+            }
+        }
+
         function saveMemoState() {
             // 履歴は最大10件まで
             if (memoHistory.length >= 10) {
@@ -1078,6 +1128,7 @@
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
             if (tool === 'pen') {
                 document.getElementById('btn-pen').classList.add('active');
+                document.getElementById('eraser-cursor').style.display = 'none';
             } else if (tool === 'eraser') {
                 document.getElementById('btn-eraser').classList.add('active');
             }
