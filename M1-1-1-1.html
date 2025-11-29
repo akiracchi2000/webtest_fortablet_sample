@@ -67,6 +67,7 @@
             display: flex;
             width: 100vw;
             height: 100vh;
+            height: 100dvh;
             background-color: var(--bg-color);
             color: var(--text-color);
             overflow: hidden;
@@ -115,7 +116,10 @@
             align-items: center;
             justify-content: flex-end;
             padding: 0 15px;
-            border-bottom: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-color);
+            padding-bottom: env(safe-area-inset-bottom);
+            height: auto;
+            min-height: 50px;
             touch-action: manipulation;
             transition: background-color 0.3s, border-color 0.3s;
         }
@@ -147,7 +151,7 @@
         #memo-question-overlay {
             position: absolute;
             top: 10px;
-            left: 10px;
+            top: calc(10px + env(safe-area-inset-top));
             right: 10px;
             background: var(--overlay-bg);
             color: var(--text-color);
@@ -558,6 +562,11 @@
 
     <!-- 右パネル：メモパッド -->
     <div id="right-panel">
+        <div id="memo-container">
+            <div id="memo-question-overlay"></div>
+            <div id="eraser-cursor"></div>
+            <canvas id="memo-pad"></canvas>
+        </div>
         <div id="memo-toolbar">
             <button class="tool-btn active" id="btn-pen" onclick="setTool('pen')">✏️ ペン</button>
             <button class="tool-btn" id="btn-eraser" onclick="setTool('eraser')">🧽 消しゴム</button>
@@ -567,11 +576,6 @@
             <button class="tool-btn" id="btn-toggle-question" onclick="toggleQuestionOverlay()">📖 問題を表示</button>
             <button class="tool-btn" onclick="saveMemo()">💾 画像保存</button>
             <button class="tool-btn" onclick="clearMemo()">🗑️ メモを消去</button>
-        </div>
-        <div id="memo-container">
-            <div id="memo-question-overlay"></div>
-            <div id="eraser-cursor"></div>
-            <canvas id="memo-pad"></canvas>
         </div>
     </div>
 
