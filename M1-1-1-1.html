@@ -96,7 +96,6 @@
             position: relative;
             display: flex;
             flex-direction: column;
-            touch-action: none;
             overscroll-behavior: none;
         }
 
@@ -121,6 +120,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            touch-action: none;
             transition: background-color 0.3s;
         }
 
@@ -594,7 +594,10 @@
 
             // 全体スクロール防止（左パネルとモーダル以外）
             document.addEventListener('touchmove', function (e) {
-                if (!e.target.closest('#left-panel') && !e.target.closest('.modal-content')) {
+                // 左パネル、モーダル、またはツールバー内の要素（ボタンなど）での操作は許可
+                if (!e.target.closest('#left-panel') &&
+                    !e.target.closest('.modal-content') &&
+                    !e.target.closest('#memo-toolbar')) {
                     e.preventDefault();
                 }
             }, { passive: false });
