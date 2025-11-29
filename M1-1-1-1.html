@@ -88,7 +88,32 @@
             transition: background-color 0.3s;
             overscroll-behavior: none;
             touch-action: pan-y;
-            border-right: 1px solid var(--border-color);
+            border-right: none;
+        }
+
+        /* --- リサイザー（境界線） --- */
+        #resizer {
+            width: 10px;
+            background-color: var(--border-color);
+            cursor: col-resize;
+            z-index: 100;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        #resizer:hover,
+        #resizer.active {
+            background-color: #007bff;
+        }
+
+        #resizer::after {
+            content: "⋮";
+            color: #666;
+            font-size: 1.2em;
+            font-weight: bold;
         }
 
         /* --- 右パネル（メモパッド） --- */
@@ -560,6 +585,9 @@
         </footer>
     </div>
 
+    <!-- リサイザー -->
+    <div id="resizer"></div>
+
     <!-- 右パネル：メモパッド -->
     <div id="right-panel">
         <div id="memo-container">
@@ -793,11 +821,11 @@
             // ★ AI分析ボタンを追加 (不正解時のみ)
             if (!isCorrect) {
                 feedbackEl.innerHTML += `<button class="ai-btn" onclick="analyzeError()">🤖 AIカガワ先生に聞く</button><small> (メモを分析します)<small><br>`;
-            }
 
-            // 間違えた問題を記録 (重複しないようにIDなどで管理するのがベストだが、今回はオブジェクト比較で簡易的に)
-            if (!incorrectQuestions.includes(currentQuestion)) {
-                incorrectQuestions.push(currentQuestion);
+                // 間違えた問題を記録
+                if (!incorrectQuestions.includes(currentQuestion)) {
+                    incorrectQuestions.push(currentQuestion);
+                }
             }
 
             saveProgress(); // 進行状況を保存
@@ -1442,6 +1470,75 @@
                 });
             }
         }
+        // --- リサイザー機能 ---
+        const resizer = document.getElementById('resizer');
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizer.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            // 選択防止
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const containerWidth = document.body.clientWidth;
+            const x = e.clientX;
+            const leftWidthPercent = (x / containerWidth) * 100;
+
+            if (leftWidthPercent > 10 && leftWidthPercent < 90) {
+                leftPanel.style.flex = `0 0 ${leftWidthPercent}vw`;
+                leftPanel.style.width = `${leftWidthPercent}vw`;
+                rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
+                rightPanel.style.width = `${100 - leftWidthPercent}vw`;
+                resizeCanvas();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('active');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                resizeCanvas();
+            }
+        });
+
+        // タッチ対応
+        resizer.addEventListener('touchstart', (e) => {
+            isResizing = true;
+            resizer.classList.add('active');
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isResizing) return;
+            const touch = e.touches[0];
+            const containerWidth = document.body.clientWidth;
+            const x = touch.clientX;
+            const leftWidthPercent = (x / containerWidth) * 100;
+
+            if (leftWidthPercent > 10 && leftWidthPercent < 90) {
+                leftPanel.style.flex = `0 0 ${leftWidthPercent}vw`;
+                leftPanel.style.width = `${leftWidthPercent}vw`;
+                rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
+                rightPanel.style.width = `${100 - leftWidthPercent}vw`;
+                resizeCanvas();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('active');
+                resizeCanvas();
+            }
+        });
+
     </script>
 </body>
 
