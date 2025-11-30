@@ -482,6 +482,16 @@
                     <input type="text" id="global-gas-url" placeholder="https://script.google.com/..."
                         style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-weight: bold; font-size: 0.9em;">Gemini APIキー</label>
+                    <input type="password" id="global-api-key" placeholder="AIzaSy..."
+                        style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                    <div style="text-align: right; margin-top: 5px;">
+                        <button onclick="testApiKey()"
+                            style="font-size: 0.8em; padding: 2px 8px; cursor: pointer;">接続テスト</button>
+                    </div>
+                    <div id="test-result" style="font-size: 0.8em; margin-top: 5px; white-space: pre-wrap;"></div>
+                </div>
                 <div style="text-align: right;">
                     <button onclick="saveGlobalSettings()"
                         style="background: #007bff; color: #fff; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">保存</button>
@@ -652,31 +662,13 @@
 
         <div class="reset-container">
             <button id="reset-ranks-button" class="reset-button">学習履歴（ランク）をリセット</button>
-            <button class="api-settings-btn" onclick="openApiModal()" style="margin-left: 10px; margin-top: 0;">🔑
-                APIキー設定</button>
         </div>
         <footer>
             <p>&copy; 2025 [香川亮]</p>
         </footer>
     </div>
 
-    <!-- API Key Modal -->
-    <div id="api-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>APIキーの設定</h3>
-            <p style="font-size: 0.9em; color: #666;">Google Gemini APIキーを入力してください。<br>キーはブラウザにのみ保存されます。</p>
-            <div class="input-group">
-                <label for="api-key-input">API Key</label>
-                <input type="password" id="api-key-input" placeholder="AIzaSy...">
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="testApiKey()">接続テスト</button>
-                <button class="btn btn-secondary" onclick="closeApiModal()">キャンセル</button>
-                <button class="btn btn-primary" onclick="saveApiKey()">保存</button>
-            </div>
-            <div id="test-result" style="margin-top: 15px; font-size: 0.9em; white-space: pre-wrap;"></div>
-        </div>
-    </div>
+
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -835,8 +827,10 @@
             /* --- E. 共通設定の読み込み ------------------------------------- */
             const savedName = localStorage.getItem('quiz_student_name');
             const savedGasUrl = localStorage.getItem('quiz_gas_url');
+            const savedApiKey = localStorage.getItem('gemini_api_key');
             if (savedName) document.getElementById('global-student-name').value = savedName;
             if (savedGasUrl) document.getElementById('global-gas-url').value = savedGasUrl;
+            if (savedApiKey) document.getElementById('global-api-key').value = savedApiKey;
             /* --- E. ここまで ----------------------------------------------- */
         });
 
@@ -853,6 +847,7 @@
         function saveGlobalSettings() {
             const name = document.getElementById('global-student-name').value.trim();
             const url = document.getElementById('global-gas-url').value.trim();
+            const apiKey = document.getElementById('global-api-key').value.trim();
 
             if (!name) {
                 alert("お名前を入力してください。");
@@ -861,36 +856,15 @@
 
             localStorage.setItem('quiz_student_name', name);
             localStorage.setItem('quiz_gas_url', url);
+            localStorage.setItem('gemini_api_key', apiKey);
             alert("設定を保存しました！");
             toggleSettingsMenu(); // 保存後に閉じる
         }
         /* --- E. ここまで ----------------------------------------------- */
 
-        /* --- D. API Key Modal Functions -------------------------------- */
-        function openApiModal() {
-            const currentKey = localStorage.getItem('gemini_api_key') || '';
-            document.getElementById('api-key-input').value = currentKey;
-            document.getElementById('api-modal').style.display = 'flex';
-            document.getElementById('test-result').textContent = '';
-        }
-
-        function closeApiModal() {
-            document.getElementById('api-modal').style.display = 'none';
-        }
-
-        function saveApiKey() {
-            const key = document.getElementById('api-key-input').value.trim();
-            if (key) {
-                localStorage.setItem('gemini_api_key', key);
-                alert('APIキーを保存しました。');
-                closeApiModal();
-            } else {
-                alert('APIキーを入力してください。');
-            }
-        }
-
+        /* --- D. API Key Test Function ---------------------------------- */
         async function testApiKey() {
-            const key = document.getElementById('api-key-input').value.trim();
+            const key = document.getElementById('global-api-key').value.trim();
             const resultEl = document.getElementById('test-result');
 
             if (!key) {
