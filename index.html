@@ -774,14 +774,19 @@
 
             /* --- C. 背景色の保存・復元 + ボタンのアクティブ表示 ------------ */
             const body = document.body;
-            const colorButtons = document.querySelectorAll('.color-selector button');
+            const colorButtons = Array.from(document.querySelectorAll('.color-selector button'));
             const storageKey_Color = 'backgroundColorPreference';
 
             function syncActiveButton(color) {
                 colorButtons.forEach(b => {
                     const isActive = b.dataset.color === color;
-                    b.classList.toggle('is-active', isActive);
-                    b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                    if (isActive) {
+                        b.classList.add('is-active');
+                        b.setAttribute('aria-pressed', 'true');
+                    } else {
+                        b.classList.remove('is-active');
+                        b.setAttribute('aria-pressed', 'false');
+                    }
                 });
             }
 
@@ -789,31 +794,43 @@
                 try {
                     const saved = localStorage.getItem(storageKey_Color) || 'default';
                     body.classList.remove('bg-light-blue', 'bg-light-green', 'bg-beige');
-                    if (saved !== 'default') body.classList.add('bg-' + saved);
+                    if (saved !== 'default') {
+                        body.classList.add('bg-' + saved);
+                    }
                     syncActiveButton(saved);
                 } catch (e) {
-                    console.error("localStorageからの背景色読み込みに失敗:", e);
+                    console.error("localStorage error:", e);
                 }
             }
 
             colorButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const selectedColor = button.getAttribute('data-color');
-                    body.classList.remove('bg-light-blue', 'bg-light-green', 'bg-beige');
-                    if (selectedColor !== 'default') {
-                        body.classList.add('bg-' + selectedColor);
-                    }
+                button.addEventListener('click', function () {
+                    const color = this.dataset.color;
                     try {
-                        localStorage.setItem(storageKey_Color, selectedColor);
+                        localStorage.setItem(storageKey_Color, color);
                     } catch (e) {
-                        console.error("localStorageへの背景色保存に失敗:", e);
+                        console.error("localStorage write error:", e);
                     }
-                    syncActiveButton(selectedColor);
+                    applySavedPreference();
                 });
             });
 
+            // 初期適用
             applySavedPreference();
-            /* --- C. ここまで ----------------------------------------------- */
+            /* --- C. ここまで ------------------------------------------------ */
+
+            /* --- D. クイズリンクにリセットパラメータを付与 ------------------ */
+            // index.htmlから遷移する場合は常に「最初から」にするため ?reset=true を付与
+            document.querySelectorAll('.quiz-list a').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('#') && !href.includes('javascript:')) {
+                    // 既にクエリパラメータがあるかチェック
+                    const separator = href.includes('?') ? '&' : '?';
+                    link.setAttribute('href', `${href}${separator}reset=true`);
+                }
+            });
+            /* --- D. ここまで ------------------------------------------------ */
+
 
             /* --- E. 共通設定の読み込み ------------------------------------- */
             const savedName = localStorage.getItem('quiz_student_name');
