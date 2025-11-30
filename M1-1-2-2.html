@@ -519,6 +519,124 @@
             cursor: pointer;
             color: #999;
         }
+
+        /* Image Preview Modal */
+        #image-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #image-preview-modal img {
+            max-width: 90%;
+            max-height: 70%;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        #image-preview-modal .modal-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        #image-preview-modal button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        #image-preview-modal .close-btn {
+            background: #6c757d;
+            color: #fff;
+        }
+
+        #image-preview-modal .share-btn {
+            background: #007bff;
+            color: #fff;
+        }
+
+        #image-preview-modal .save-hint {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1em;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        /* Image Preview Modal */
+        #image-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #image-preview-modal img {
+            max-width: 90%;
+            max-height: 70%;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        #image-preview-modal .modal-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        #image-preview-modal button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        #image-preview-modal .close-btn {
+            background: #6c757d;
+            color: #fff;
+        }
+
+        #image-preview-modal .share-btn {
+            background: #007bff;
+            color: #fff;
+        }
+
+        #image-preview-modal .save-hint {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1em;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 
@@ -1315,6 +1433,11 @@
                 backgroundColor: isDarkMode ? '#121212' : '#ffffff', // 背景色を明示
                 scale: 2 // 高解像度で取得
             }).then(canvas => {
+                // 元の状態に戻す（キャプチャ完了後すぐに戻す）
+                if (wasHidden) {
+                    overlay.style.display = 'none';
+                }
+
                 const now = new Date();
                 const dateStr = now.getFullYear() +
                     ('0' + (now.getMonth() + 1)).slice(-2) +
@@ -1328,59 +1451,41 @@
                     if (!blob) return;
 
                     const file = new File([blob], fileName, { type: 'image/png' });
-                    let shareSuccess = false;
 
-                    // 1. Web Share API (navigator.share) を試みる
+                    // プレビュー表示
+                    const previewImg = document.getElementById('preview-image');
+                    previewImg.src = URL.createObjectURL(blob);
+
+                    // シェアボタンの表示制御
+                    const shareBtn = document.getElementById('preview-share-btn');
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        try {
-                            await navigator.share({
-                                files: [file],
-                                title: 'メモを保存',
-                                text: 'メモ画像を保存します'
-                            });
-                            shareSuccess = true;
-                        } catch (err) {
-                            if (err.name === 'AbortError') {
-                                // ユーザーがキャンセルした場合はここで終了
-                                shareSuccess = true;
-                            } else {
-                                console.error('Share failed:', err);
+                        shareBtn.style.display = 'inline-block';
+                        shareBtn.onclick = async () => {
+                            try {
+                                await navigator.share({
+                                    files: [file],
+                                    title: 'メモを保存',
+                                    text: 'メモ画像を保存します'
+                                });
+                            } catch (err) {
+                                console.log('Share cancelled or failed', err);
                             }
-                        }
+                        };
+                    } else {
+                        shareBtn.style.display = 'none';
                     }
 
-                    if (!shareSuccess) {
-                        // 2. クリップボードへのコピーを試みる
-                        try {
-                            if (navigator.clipboard && navigator.clipboard.write) {
-                                await navigator.clipboard.write([
-                                    new ClipboardItem({
-                                        [blob.type]: blob
-                                    })
-                                ]);
-                                alert("画像をクリップボードにコピーしました。\n写真アプリなどに貼り付けて保存してください。");
-                                shareSuccess = true;
-                            }
-                        } catch (err) {
-                            console.error('Clipboard failed:', err);
-                        }
-                    }
-
-                    if (!shareSuccess) {
-                        // 3. ダウンロード (PCや一部Android向け)
-                        downloadImage(canvas, fileName);
-                        // タブレット向けにメッセージを表示
-                        if (/iPad|iPhone|Android/i.test(navigator.userAgent)) {
-                            alert("画像をダウンロードしました。\n保存されない場合は、画像を長押しして保存してください。");
-                        }
-                    }
-
-                    // 元の状態に戻す
-                    if (wasHidden) {
-                        overlay.style.display = 'none';
-                    }
-                }, 'image/png');
+                    document.getElementById('image-preview-modal').style.display = 'flex';
+                });
             });
+        }
+
+        function closeImagePreview() {
+            document.getElementById('image-preview-modal').style.display = 'none';
+            // メモリ解放のためにURLをrevoke（念のため）
+            const img = document.getElementById('preview-image');
+            if (img.src) URL.revokeObjectURL(img.src);
+            img.src = '';
         }
 
         function downloadImage(canvas, fileName) {
@@ -1731,6 +1836,24 @@ AIカガワ先生の目的は間違いの原因を指摘することです。**�
         });
 
     </script>
+    <!-- Image Preview Modal -->
+    <div id="image-preview-modal">
+        <img id="preview-image" src="" alt="Memo Preview">
+        <p class="save-hint">画像を長押しして「写真」に保存してください</p>
+        <div class="modal-controls">
+            <button id="preview-share-btn" class="share-btn">共有 / 他のアプリで開く</button>
+            <button class="close-btn" onclick="closeImagePreview()">閉じる</button>
+        </div>
+    </div>
+    <!-- Image Preview Modal -->
+    <div id="image-preview-modal">
+        <img id="preview-image" src="" alt="Memo Preview">
+        <p class="save-hint">画像を長押しして「写真」に保存してください</p>
+        <div class="modal-controls">
+            <button id="preview-share-btn" class="share-btn">共有 / 他のアプリで開く</button>
+            <button class="close-btn" onclick="closeImagePreview()">閉じる</button>
+        </div>
+    </div>
 </body>
 
 </html>
