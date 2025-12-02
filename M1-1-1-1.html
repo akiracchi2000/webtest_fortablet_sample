@@ -1200,6 +1200,14 @@
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
+
+                // 無音のバッファを再生して強制的にオーディオエンジンを目覚めさせる（iOS対策）
+                const buffer = audioCtx.createBuffer(1, 1, 22050);
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioCtx.destination);
+                source.start(0);
+
                 // イベントリスナーを削除（一度だけでOK）
                 document.removeEventListener('click', unlockAudio);
                 document.removeEventListener('touchstart', unlockAudio);
