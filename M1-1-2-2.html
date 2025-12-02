@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数と式：2乗の展開公式 (ランダム10題)</title>
+    <title>第2節-2 2乗の展開公式のテスト (ランダム10題)</title>
 
     <!-- KaTeX（数式表示ライブラリ） -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
@@ -475,8 +475,34 @@
         }
 
         .ai-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.4);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        /* AIバナー（ヘッダー用） */
+        .ai-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .explanation-banner {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
         }
 
         /* モーダル */
@@ -578,65 +604,6 @@
             padding: 5px 10px;
             border-radius: 4px;
         }
-
-        /* Image Preview Modal */
-        #image-preview-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-
-        #image-preview-modal img {
-            max-width: 90%;
-            max-height: 70%;
-            border: 2px solid #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            margin-bottom: 20px;
-        }
-
-        #image-preview-modal .modal-controls {
-            display: flex;
-            gap: 15px;
-        }
-
-        #image-preview-modal button {
-            padding: 10px 20px;
-            font-size: 1em;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-
-        #image-preview-modal .close-btn {
-            background: #6c757d;
-            color: #fff;
-        }
-
-        #image-preview-modal .share-btn {
-            background: #007bff;
-            color: #fff;
-        }
-
-        #image-preview-modal .save-hint {
-            color: #fff;
-            margin-bottom: 15px;
-            font-size: 1em;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 5px 10px;
-            border-radius: 4px;
-        }
     </style>
 </head>
 
@@ -645,7 +612,7 @@
     <!-- 左パネル：クイズ -->
     <div id="left-panel">
         <header>
-            <h1>数と式：様々な用語</h1>
+            <h1>第2節-2 2乗の展開公式</h1>
             <div>
                 <!-- <button id="fullscreen-toggle" class="tool-btn" onclick="toggleFullscreen()"
                     style="padding: 5px 10px; font-size: 1.2em;" title="フルスクリーン／フルスクリーン解除">⛶</button> -->
@@ -668,9 +635,9 @@
                 </div>
                 <h2 id="question-text"></h2>
 
-                <button id="answer-btn" class="tool-btn"
-                    style="display:block; margin: 20px auto; padding: 12px 30px; font-size: 1.2em; background-color: #28a745; color: white;"
-                    onclick="checkAnswerWithAI()">回答する</button>
+                <button id="answer-btn" class="tool-btn ai-btn"
+                    style="display:block; margin: 20px auto; padding: 12px 30px; font-size: 1.2em;"
+                    onclick="checkAnswerWithAI()">🤖AIカガワ先生🤖に添削してもらう</button>
                 <div id="analyzing-indicator" style="display:none; text-align:center; margin: 10px 0;">
                     <span style="font-size: 2em;">🤖</span> 採点中...
                 </div>
@@ -722,6 +689,7 @@
         </div>
         <div id="memo-toolbar">
             <button class="tool-btn active" id="btn-pen" onclick="setTool('pen')">✏️ ペン</button>
+            <button class="tool-btn" id="btn-pen-red" onclick="setTool('pen-red')">🔴 赤ペン</button>
             <button class="tool-btn" id="btn-eraser" onclick="setTool('eraser')">🧽 消しゴム</button>
             <button class="tool-btn active" id="btn-pen-only" onclick="togglePenOnly()">🖊️ ペンのみ</button>
             <button class="tool-btn" onclick="undoMemo()">↩️ 元に戻す</button>
@@ -759,7 +727,7 @@
 
         // --- キャンバス関連 ---
         const canvas = document.getElementById('memo-pad');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         let isDrawing = false;
         let currentTool = 'pen'; // 'pen' or 'eraser'
         let memoHistory = []; // Undo用履歴
@@ -814,7 +782,7 @@
             };
             renderMath();
 
-            // データ読み込み (window.QUIZ_DATA from M1-1-1-1QD.js)
+            // データ読み込み (window.QUIZ_DATA from M1-1-2-2QD.js)
             let allData = [];
             if (window.QUIZ_DATA) {
                 allData = window.QUIZ_DATA;
@@ -937,15 +905,17 @@
 
 **重要な採点ルール:**
 1. **画像に何も書かれていない、または白紙に近い場合は、必ず「不正解」としてください。**
-2. 解答が正解と一致している場合のみ「正解」としてください。有理化で同じ回答の場合も正解，積の順序が異なる解答も正解とします。
-3. 途中式があっても、最終的な答えが間違っていれば「不正解」です。
-4. **数式は必ずLaTeX形式（$ または  で囲む）で記述してください。特に分数は \frac{分子}{分母} の形式を使用してください。**
+2. 「メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！」とだけ答えて、分析を終了してください。
+   - **これ以外の文章や項目（間違いの指摘など）は一切出力しないでください。**
+3. 解答が正解と一致している場合のみ「正解」としてください。有理化で同じ回答の場合も正解，積の順序が異なる解答も正解とします。
+4. 途中式があっても、最終的な答えが間違っていれば「不正解」です。
+5. **数式は必ずLaTeX形式（$ または $ で囲む）で記述してください。特に分数は \\frac{分子}{分母} の形式を使用してください。**
 
 以下のJSON形式のみを出力してください。Markdownのコードブロックは不要です。
 {
   "isCorrect": true または false,
   "recognizedAnswer": "画像から読み取った生徒の解答（数式や答え）。数式は必ずLaTeX形式（$で囲む）で記述してください。例: $x^2+3x$",
-  "feedback": "正解/不正解の判定理由と、生徒への簡潔なアドバイス（100文字以内）。数式は必ずLaTeX形式（$で囲む）で記述してください。"
+  "feedback": "以下の構成で記述してください。\n- 間違いの指摘（復唱はせず、途中式がある場合はその式も含めて原因を分析）\n- 間違いを防ぐには\n- 復習のポイント\n（全体で200字程度。励ますような口調で。最後に正解を繰り返さないでください。）数式は必ずLaTeX形式（$で囲む）で記述してください。**正解の場合はフィードバックは不要です。**"
 }
 `;
 
@@ -967,7 +937,10 @@
                     })
                 });
 
-                if (!response.ok) throw new Error("API Error");
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || "API Error");
+                }
 
                 const data = await response.json();
                 const aiText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -979,11 +952,11 @@
                     score++;
                     playSound('correct');
                     feedbackEl.className = 'correct-feedback';
-                    feedbackEl.innerHTML = `🤖AIカガワ先生🤖の解答check✅<br><span style="color: var(--correct-color);"><strong>正解！💐</strong></span><br>あなたの解答: ${result.recognizedAnswer}<br><br>${result.feedback}<br>`;
+                    feedbackEl.innerHTML = `<div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br><span style="color: var(--correct-color);"><strong>正解！💐</strong></span><br>あなたの解答: ${result.recognizedAnswer}<br><br>${result.feedback}<br>`;
                 } else {
                     playSound('incorrect');
                     feedbackEl.className = 'incorrect-feedback';
-                    feedbackEl.innerHTML = `🤖AIカガワ先生🤖の解答check✅<br><span style="color: var(--incorrect-color);"><strong>不正解💦</strong></span><br>あなたの解答: ${result.recognizedAnswer}<br><br>${result.feedback}<br>（正解: ${currentQuestion.answer}）<br>`;
+                    feedbackEl.innerHTML = `<div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br><span style="color: var(--incorrect-color);"><strong>不正解💦</strong></span><br>あなたの解答: ${result.recognizedAnswer}<br><strong>正解: ${currentQuestion.answer}</strong><br><br>${result.feedback}<br>`;
 
                     // 不正解リストに追加
                     if (!incorrectQuestions.includes(currentQuestion)) {
@@ -995,7 +968,7 @@
                 updateProgressAndScore();
 
                 // 解説追加
-                feedbackEl.innerHTML += `<hr>${currentQuestion.rationale || ""}`;
+                feedbackEl.innerHTML += `<hr><div class="explanation-banner">解説</div><br>${currentQuestion.rationale || ""}`;
                 feedbackEl.style.display = 'block';
                 renderAllMath();
 
@@ -1006,8 +979,22 @@
                 }
 
             } catch (error) {
-                console.error(error);
-                alert("採点中にエラーが発生しました。もう一度試してください。");
+                console.error("Gemini API error:", error);
+                const msg = String(error.message || '');
+
+                if (
+                    msg.includes('Quota exceeded') ||
+                    msg.includes('rate limit') ||
+                    msg.includes('429')
+                ) {
+                    alert(
+                        "AIの無料利用回数の上限に達しました。\n" +
+                        "少し時間をおいてから、もう一度お試しください。"
+                    );
+                } else {
+                    alert("採点中にエラーが発生しました。\n詳細: " + msg);
+                }
+
                 indicator.style.display = 'none';
                 answerBtn.style.display = 'block';
             }
@@ -1041,7 +1028,7 @@
 
             // ★ AI分析ボタンを追加 (不正解時のみ)
             if (!isCorrect) {
-                feedbackEl.innerHTML += `<button class="ai-btn" onclick="analyzeError()">🤖 AIカガワ先生に聞く</button><small> (メモを分析します)<small><br>`;
+                feedbackEl.innerHTML += `<button class="ai-btn" onclick="analyzeError()">🤖 AIカガワ先生に聞く (v2)</button><small> (メモを分析します)<small><br>`;
 
                 // 間違えた問題を記録
                 if (!incorrectQuestions.includes(currentQuestion)) {
@@ -1315,7 +1302,7 @@
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width;
             tempCanvas.height = canvas.height;
-            const tempCtx = tempCanvas.getContext('2d');
+            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
             if (canvas.width > 0 && canvas.height > 0) {
                 tempCtx.drawImage(canvas, 0, 0);
             }
@@ -1347,6 +1334,10 @@
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.lineWidth = 3;
                 ctx.strokeStyle = currentPenColor;
+            } else if (currentTool === 'pen-red') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#ff0000';
             } else if (currentTool === 'eraser') {
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.lineWidth = 20;
@@ -1406,6 +1397,9 @@
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
             if (tool === 'pen') {
                 document.getElementById('btn-pen').classList.add('active');
+                document.getElementById('eraser-cursor').style.display = 'none';
+            } else if (tool === 'pen-red') {
+                document.getElementById('btn-pen-red').classList.add('active');
                 document.getElementById('eraser-cursor').style.display = 'none';
             } else if (tool === 'eraser') {
                 document.getElementById('btn-eraser').classList.add('active');
@@ -1544,11 +1538,19 @@
             const data = imageData.data;
 
             for (let i = 0; i < data.length; i += 4) {
-                // アルファ値が0でない（描画されている）ピクセルのみ反転
+                // アルファ値が0でない（描画されている）ピクセルのみ処理
                 if (data[i + 3] > 0) {
-                    data[i] = 255 - data[i];     // R
-                    data[i + 1] = 255 - data[i + 1]; // G
-                    data[i + 2] = 255 - data[i + 2]; // B
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+
+                    // グレースケール（黒・白・グレー）の場合のみ反転
+                    // これにより赤色などはそのまま維持される
+                    if (r === g && g === b) {
+                        data[i] = 255 - r;     // R
+                        data[i + 1] = 255 - g; // G
+                        data[i + 2] = 255 - b; // B
+                    }
                 }
             }
             ctx.putImageData(imageData, 0, 0);
@@ -1658,21 +1660,26 @@
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
                 const prompt = `
-あなたは数学の先生です。生徒が以下の問題を間違えました。
+あなたは数学の先生です。
+以下の問題に対する生徒の手書き解答（画像）を採点してください。
+
 問題: ${currentQuestion.question}
 正解: ${currentQuestion.answer}
-解説: ${currentQuestion.rationale.replace(/<[^>]*>/g, '')}
 
-**メモ帳に何も記述がない場合は分析をそこで止めてください。**+
-その際に，メモ帳に書かれていることを分析するんだよ，だからメモ帳の解答を見せてね，といった形で結んでください。この場合はそれ以降の分析等は行わないでください。その際は「メモ帳に記述がない場合は分析ができないので，次はメモがあるときに聞いてくださいね！」と結んでください。+
-**メモ帳に記述がある場合，メモ帳に書かれている解答をまず復唱して下さい。**+
-そのうえで間違えたポイントを指摘してほしい。できる限り間違えた原因を分析してほしい。+
-AIカガワ先生の目的は間違いの原因を指摘することです。**時間はかかってもいいので丁寧にメモ帳を分析して指摘してください。**+
-そのあとでつまずきやすいポイントや、次回の正解につながる簡潔なアドバイスを、励ますような口調で教えてください。また，解説動画の活用も促すようにしてください。+
-全体は「間違いの指摘」「間違いを防ぐには」「復習のポイント」の3つを中心に構成してください。全体で200字程度がいいです。+
-分析は生徒のやる気をそぐことのないように，丁寧に言葉使いに気を付けて行ってください。+
-分析の出だしは「はい」という表現は使わず，「お待たせしました！」的な表現にしてください。適宜表現は変えてください。
-**数式は必ずLaTeX形式（$ または  で囲む）で記述してください。特に分数は \frac{分子}{分母} の形式を使用してください。**
+**重要な採点ルール:**
+1. **画像に何も書かれていない、または白紙に近い場合は、必ず「不正解」としてください。**
+2. 「メモ帳に記述がない場合は分析ができないので，次はメモがあるときに聞いてくださいね！」とだけ答えて、分析を終了してください。
+   - **これ以外の文章や項目（間違いの指摘など）は一切出力しないでください。**
+3. 解答が正解と一致している場合のみ「正解」としてください。有理化で同じ回答の場合も正解，積の順序が異なる解答も正解とします。
+4. 途中式があっても、最終的な答えが間違っていれば「不正解」です。
+5. **数式は必ずLaTeX形式（$ または $ で囲む）で記述してください。特に分数は \\frac{分子}{分母} の形式を使用してください。**
+
+以下のJSON形式のみを出力してください。Markdownのコードブロックは不要です。
+{
+  "isCorrect": true または false,
+  "recognizedAnswer": "画像から読み取った生徒の解答（数式や答え）。数式は必ずLaTeX形式（$で囲む）で記述してください。例: $x^2+3x$",
+  "feedback": "以下の構成で記述してください。\n- 間違いの指摘（復唱はせず、途中式がある場合はその式も含めて原因を分析）\n- 間違いを防ぐには\n- 復習のポイント\n（全体で200字程度。励ますような口調で。最後に正解を繰り返さないでください。）数式は必ずLaTeX形式（$で囲む）で記述してください。**正解の場合はフィードバックは不要です。**"
+}
 `;
 
                 // ユーザーの環境で利用可能な gemini-2.0-flash を使用 (v1beta)
@@ -1836,15 +1843,6 @@ AIカガワ先生の目的は間違いの原因を指摘することです。**�
         });
 
     </script>
-    <!-- Image Preview Modal -->
-    <div id="image-preview-modal">
-        <img id="preview-image" src="" alt="Memo Preview">
-        <p class="save-hint">画像を長押しして「写真」に保存してください</p>
-        <div class="modal-controls">
-            <button id="preview-share-btn" class="share-btn">共有 / 他のアプリで開く</button>
-            <button class="close-btn" onclick="closeImagePreview()">閉じる</button>
-        </div>
-    </div>
     <!-- Image Preview Modal -->
     <div id="image-preview-modal">
         <img id="preview-image" src="" alt="Memo Preview">

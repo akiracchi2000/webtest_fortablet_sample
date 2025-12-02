@@ -7,47 +7,103 @@
     <title>高校数学基本大全 Webテスト</title>
     <style>
         /* index.htmlと共通のスタイル */
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --container-bg: #ffffff;
+            --header-border: #dee2e6;
+            --h1-color: #343a40;
+            --h2-color: #495057;
+            --h2-border: #ced4da;
+            --book-intro-bg: #fdfdfd;
+            --link-bg: #f1f3f5;
+            --link-hover-bg: #e9ecef;
+            --link-text: #333;
+            --settings-menu-bg: #fff;
+            --settings-menu-text: #333;
+            --input-bg: #fff;
+            --input-text: #000;
+            --input-border: #ccc;
+            --accordion-bg: #f8f9fa;
+            --accordion-border: #dee2e6;
+            --accordion-text: #495057;
+            --accordion-summary-hover: #e9ecef;
+            --chapter-summary-bg: #e9ecef;
+            --chapter-border-open: #dee2e6;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --container-bg: #1e1e1e;
+            --header-border: #444;
+            --h1-color: #e0e0e0;
+            --h2-color: #d0d0d0;
+            --h2-border: #555;
+            --book-intro-bg: #2d2d2d;
+            --link-bg: #2d2d2d;
+            --link-hover-bg: #3d3d3d;
+            --link-text: #e0e0e0;
+            --settings-menu-bg: #2d2d2d;
+            --settings-menu-text: #e0e0e0;
+            --input-bg: #333;
+            --input-text: #e0e0e0;
+            --input-border: #555;
+            --accordion-bg: #2d2d2d;
+            --accordion-border: #444;
+            --accordion-text: #e0e0e0;
+            --accordion-summary-hover: #3d3d3d;
+            --chapter-summary-bg: #333333;
+            --chapter-border-open: #444444;
+
+            /* Override utility classes */
+            background-color: var(--bg-color) !important;
+            color: var(--text-color) !important;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
             line-height: 1.7;
-            background-color: #f8f9fa;
-            /* デフォルト背景色 */
-            color: #212529;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
             padding: 0;
-            transition: background-color 0.3s;
-            /* 背景色変更を滑らかに */
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
             max-width: 800px;
             margin: 20px auto;
             padding: 20px;
-            background-color: #ffffff;
+            background-color: var(--container-bg);
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s;
         }
 
         header {
             text-align: center;
-            border-bottom: 2px solid #dee2e6;
+            border-bottom: 2px solid var(--header-border);
             padding-bottom: 20px;
             margin-bottom: 30px;
+            transition: border-color 0.3s;
         }
 
         header h1 {
             margin: 0;
-            color: #343a40;
+            color: var(--h1-color);
+            transition: color 0.3s;
         }
 
         h2 {
             /* 科目見出し */
-            border-bottom: 1px solid #ced4da;
+            border-bottom: 1px solid var(--h2-border);
             padding-bottom: 8px;
             margin-top: 40px;
             margin-bottom: 5px;
             /* summaryとの間隔を詰める */
-            color: #495057;
+            color: var(--h2-color);
+            transition: color 0.3s, border-color 0.3s;
 
             /* Flexboxでリンクを横並びにする */
             display: flex;
@@ -95,7 +151,8 @@
             flex-wrap: wrap;
             gap: 20px;
             align-items: center;
-            background-color: #fdfdfd;
+            background-color: var(--book-intro-bg);
+            transition: background-color 0.3s;
             padding: 20px;
             border-radius: 8px;
             border: 1px solid #e9ecef;
@@ -147,9 +204,9 @@
             flex-grow: 1;
             display: inline-block;
             padding: 15px;
-            background-color: #f1f3f5;
+            background-color: var(--link-bg);
             text-decoration: none;
-            color: #0056b3;
+            color: var(--link-text);
             border-radius: 5px;
             font-weight: 500;
             transition: background-color 0.3s;
@@ -157,7 +214,7 @@
         }
 
         .quiz-list a:hover {
-            background-color: #e9ecef;
+            background-color: var(--link-hover-bg);
         }
 
         /* ランク表示 */
@@ -173,19 +230,19 @@
         }
 
         .rank-S {
-            background-color: #ffd700;
-            color: #333;
+            background-color: #daa520;
+            color: #fff;
         }
 
         /* Gold */
         .rank-A {
-            background-color: #c0c0c0;
+            background-color: #b0b7c3;
             color: #333;
         }
 
         /* Silver */
         .rank-B {
-            background-color: #b87333;
+            background-color: #a15c2f;
             color: #fff;
         }
 
@@ -206,21 +263,27 @@
         details.subject-accordion {
             margin-top: 10px;
             margin-bottom: 20px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--accordion-border);
             border-radius: 8px;
-            background-color: #fdfdfd;
+            background-color: var(--accordion-bg);
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         details.subject-accordion summary {
             font-size: 1.3em;
             font-weight: bold;
-            color: #495057;
+            color: var(--accordion-text);
             padding: 15px 20px 15px 35px;
             cursor: pointer;
             list-style: none;
             position: relative;
             border-bottom: 1px solid transparent;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, color 0.3s, background-color 0.3s;
+        }
+
+        details.subject-accordion summary:hover {
+            background-color: var(--accordion-summary-hover);
+            border-radius: 8px 8px 0 0;
         }
 
         details.subject-accordion summary::-webkit-details-marker {
@@ -228,7 +291,7 @@
         }
 
         details[open].subject-accordion>summary {
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid var(--accordion-border);
         }
 
         details.subject-accordion summary::before {
@@ -249,20 +312,24 @@
         /* アコーディオン (章レベル - 入れ子) */
         details.chapter-accordion {
             margin: 10px 20px 15px 20px;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--accordion-border);
             border-radius: 6px;
+            background-color: var(--accordion-bg);
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         details.chapter-accordion summary {
             font-size: 1.1em;
             font-weight: 500;
             padding: 10px 15px 10px 30px;
-            background-color: #f8f9fa;
+            background-color: var(--chapter-summary-bg);
             border-bottom: 1px solid transparent;
+            color: var(--accordion-text);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
         details[open].chapter-accordion>summary {
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--chapter-border-open);
         }
 
         details.chapter-accordion summary::before {
@@ -455,6 +522,24 @@
             color: #333;
             margin-right: 10px;
         }
+
+        /* Settings Menu Class */
+        .settings-menu-panel {
+            background: var(--settings-menu-bg) !important;
+            color: var(--settings-menu-text) !important;
+            border-color: var(--header-border) !important;
+        }
+
+        .settings-menu-panel h3 {
+            color: var(--settings-menu-text) !important;
+            border-bottom-color: var(--header-border) !important;
+        }
+
+        .settings-menu-panel input {
+            background: var(--input-bg) !important;
+            color: var(--input-text) !important;
+            border-color: var(--input-border) !important;
+        }
     </style>
 </head>
 
@@ -462,13 +547,17 @@
     <div class="container">
         <header style="position: relative;">
             <h1>高校数学基本大全 Webテスト</h1>
-            <button onclick="toggleSettingsMenu()"
-                style="position: absolute; right: 0; top: 0; background: none; border: none; font-size: 1.5em; cursor: pointer;"
-                title="共通設定">⚙️</button>
+            <div style="position: absolute; right: 0; top: 0; display: flex; gap: 10px;">
+                <button id="dark-mode-toggle" onclick="toggleDarkMode()"
+                    style="background: none; border: none; font-size: 1.5em; cursor: pointer;"
+                    title="ダークモード／ライトモード">🌙</button>
+                <button onclick="toggleSettingsMenu()"
+                    style="background: none; border: none; font-size: 1.5em; cursor: pointer;" title="共通設定">⚙️</button>
+            </div>
 
             <!-- 設定メニュー (プルダウン) -->
-            <div id="settings-menu"
-                style="display: none; position: absolute; right: 0; top: 40px; background: #fff; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 15px; border-radius: 8px; z-index: 100; width: 300px; text-align: left;">
+            <div id="settings-menu" class="settings-menu-panel"
+                style="display: none; position: absolute; right: 0; top: 40px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 15px; border-radius: 8px; z-index: 100; width: 300px; text-align: left; border: 1px solid #ddd;">
                 <h3
                     style="margin-top: 0; font-size: 1.1em; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px;">
                     ⚙️ 共通設定</h3>
@@ -725,7 +814,7 @@
                         const savedRank = localStorage.getItem('quizRank_' + quizId);
                         const valid = new Set(['S', 'A', 'B', 'C']);
                         if (valid.has(savedRank)) {
-                            rankSpan.textContent = `(Rank: ${savedRank})`;
+                            rankSpan.textContent = savedRank;
                             rankSpan.className = 'quiz-rank';
                             rankSpan.classList.add('rank-' + savedRank);
                         } else {
@@ -832,6 +921,16 @@
             if (savedGasUrl) document.getElementById('global-gas-url').value = savedGasUrl;
             if (savedApiKey) document.getElementById('global-api-key').value = savedApiKey;
             /* --- E. ここまで ----------------------------------------------- */
+
+            /* --- F. ダークモード初期化 ------------------------------------- */
+            const savedDarkMode = localStorage.getItem('darkMode');
+            if (savedDarkMode === 'true') {
+                isDarkMode = true;
+                document.body.classList.add('dark-mode');
+                const btn = document.getElementById('dark-mode-toggle');
+                if (btn) btn.textContent = '☀️';
+            }
+            /* --- F. ここまで ----------------------------------------------- */
         });
 
         /* --- E. 共通設定の保存処理 ------------------------------------- */
@@ -842,6 +941,16 @@
             } else {
                 menu.style.display = 'none';
             }
+        }
+
+        /* --- ダークモード切り替え --- */
+        let isDarkMode = false;
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            const btn = document.getElementById('dark-mode-toggle');
+            if (btn) btn.textContent = isDarkMode ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDarkMode);
         }
 
         function saveGlobalSettings() {

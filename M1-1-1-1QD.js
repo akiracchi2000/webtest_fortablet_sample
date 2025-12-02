@@ -1,4 +1,4 @@
-// --- クイズデータ(QD)はここに貼り付けてください ---
+﻿// --- クイズデータ(QD)はここに貼り付けてください ---
 window.QUIZ_DATA = [
             // 問題 1
             {
@@ -352,5 +352,5 @@ window.QUIZ_DATA = [
                 answer: "$10$",
                 rationale: "<strong>定義: </strong>同類項とは、文字の部分がまったく同じ項のことです。<br><strong>解説: </strong>$-5$ は文字を含まない「定数項」です。<br>$10$ も文字を含まない「定数項」なので、同類項です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7707/63099' target='_blank'>" + "解説動画を見る" + "</a><br>" + "<small>（※学びエイドのログインが必要です）</small>"
             }
-            ];
-            // --- 問題データの終わり ---
+            ];
+            // --- 問題データの終わり ---
