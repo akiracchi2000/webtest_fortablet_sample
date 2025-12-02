@@ -724,6 +724,7 @@
         let currentPenColor = '#000'; // 現在のペンの色
         const synth = window.speechSynthesis;
         let currentUtterance = null;
+        let audioCtx = null; // グローバルAudioContext
 
         // --- キャンバス関連 ---
         const canvas = document.getElementById('memo-pad');
@@ -734,6 +735,7 @@
         let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
 
         document.addEventListener("DOMContentLoaded", function () {
+            initAudioContext(); // オーディオコンテキストの初期化準備
             initCanvas();
             setTimeout(resizeCanvas, 100); // レイアウト確定後に再調整
             initQuiz();
@@ -1185,6 +1187,30 @@
         }
 
         // --- 効果音機能 ---
+        // --- 効果音機能 ---
+        function initAudioContext() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+
+            // ユーザーアクションでAudioContextを作成・再開する
+            const unlockAudio = () => {
+                if (!audioCtx) {
+                    audioCtx = new AudioContext();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                // イベントリスナーを削除（一度だけでOK）
+                document.removeEventListener('click', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+                document.removeEventListener('keydown', unlockAudio);
+            };
+
+            document.addEventListener('click', unlockAudio);
+            document.addEventListener('touchstart', unlockAudio);
+            document.addEventListener('keydown', unlockAudio);
+        }
+
         function toggleSound() {
             isSoundOn = !isSoundOn;
             const btn = document.getElementById('sound-toggle');
@@ -1194,34 +1220,43 @@
         function playSound(type) {
             if (!isSoundOn) return;
 
+            // AudioContextがまだない、または閉じている場合は作成を試みる
+            // (ただしiOSではユーザーアクション内でないと新規作成・resumeできない場合があるため、initAudioContextでのunlockが重要)
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
 
-            const ctx = new AudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(e => console.log("Audio resume failed:", e));
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
 
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(audioCtx.destination);
 
             if (type === 'correct') {
                 // ピンポン（高音2回）
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(1000, ctx.currentTime);
-                osc.frequency.setValueAtTime(1500, ctx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+                osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(1500, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
                 osc.start();
-                osc.stop(ctx.currentTime + 0.3);
+                osc.stop(audioCtx.currentTime + 0.3);
             } else if (type === 'incorrect') {
                 // ブブー（低音のこぎり波）
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, ctx.currentTime);
-                osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
                 osc.start();
-                osc.stop(ctx.currentTime + 0.3);
+                osc.stop(audioCtx.currentTime + 0.3);
             }
         }
 
