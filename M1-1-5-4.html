@@ -724,6 +724,7 @@
         let currentPenColor = '#000'; // 現在のペンの色
         const synth = window.speechSynthesis;
         let currentUtterance = null;
+        let audioCtx = null; // Global AudioContext
 
         // --- キャンバス関連 ---
         const canvas = document.getElementById('memo-pad');
@@ -734,6 +735,7 @@
         let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
 
         document.addEventListener("DOMContentLoaded", function () {
+            initAudioContext(); // Init AudioContext
             initCanvas();
             setTimeout(resizeCanvas, 100); // レイアウト確定後に再調整
             initQuiz();
@@ -874,8 +876,23 @@
             const nextBtn = document.getElementById('next-btn');
             const resultsBtn = document.getElementById('results-btn');
 
-            answerBtn.style.display = 'none';
+                        answerBtn.style.display = 'none';
             indicator.style.display = 'block';
+
+            // iOS fix: Resume AudioContext immediately after user interaction
+            if (isSoundOn && audioCtx) {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } else if (isSoundOn && !audioCtx) {
+                 // Fallback if not initialized
+                 const AudioContext = window.AudioContext || window.webkitAudioContext;
+                 if (AudioContext) {
+                     audioCtx = new AudioContext();
+                     // iOS might need silent playback here, but resume() is often enough
+                     audioCtx.resume();
+                 }
+            }
 
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) {
@@ -896,7 +913,7 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
-                const prompt = `
+                                const prompt = `
 あなたは数学の先生です。
 以下の問題に対する生徒の手書き解答（画像）を採点してください。
 
@@ -915,7 +932,7 @@
 {
   "isCorrect": true または false,
   "recognizedAnswer": "画像から読み取った生徒の解答（数式や答え）。数式は必ずLaTeX形式（$で囲む）で記述してください。例: $x^2+3x$",
-  "feedback": "以下の構成で記述してください。\n- 間違いの指摘（復唱はせず、途中式がある場合はその式も含めて原因を分析）\n- 間違いを防ぐには\n- 復習のポイント\n（全体で200字程度。励ますような口調で。最後に正解を繰り返さないでください。）数式は必ずLaTeX形式（$で囲む）で記述してください。**正解の場合はフィードバックは不要です。**"
+  "feedback": "以下の構成で記述してください。\n- 間違いの指摘（復唱はせず、途中式がある場合はその式も含めて原因を分析）\n- 間違いを防ぐには\n- 復習のポイント\n（全体で200字程度。励ますような口調で。最後に正解を繰り返さないでください。解説は別に表示するものがあるので，解答の分析中心のコメントをしてください。）数式は必ずLaTeX形式（$で囲む）で記述してください。**正解の場合はフィードバックは不要です。**"
 }
 `;
 
@@ -945,6 +962,9 @@
                 const data = await response.json();
                 const aiText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
                 const result = JSON.parse(aiText);
+                // Fix for null display
+                if (result.recognizedAnswer === 'null' || result.recognizedAnswer === null) result.recognizedAnswer = '';
+                if (result.feedback === 'null' || result.feedback === null) result.feedback = '';
 
                 indicator.style.display = 'none';
 
@@ -1000,7 +1020,19 @@
             }
         }
 
-        function selectAnswer(selectedAnswer, btnElement) {
+                function selectAnswer(selectedAnswer, btnElement) {
+            // iOS fix: Resume AudioContext immediately after user interaction
+            if (isSoundOn && audioCtx) {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } else if (isSoundOn && !audioCtx) {
+                 const AudioContext = window.AudioContext || window.webkitAudioContext;
+                 if (AudioContext) {
+                     audioCtx = new AudioContext();
+                     audioCtx.resume();
+                 }
+            }
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = (selectedAnswer === currentQuestion.answer);
             const feedbackEl = document.getElementById('feedback');
@@ -1180,7 +1212,38 @@
                 });
         }
 
-        // --- 効果音機能 ---
+                // --- 効果音機能 ---
+        function initAudioContext() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+
+            // Create/Resume AudioContext on user action
+            const unlockAudio = () => {
+                if (!audioCtx) {
+                    audioCtx = new AudioContext();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                
+                // Play silent buffer to force wake up audio engine (iOS fix)
+                const buffer = audioCtx.createBuffer(1, 1, 22050);
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioCtx.destination);
+                source.start(0);
+
+                // Remove event listeners (only need once)
+                document.removeEventListener('click', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+                document.removeEventListener('keydown', unlockAudio);
+            };
+
+            document.addEventListener('click', unlockAudio);
+            document.addEventListener('touchstart', unlockAudio);
+            document.addEventListener('keydown', unlockAudio);
+        }
+
         function toggleSound() {
             isSoundOn = !isSoundOn;
             const btn = document.getElementById('sound-toggle');
@@ -1190,34 +1253,42 @@
         function playSound(type) {
             if (!isSoundOn) return;
 
+            // Try to create/resume AudioContext if missing or closed
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
 
-            const ctx = new AudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(e => console.log("Audio resume failed:", e));
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
 
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(audioCtx.destination);
 
             if (type === 'correct') {
-                // ピンポン（高音2回）
+                // Ping-pong (high pitch x2)
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(1000, ctx.currentTime);
-                osc.frequency.setValueAtTime(1500, ctx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+                osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(1500, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
                 osc.start();
-                osc.stop(ctx.currentTime + 0.3);
+                osc.stop(audioCtx.currentTime + 0.3);
             } else if (type === 'incorrect') {
-                // ブブー（低音のこぎり波）
+                // Buzzer (low saw wave)
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, ctx.currentTime);
-                osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
                 osc.start();
-                osc.stop(ctx.currentTime + 0.3);
+                osc.stop(audioCtx.currentTime + 0.3);
             }
         }
 
@@ -1659,7 +1730,7 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
-                const prompt = `
+                                const prompt = `
 あなたは数学の先生です。
 以下の問題に対する生徒の手書き解答（画像）を採点してください。
 
@@ -1668,7 +1739,7 @@
 
 **重要な採点ルール:**
 1. **画像に何も書かれていない、または白紙に近い場合は、必ず「不正解」としてください。**
-2. 「メモ帳に記述がない場合は分析ができないので，次はメモがあるときに聞いてくださいね！」とだけ答えて、分析を終了してください。
+2. 「メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！」とだけ答えて、分析を終了してください。
    - **これ以外の文章や項目（間違いの指摘など）は一切出力しないでください。**
 3. 解答が正解と一致している場合のみ「正解」としてください。有理化で同じ回答の場合も正解，積の順序が異なる解答も正解とします。
 4. 途中式があっても、最終的な答えが間違っていれば「不正解」です。
@@ -1678,7 +1749,7 @@
 {
   "isCorrect": true または false,
   "recognizedAnswer": "画像から読み取った生徒の解答（数式や答え）。数式は必ずLaTeX形式（$で囲む）で記述してください。例: $x^2+3x$",
-  "feedback": "以下の構成で記述してください。\n- 間違いの指摘（復唱はせず、途中式がある場合はその式も含めて原因を分析）\n- 間違いを防ぐには\n- 復習のポイント\n（全体で200字程度。励ますような口調で。最後に正解を繰り返さないでください。）数式は必ずLaTeX形式（$で囲む）で記述してください。**正解の場合はフィードバックは不要です。**"
+  "feedback": "以下の構成で記述してください。\n- 間違いの指摘（復唱はせず、途中式がある場合はその式も含めて原因を分析）\n- 間違いを防ぐには\n- 復習のポイント\n（全体で200字程度。励ますような口調で。最後に正解を繰り返さないでください。解説は別に表示するものがあるので，解答の分析中心のコメントをしてください。）数式は必ずLaTeX形式（$で囲む）で記述してください。**正解の場合はフィードバックは不要です。**"
 }
 `;
 
@@ -1855,3 +1926,6 @@
 </body>
 
 </html>
+
+
+

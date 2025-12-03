@@ -879,6 +879,21 @@
             answerBtn.style.display = 'none';
             indicator.style.display = 'block';
 
+            // iOS対策: ユーザー操作の直後にAudioContextを再開する
+            if (isSoundOn && audioCtx) {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } else if (isSoundOn && !audioCtx) {
+                // まだ初期化されていない場合のフォールバック
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                    // iOSではここで無音再生が必要かもしれないが、resume()だけで十分な場合も多い
+                    audioCtx.resume();
+                }
+            }
+
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) {
                 alert("APIキーが設定されていません。トップページで設定してください。");
@@ -917,7 +932,7 @@
 {
   "isCorrect": true または false,
   "recognizedAnswer": "画像から読み取った生徒の解答（数式や答え）。数式は必ずLaTeX形式（$で囲む）で記述してください。例: $x^2+3x$",
-  "feedback": "以下の構成で記述してください。\n- 間違いの指摘（復唱はせず、途中式がある場合はその式も含めて原因を分析）\n- 間違いを防ぐには\n- 復習のポイント\n（全体で200字程度。励ますような口調で。最後に正解を繰り返さないでください。）数式は必ずLaTeX形式（$で囲む）で記述してください。**正解の場合はフィードバックは不要です。**"
+  "feedback": "以下の構成で記述してください。\n- 間違いの指摘（復唱はせず、途中式がある場合はその式も含めて原因を分析）\n- 間違いを防ぐには\n- 復習のポイント\n（全体で200字程度。励ますような口調で。最後に正解を繰り返さないでください。解説は別に表示するものがあるので，解答の分析中心のコメントをしてください。）数式は必ずLaTeX形式（$で囲む）で記述してください。**正解の場合はフィードバックは不要です。**"
 }
 `;
 
@@ -947,6 +962,10 @@
                 const data = await response.json();
                 const aiText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
                 const result = JSON.parse(aiText);
+
+                // null対策
+                if (result.recognizedAnswer === 'null' || result.recognizedAnswer === null) result.recognizedAnswer = '';
+                if (result.feedback === 'null' || result.feedback === null) result.feedback = '';
 
                 indicator.style.display = 'none';
 
@@ -1007,6 +1026,19 @@
         }
 
         function selectAnswer(selectedAnswer, btnElement) {
+            // iOS対策: ユーザー操作の直後にAudioContextを再開する
+            if (isSoundOn && audioCtx) {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } else if (isSoundOn && !audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                    audioCtx.resume();
+                }
+            }
+
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = (selectedAnswer === currentQuestion.answer);
             const feedbackEl = document.getElementById('feedback');
@@ -1187,12 +1219,11 @@
         }
 
         // --- 効果音機能 ---
-        // --- 効果音機能 ---
         function initAudioContext() {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
 
-            // ユーザーアクションでAudioContextを作成・再開する
+            // Create/Resume AudioContext on user action
             const unlockAudio = () => {
                 if (!audioCtx) {
                     audioCtx = new AudioContext();
@@ -1201,14 +1232,14 @@
                     audioCtx.resume();
                 }
 
-                // 無音のバッファを再生して強制的にオーディオエンジンを目覚めさせる（iOS対策）
+                // Play silent buffer to force wake up audio engine (iOS fix)
                 const buffer = audioCtx.createBuffer(1, 1, 22050);
                 const source = audioCtx.createBufferSource();
                 source.buffer = buffer;
                 source.connect(audioCtx.destination);
                 source.start(0);
 
-                // イベントリスナーを削除（一度だけでOK）
+                // Remove event listeners (only need once)
                 document.removeEventListener('click', unlockAudio);
                 document.removeEventListener('touchstart', unlockAudio);
                 document.removeEventListener('keydown', unlockAudio);
@@ -1228,8 +1259,7 @@
         function playSound(type) {
             if (!isSoundOn) return;
 
-            // AudioContextがまだない、または閉じている場合は作成を試みる
-            // (ただしiOSではユーザーアクション内でないと新規作成・resumeできない場合があるため、initAudioContextでのunlockが重要)
+            // Try to create/resume AudioContext if missing or closed
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
 
@@ -1248,7 +1278,7 @@
             gain.connect(audioCtx.destination);
 
             if (type === 'correct') {
-                // ピンポン（高音2回）
+                // Ping-pong (high pitch x2)
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
                 osc.frequency.setValueAtTime(1500, audioCtx.currentTime + 0.1);
@@ -1257,7 +1287,7 @@
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.3);
             } else if (type === 'incorrect') {
-                // ブブー（低音のこぎり波）
+                // Buzzer (low saw wave)
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(150, audioCtx.currentTime);
                 osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
