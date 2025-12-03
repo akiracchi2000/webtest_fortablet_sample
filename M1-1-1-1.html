@@ -909,7 +909,7 @@
                 const memoContainer = document.getElementById('memo-container');
                 const capturedCanvas = await html2canvas(memoContainer, {
                     backgroundColor: isDarkMode ? '#121212' : '#ffffff',
-                    scale: 1
+                    scale: 2
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 

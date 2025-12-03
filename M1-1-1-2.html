@@ -909,7 +909,7 @@
                 const memoContainer = document.getElementById('memo-container');
                 const capturedCanvas = await html2canvas(memoContainer, {
                     backgroundColor: isDarkMode ? '#121212' : '#ffffff',
-                    scale: 1
+                    scale: 2
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
@@ -1726,7 +1726,7 @@
                 const memoContainer = document.getElementById('memo-container');
                 const capturedCanvas = await html2canvas(memoContainer, {
                     backgroundColor: isDarkMode ? '#121212' : '#ffffff',
-                    scale: 1 // 分析用なので標準解像度で十分
+                    scale: 2 // 分析用なので標準解像度で十分
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
@@ -1926,6 +1926,7 @@
 </body>
 
 </html>
+
 
 
 
