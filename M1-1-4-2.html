@@ -876,7 +876,7 @@
             const nextBtn = document.getElementById('next-btn');
             const resultsBtn = document.getElementById('results-btn');
 
-                        answerBtn.style.display = 'none';
+            answerBtn.style.display = 'none';
             indicator.style.display = 'block';
 
             // iOS fix: Resume AudioContext immediately after user interaction
@@ -885,13 +885,13 @@
                     audioCtx.resume();
                 }
             } else if (isSoundOn && !audioCtx) {
-                 // Fallback if not initialized
-                 const AudioContext = window.AudioContext || window.webkitAudioContext;
-                 if (AudioContext) {
-                     audioCtx = new AudioContext();
-                     // iOS might need silent playback here, but resume() is often enough
-                     audioCtx.resume();
-                 }
+                // Fallback if not initialized
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                    // iOS might need silent playback here, but resume() is often enough
+                    audioCtx.resume();
+                }
             }
 
             const apiKey = localStorage.getItem('gemini_api_key');
@@ -913,7 +913,7 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
-                                const prompt = `
+                const prompt = `
 あなたは数学の先生です。
 以下の問題に対する生徒の手書き解答（画像）を採点してください。
 
@@ -927,6 +927,10 @@
 3. 解答が正解と一致している場合のみ「正解」としてください。有理化で同じ回答の場合も正解，積の順序が異なる解答も正解とします。
 4. 途中式があっても、最終的な答えが間違っていれば「不正解」です。
 5. **数式は必ずLaTeX形式（$ または $ で囲む）で記述してください。特に分数は \\frac{分子}{分母} の形式を使用してください。**
+6. **正誤判定問題（答えが「正しい」「正しくない」の場合）について:**
+   - 生徒が「正しい」「正しくない」と書いているかを判定してください。
+   - 漢字の崩れや、ひらがな表記（例：「ただしい」）でも、意図が明確であれば正解としてください。
+   - 「〇」「×」で書かれている場合は、それぞれ「正しい」「正しくない」に対応させて採点してください。
 
 以下のJSON形式のみを出力してください。Markdownのコードブロックは不要です。
 {
@@ -1020,18 +1024,18 @@
             }
         }
 
-                function selectAnswer(selectedAnswer, btnElement) {
+        function selectAnswer(selectedAnswer, btnElement) {
             // iOS fix: Resume AudioContext immediately after user interaction
             if (isSoundOn && audioCtx) {
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
             } else if (isSoundOn && !audioCtx) {
-                 const AudioContext = window.AudioContext || window.webkitAudioContext;
-                 if (AudioContext) {
-                     audioCtx = new AudioContext();
-                     audioCtx.resume();
-                 }
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                    audioCtx.resume();
+                }
             }
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = (selectedAnswer === currentQuestion.answer);
@@ -1212,7 +1216,7 @@
                 });
         }
 
-                // --- 効果音機能 ---
+        // --- 効果音機能 ---
         function initAudioContext() {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
@@ -1225,7 +1229,7 @@
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
-                
+
                 // Play silent buffer to force wake up audio engine (iOS fix)
                 const buffer = audioCtx.createBuffer(1, 1, 22050);
                 const source = audioCtx.createBufferSource();
@@ -1730,7 +1734,7 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
-                                const prompt = `
+                const prompt = `
 あなたは数学の先生です。
 以下の問題に対する生徒の手書き解答（画像）を採点してください。
 
@@ -1926,7 +1930,3 @@
 </body>
 
 </html>
-
-
-
-
