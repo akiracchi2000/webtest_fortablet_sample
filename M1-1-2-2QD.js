@@ -1,7 +1,7 @@
 ﻿// --- クイズデータ(QD)はここに貼り付けてください ---
 window.QUIZ_DATA = [
-                  // --- (x+a)^2 形式 (整数) ---
-// 問題 1
+  // --- (x+a)^2 形式 (整数) ---
+  // 問題 1
   {
     question: "次の式を展開せよ。<br>$\\left(x+1\\right)^2$",
     options: ["$x^2+2x+1$", "$x^2+x+1$", "$x^2+2x+2$", "$x^2+1$"],
@@ -541,7 +541,7 @@ window.QUIZ_DATA = [
     options: ["$x^2-4xy+4y^2$", "$x^2+4xy+4y^2$", "$-x^2-4xy+4y^2$", "$x^2-4y^2$"],
     answer: "$x^2-4xy+4y^2$",
     rationale:
-      "$\\left(-x+2y\\right)^2 = \\left(x-2y\\right)^2$<br>公式 $\\left(a-b\\right)^2=a^2-2ab+b^2$ で $a=x, b=2y$ とします。<br>$x^2-2\\cdot x \\cdot 2y+\\left(2y\\right)^2 = x^2-4xy+4y^2$<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br>" +
+      "$\\left(-x+2y\\right)^2 =\\left(-\\left(x-2y\\right)\\right)^2= \\left(x-2y\\right)^2$<br>公式 $\\left(a-b\\right)^2=a^2-2ab+b^2$ で $a=x, b=2y$ とします。<br>$x^2-2\\cdot x \\cdot 2y+\\left(2y\\right)^2 = x^2-4xy+4y^2$<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br>" +
       "<a href='https://www.manabi-aid.jp/lesson/id/7708/63113' target='_blank'>" +
       "解説動画を見る" +
       "</a><br>" +
@@ -713,5 +713,5 @@ window.QUIZ_DATA = [
   }
 
 
-            ]; // ← allQuizData をここで閉じる
-            // --- 元のクイズデータの終わり ---
+]; // ← allQuizData をここで閉じる
+// --- 元のクイズデータの終わり ---

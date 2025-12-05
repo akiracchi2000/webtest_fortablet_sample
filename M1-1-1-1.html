@@ -604,6 +604,26 @@
             padding: 5px 10px;
             border-radius: 4px;
         }
+    
+        /* ===== 不正解時の2択（やり直す/正解を教えて） ===== */
+        .wrong-decision-area{
+            margin-top:12px;
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            justify-content:center;
+        }
+        .wrong-decision-btn{
+            padding:10px 18px;
+            font-size:1em;
+        }
+        .wrong-decision-note{
+            margin-top:8px;
+            font-size:0.85em;
+            opacity:0.8;
+            text-align:center;
+        }
+
     </style>
 </head>
 
@@ -869,12 +889,123 @@
             renderAllMath();
         }
 
+        
+        // --- 不正解時の分岐（やり直す / 正解を教えて）用 ---
+        let pendingAIResult = null; // { questionIndex, recognizedAnswer, feedback, hasProcessError }
+
+        function showWrongDecisionUI(currentQuestion, result) {
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+            const answerBtn = document.getElementById('answer-btn');
+
+            // 次へ/結果は一旦隠す
+            nextBtn.style.display = 'none';
+            resultsBtn.style.display = 'none';
+
+            // 2択表示中は通常の添削ボタンは隠しておく
+            answerBtn.style.display = 'none';
+
+            pendingAIResult = {
+                questionIndex: currentQuestionIndex,
+                recognizedAnswer: result.recognizedAnswer || '',
+                feedback: result.feedback || '',
+                hasProcessError: !!result.hasProcessError
+            };
+
+            feedbackEl.className = 'incorrect-feedback';
+            feedbackEl.innerHTML = `
+                <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                <span style="color: var(--incorrect-color);"><strong>今回は不正解でした。</strong></span><br>
+                あなたの解答: ${pendingAIResult.recognizedAnswer || '(読み取り不可)'}<br>
+                <div class="wrong-decision-area">
+                    <button class="tool-btn ai-btn wrong-decision-btn" onclick="retryCurrentQuestion()">🔁 もう一度解く</button>
+                    <button class="tool-btn ai-btn wrong-decision-btn" onclick="revealCorrectWithAI()">✅ 正解を教えて！AIカガワ先生</button>
+                </div>
+                <div class="wrong-decision-note">※「もう一度解く」を押すとメモを消去して再チャレンジできます。</div>
+            `;
+            feedbackEl.style.display = 'block';
+            renderAllMath();
+        }
+
+        function retryCurrentQuestion() {
+            pendingAIResult = null;
+
+            // メモを消して再チャレンジ
+            clearMemo();
+
+            // フィードバックを閉じて添削ボタンを再表示
+            const feedbackEl = document.getElementById('feedback');
+            const answerBtn = document.getElementById('answer-btn');
+            const indicator = document.getElementById('analyzing-indicator');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+
+            feedbackEl.style.display = 'none';
+            indicator.style.display = 'none';
+
+            nextBtn.style.display = 'none';
+            resultsBtn.style.display = 'none';
+
+            answerBtn.textContent = "🤖AIカガワ先生🤖に添削してもらう";
+            answerBtn.style.display = 'block';
+        }
+
+        function revealCorrectWithAI() {
+            if (!pendingAIResult) return;
+
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+
+            const q = quizData[pendingAIResult.questionIndex] || quizData[currentQuestionIndex];
+
+            // 不正解リストに追加（ここで確定として扱う）
+            if (!incorrectQuestions.includes(q)) {
+                incorrectQuestions.push(q);
+            }
+
+            let html = `
+                <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                <span style="color: var(--incorrect-color);"><strong>不正解でした</strong></span><br>
+                あなたの解答: ${pendingAIResult.recognizedAnswer || '(読み取り不可)'}<br>
+                <strong>正解: ${q.answer}</strong><br><br>
+            `;
+
+            if (pendingAIResult.feedback) {
+                html += `${pendingAIResult.feedback}<br>`;
+            }
+
+            html += `<hr><div class="explanation-banner">解説</div><br>${q.rationale || ""}`;
+
+            feedbackEl.className = 'incorrect-feedback';
+            feedbackEl.innerHTML = html;
+            feedbackEl.style.display = 'block';
+            renderAllMath();
+
+            if (pendingAIResult.questionIndex < quizData.length - 1) {
+                nextBtn.style.display = 'block';
+                resultsBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'none';
+                resultsBtn.style.display = 'block';
+            }
+
+            pendingAIResult = null;
+
+            saveProgress();
+            updateProgressAndScore();
+        }
+
         async function checkAnswerWithAI() {
             const answerBtn = document.getElementById('answer-btn');
             const indicator = document.getElementById('analyzing-indicator');
             const feedbackEl = document.getElementById('feedback');
             const nextBtn = document.getElementById('next-btn');
             const resultsBtn = document.getElementById('results-btn');
+
+            // 不正解分岐の保留状態をリセット
+            pendingAIResult = null;
 
             answerBtn.style.display = 'none';
             indicator.style.display = 'block';
@@ -885,11 +1016,9 @@
                     audioCtx.resume();
                 }
             } else if (isSoundOn && !audioCtx) {
-                // まだ初期化されていない場合のフォールバック
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (AudioContext) {
                     audioCtx = new AudioContext();
-                    // iOSではここで無音再生が必要かもしれないが、resume()だけで十分な場合も多い
                     audioCtx.resume();
                 }
             }
@@ -913,29 +1042,63 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
+                // --- 誤り診断・途中式破綻チェック特化プロンプト ---
                 const prompt = `
-あなたは数学の先生です。
-以下の問題に対する生徒の手書き解答（画像）を採点してください。
+あなたは高校数学の「誤り診断」に特化した添削者です。
+以下の問題に対する生徒の手書き解答（画像）を読み取り，
+最終答案の正誤と，途中式の数学的整合性だけを判定してください。
 
 問題: ${currentQuestion.question}
 正解: ${currentQuestion.answer}
 
-**重要な採点ルール:**
-1. **画像に何も書かれていない、または白紙に近い場合は、必ず「不正解」としてください。**
-2. 「メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！」とだけ答えて、分析を終了してください。
-   - **これ以外の文章や項目（間違いの指摘など）は一切出力しないでください。**
-3. 解答が正解と一致している場合のみ「正解」としてください。有理化で同じ回答の場合も正解，積の順序が異なる解答も正解とします。
-4. 途中式があっても、最終的な答えが間違っていれば「不正解」です。
-5. **数式は必ずLaTeX形式（$ または $$ で囲む）で記述してください。特に分数は \\frac{分子}{分母} の形式を使用してください。**
-6. **正誤判定問題（答えが「正しい」「正しくない」の場合）について:**
-   - 生徒が「正しい」「正しくない」と書いているかを判定してください。
-   - 漢字の崩れや、ひらがな表記（例：「ただしい」）でも、意図が明確であれば正解としてください。
-   - 「〇」「×」で書かれている場合は、それぞれ「正しい」「正しくない」に対応させて採点してください。
+【最重要ルール】
+1. 画像に何も書かれていない，または白紙に近い場合は必ず不正解とする。
+2. その場合は次の一文だけを出力して終了する：
+   「メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！」
+   - この文以外は一切出力しない。
+3. 最終答案が正解と一致している場合のみ isCorrect を true とする。
+   - 有理化で同じ，同値変形，積の順序違いなどは正解扱い。
+4. 途中式が存在する場合は，必ず途中式の整合性をチェックする。
+5. 最終答案が正解でも途中式に数学的な誤りや飛躍がある場合，
+   hasProcessError を true とする。
+6. 途中式がほぼ無い/読めない場合は
+   hasProcessError は false にしてよいが，
+   feedback に「途中式が読み取れないため過程の検証は不十分」と短く書く。
+7. 正誤判定問題（答えが「正しい」「正しくない」の場合）について:
+   - 漢字の崩れやひらがな表記（例：「ただしい」）でも意図が明確なら採点。
+   - 「〇」「×」はそれぞれ「正しい」「正しくない」に対応させて採点。
+8. 数式は必ずLaTeX形式（$...$）で記述する。分数は \frac{a}{b} を用いる。
+9. 計算ミスだけでなく，
+   問題文や途中式の「写し間違い（転記ミス）」も重要な誤りとして扱う。
+   写し間違いが疑われる場合は feedback で優先して短く指摘する。
+
+【あなたの役割の境界】
+- このステップでは「解説」「丁寧な導出」「別解」「一般論」を書かない。
+- rationale が別に表示されるため，
+  ここでは「どこがどう間違っているか」「どの変形が破綻しているか」
+  に集中する。
+
+【feedbackの書き方（短くやさしく）】
+- 100〜120字程度。
+- 指摘は最大2点まで。
+- 口調はやさしく丁寧に。
+- 正しい解法の説明や正解の復唱は禁止。
+- 不正解の場合は最も致命的な誤り箇所を優先して指摘する。
+  必要なら誤りタイプを短く添える：
+  例：計算ミス／符号ミス／写し間違い／公式の適用条件ミス／同値変形の誤り／論理の飛躍 など。
+- isCorrect が false のときは
+  「答えは合っていますが」等の表現を絶対に使わない。
+- 正解だが hasProcessError が true の場合は
+  「答えは合っていますが，途中式に誤りが見られます。」の趣旨で短く指摘する。
+- 正解かつ過程も問題なければ feedback は空文字。
+
+【出力】
 以下のJSON形式のみを出力してください。Markdownのコードブロックは不要です。
 {
   "isCorrect": true または false,
-  "recognizedAnswer": "画像から読み取った生徒の解答（数式や答え）。数式は必ずLaTeX形式（$で囲む）で記述してください。例: $x^2+3x$",
-  "feedback": "以下の構成で記述してください。\n- 間違いの指摘（復唱はせず、途中式がある場合はその式も含めて原因を分析）\n- 間違いを防ぐには\n- 復習のポイント\n（全体で200字程度。励ますような口調で。最後に正解を繰り返さないでください。解説は別に表示するものがあるので，解答の分析中心のコメントをしてください。）数式は必ずLaTeX形式（$で囲む）で記述してください。**正解の場合はフィードバックは不要です。**"
+  "hasProcessError": true または false,
+  "recognizedAnswer": "画像から読み取った生徒の最終解答（LaTeX $...$）。読み取れない場合は空文字。",
+  "feedback": "誤り診断コメント。正解かつ過程も問題なければ空文字。"
 }
 `;
 
@@ -969,41 +1132,68 @@
                 // null対策
                 if (result.recognizedAnswer === 'null' || result.recognizedAnswer === null) result.recognizedAnswer = '';
                 if (result.feedback === 'null' || result.feedback === null) result.feedback = '';
+                if (result.hasProcessError === 'null' || result.hasProcessError === null) result.hasProcessError = false;
 
-                indicator.style.display = 'none';
+                
+                // 不正解なのに「答えは合っています」系が混ざる誤出力の安全弁
+                const misleadingRegex = /(答え|結論)は合って(い|)ます|偶然正解/;
+                if (result.isCorrect === false && misleadingRegex.test(result.feedback || "")) {
+                    result.feedback = "途中の計算や式の写し間違いがないか確認してみましょう。";
+                }
+
+indicator.style.display = 'none';
+
+                // 既に間違いリストに入っていて，今回正解した場合は外す（任意）
+                const removeFromIncorrect = () => {
+                    const idx = incorrectQuestions.indexOf(currentQuestion);
+                    if (idx !== -1) incorrectQuestions.splice(idx, 1);
+                };
 
                 if (result.isCorrect) {
                     score++;
                     playSound('correct');
+
+                    removeFromIncorrect();
+
                     feedbackEl.className = 'correct-feedback';
-                    let feedbackHtml = `<div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br><span style="color: var(--correct-color);"><strong>正解！💐</strong></span><br>あなたの解答: ${result.recognizedAnswer}<br><br>`;
+
+                    const caution = result.hasProcessError
+                        ? `<br><span style="color: var(--incorrect-color);"><strong>※答えは合っていますが，途中式に誤りが見られます。</strong></span><br>`
+                        : `<br>`;
+
+                    let feedbackHtml =
+                        `<div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>` +
+                        `<span style="color: var(--correct-color);"><strong>正解！💐</strong></span>${caution}` +
+                        `あなたの解答: ${result.recognizedAnswer || '(読み取り不可)'}<br>`;
+
                     if (result.feedback) {
-                        feedbackHtml += `${result.feedback}<br>`;
+                        feedbackHtml += `<br>${result.feedback}<br>`;
                     }
+
                     feedbackEl.innerHTML = feedbackHtml;
+
+                    saveProgress();
+                    updateProgressAndScore();
+
+                    // 正解時は従来通りすぐ解説
+                    feedbackEl.innerHTML += `<hr><div class="explanation-banner">解説</div><br>${currentQuestion.rationale || ""}`;
+                    feedbackEl.style.display = 'block';
+                    renderAllMath();
+
+                    if (currentQuestionIndex < quizData.length - 1) {
+                        nextBtn.style.display = 'block';
+                    } else {
+                        resultsBtn.style.display = 'block';
+                    }
+
                 } else {
                     playSound('incorrect');
-                    feedbackEl.className = 'incorrect-feedback';
-                    feedbackEl.innerHTML = `<div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br><span style="color: var(--incorrect-color);"><strong>不正解💦</strong></span><br>あなたの解答: ${result.recognizedAnswer}<br><strong>正解: ${currentQuestion.answer}</strong><br><br>${result.feedback}<br>`;
 
-                    // 不正解リストに追加
-                    if (!incorrectQuestions.includes(currentQuestion)) {
-                        incorrectQuestions.push(currentQuestion);
-                    }
-                }
+                    // 不正解時はここで正解や解説を出さず，2択UIを提示
+                    showWrongDecisionUI(currentQuestion, result);
 
-                saveProgress();
-                updateProgressAndScore();
-
-                // 解説追加
-                feedbackEl.innerHTML += `<hr><div class="explanation-banner">解説</div><br>${currentQuestion.rationale || ""}`;
-                feedbackEl.style.display = 'block';
-                renderAllMath();
-
-                if (currentQuestionIndex < quizData.length - 1) {
-                    nextBtn.style.display = 'block';
-                } else {
-                    resultsBtn.style.display = 'block';
+                    saveProgress();
+                    updateProgressAndScore();
                 }
 
             } catch (error) {
@@ -1028,7 +1218,7 @@
             }
         }
 
-        function selectAnswer(selectedAnswer, btnElement) {
+function selectAnswer(selectedAnswer, btnElement) {
             // iOS対策: ユーザー操作の直後にAudioContextを再開する
             if (isSoundOn && audioCtx) {
                 if (audioCtx.state === 'suspended') {
@@ -1061,7 +1251,7 @@
                 playSound('incorrect');
                 btnElement.classList.add('incorrect', 'selected');
                 feedbackEl.className = 'incorrect-feedback';
-                feedbackEl.innerHTML = `<span style="color: var(--incorrect-color);"><strong>不正解💦</strong></span><br>（正解: ${currentQuestion.answer}）<br>`;
+                feedbackEl.innerHTML = `<span style="color: var(--incorrect-color);"><strong>不正解でした。</strong></span><br>（正解: ${currentQuestion.answer}）<br>`;
             }     // 正解をハイライト
             document.querySelectorAll('.option-btn').forEach(b => {
                 if (b.dataset.optionValue === currentQuestion.answer) b.classList.add('correct');
