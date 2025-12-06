@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第4節-2 平方根の意味のテスト (ランダム10題)</title>
+    <title>第2節-2 条件の否定のテスト (ランダム10題)</title>
 
     <!-- KaTeX（数式表示ライブラリ） -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <!-- クイズデータ読み込み -->
-    <script src="M1-1-4-2QD.js"></script>
+    <script src="M1-2-2-2QD.js"></script>
 
     <style>
         /* 共通スタイル */
@@ -645,7 +645,7 @@
     <!-- 左パネル：クイズ -->
     <div id="left-panel">
         <header>
-            <h1>第4節-2 平方根の意味</h1>
+            <h1>第2節-2 条件の否定</h1>
             <div>
                 <!-- <button id="fullscreen-toggle" class="tool-btn" onclick="toggleFullscreen()"
                     style="padding: 5px 10px; font-size: 1.2em;" title="フルスクリーン／フルスクリーン解除">⛶</button> -->
@@ -842,13 +842,13 @@
                 const newUrl = window.location.pathname + window.location.hash;
                 window.history.replaceState(null, '', newUrl);
             } else if (isResumeOn) {
-                const savedData = localStorage.getItem('quiz_progress_m1_1_4_2');
+                const savedData = localStorage.getItem('quiz_progress_m1_1_5_6');
                 if (savedData) {
                     if (confirm("前回の続きから始めますか？")) {
                         restoreProgress(JSON.parse(savedData));
                         return;
                     } else {
-                        localStorage.removeItem('quiz_progress_m1_1_4_2'); // キャンセルしたら削除
+                        localStorage.removeItem('quiz_progress_m1_1_5_6'); // キャンセルしたら削除
                     }
                 }
             }
@@ -1888,7 +1888,7 @@ function selectAnswer(selectedAnswer, btnElement) {
                 startTime: startTime,
                 timestamp: Date.now()
             };
-            localStorage.setItem('quiz_progress_m1_1_4_2', JSON.stringify(data));
+            localStorage.setItem('quiz_progress_m1_1_5_6', JSON.stringify(data));
         }
 
         function restoreProgress(data) {
@@ -1903,7 +1903,7 @@ function selectAnswer(selectedAnswer, btnElement) {
         }
 
         function clearProgress() {
-            localStorage.removeItem('quiz_progress_m1_1_4_2');
+            localStorage.removeItem('quiz_progress_m1_1_5_6');
         }
 
         // --- フルスクリーン機能 ---
