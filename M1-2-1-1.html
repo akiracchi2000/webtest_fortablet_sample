@@ -763,6 +763,37 @@
         let currentUtterance = null;
         let audioCtx = null; // グローバルAudioContext
 
+// --- AIのJSONを安全にパース（\subset などの不正エスケープを自動修復） ---
+function parseAIJsonWithRepair(rawText) {
+    if (!rawText) throw new Error("Empty AI response");
+
+    const trimmed = rawText.trim();
+
+    // 余計な前後文が混ざっても最初の { から最後の } を拾う
+    const match = trimmed.match(/\{[\s\S]*\}/);
+    let jsonStr = match ? match[0] : trimmed;
+
+    // まず素直にパース
+    try {
+        return JSON.parse(jsonStr);
+    } catch (e1) {
+        // JSONとして無効なバックスラッシュだけを \\ に修復
+        // 例: "\subset" -> "\\subset"
+        let repaired = jsonStr.replace(
+            /\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g,
+            '\\\\'
+        );
+
+        try {
+            return JSON.parse(repaired);
+        } catch (e2) {
+            // 最終保険：全部の \ を \\ に（多少荒いが止血になる）
+            repaired = jsonStr.replace(/\\/g, '\\\\');
+            return JSON.parse(repaired);
+        }
+    }
+}
+
         // --- キャンバス関連 ---
         const canvas = document.getElementById('memo-pad');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -800,8 +831,28 @@
                     !e.target.closest('#memo-toolbar')) {
                     e.preventDefault();
                 }
-            }, { passive: false });
+                        }, { passive: false });
+
+            // --- 積極的なオーディオプリロード（遅延対策） ---
+            document.addEventListener('touchstart', function(e) {
+                if (e.target.closest('.option-btn') || e.target.closest('#next-btn') || e.target.closest('#results-btn')) {
+                    if (isSoundOn) {
+                        try {
+                            const AudioContext = window.AudioContext || window.webkitAudioContext;
+                            if (!audioCtx && AudioContext) {
+                                audioCtx = new AudioContext();
+                            }
+                            if (audioCtx && audioCtx.state === 'suspended') {
+                                audioCtx.resume();
+                            }
+                        } catch (err) {
+                            console.error("Audio warmup failed:", err);
+                        }
+                    }
+                }
+            }, { passive: true });
         });
+
 
         // --- クイズ初期化 ---
         function initQuiz() {
@@ -1160,7 +1211,7 @@
                     .replace(/```/g, '')
                     .trim();
 
-                const result = JSON.parse(aiText);
+                const result = parseAIJsonWithRepair(aiText);
 
                 if (result.recognizedAnswer === 'null' || result.recognizedAnswer === null) result.recognizedAnswer = '';
                 if (result.feedback === 'null' || result.feedback === null) result.feedback = '';
@@ -2155,4 +2206,5 @@ function selectAnswer(selectedAnswer, btnElement) {
 </body>
 
 </html>
+
 
