@@ -1265,6 +1265,21 @@
     - 「{}」は空文字ではなく「$\\{\\}$」と出力する。（重要）
     - 「{」や「}」などの単独の括弧も、文字として認識し、それぞれ「$\\{$」「$\\}$」として出力する。
 
+9. 「要素を答える」形式の問題では，
+   生徒の答案に波括弧があってもなくても集合として解釈する。
+   例:
+   - 「1,2,3」
+   - 「{1,2,3}」
+   - 「1 2 3」
+   いずれも同じ集合の候補として扱う。
+
+   ★画像に波括弧が書かれている場合でも，
+     それだけを理由に recognizedAnswer を空文字にしてはならない。
+
+ ★recognizedAnswer は可能な限り
+     「$\\{要素列\\}$」の形に正規化して出力する。
+     （波括弧が曖昧でも，要素が読めるなら推定してよい。）
+
 10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\\\」と記述してください。
 
 【出力】
@@ -1315,6 +1330,43 @@
 
                 result.recognizedAnswer = replaceBareLatexOutsideMath(result.recognizedAnswer || "");
                 result.feedback = replaceBareLatexOutsideMath(result.feedback || "")
+
+                function normalizeSetAnswer(ans) {
+  if (!ans) return ans;
+  let s = String(ans).trim();
+
+  // すでに $...$ が付いているなら一旦外して中身だけ見る
+  const hasDollar = /^\$[\s\S]*\$$/.test(s);
+  if (hasDollar) s = s.slice(1, -1).trim();
+
+  // 既に \{ \} がある場合は尊重
+  const hasEscapedBraces = /\\\{|\\\}/.test(s);
+
+  // 生の { } を見つけたら KaTeX 用にエスケープ
+  // （lookbehind を避けて安全に処理）
+  if (!hasEscapedBraces) {
+    s = s.replace(/\\\{/g, "__LBRACE__").replace(/\\\}/g, "__RBRACE__");
+    s = s.replace(/\{/g, "\\{").replace(/\}/g, "\\}");
+    s = s.replace(/__LBRACE__/g, "\\{").replace(/__RBRACE__/g, "\\}");
+  }
+
+  // 波括弧が無くて「要素列っぽい」なら自動で集合に包む
+  const looksLikeElements =
+    !/\\\{|\\\}/.test(s) &&
+    /,/.test(s) &&
+    /[0-9A-Za-z]/.test(s) &&
+    !/(subset|supset|cup|cap|in|notin)/.test(s);
+
+  if (looksLikeElements) {
+    s = `\\{${s}\\}`;
+  }
+
+  return `$${s}$`;
+}
+
+// 既存の置換のあとで
+result.recognizedAnswer = normalizeSetAnswer(result.recognizedAnswer || "");
+
 
                 if (result.recognizedAnswer === 'null' || result.recognizedAnswer === null) result.recognizedAnswer = '';
                 if (result.feedback === 'null' || result.feedback === null) result.feedback = '';
