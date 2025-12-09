@@ -691,7 +691,6 @@
                 <h2>テスト終了！</h2>
                 <p id="score-text"></p>
                 <p id="final-message"></p>
-                <p id="final-message"></p>
 
                 <!-- 結果送信フォーム -->
                 <!-- 結果送信フォーム -->
@@ -764,6 +763,37 @@
         let audioCtx = null; // グローバルAudioContext
 
         // --- キャンバス関連 ---
+                // --- AIのJSONを安全にパース（\subset などの不正エスケープを自動修復） ---
+        function parseAIJsonWithRepair(rawText) {
+            if (!rawText) throw new Error("Empty AI response");
+
+            const trimmed = rawText.trim();
+
+            // 余計な前後文が混ざっても最初の { から最後の } を拾う
+            const match = trimmed.match(/\{[\s\S]*\}/);
+            let jsonStr = match ? match[0] : trimmed;
+
+            // まず素直にパース
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e1) {
+                // JSONとして無効なバックスラッシュだけを \\ に修復
+                // 例: "\subset" -> "\\subset"
+                let repaired = jsonStr.replace(
+                    /\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g,
+                    '\\\\'
+                );
+
+                try {
+                    return JSON.parse(repaired);
+                } catch (e2) {
+                    // 最終保険：全部の \ を \\ に（多少荒いが止血になる）
+                    repaired = jsonStr.replace(/\\/g, '\\\\');
+                    return JSON.parse(repaired);
+                }
+            }
+        }
+
         const canvas = document.getElementById('memo-pad');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         let isDrawing = false;
@@ -800,8 +830,28 @@
                     !e.target.closest('#memo-toolbar')) {
                     e.preventDefault();
                 }
-            }, { passive: false });
+                        }, { passive: false });
+
+            // --- 積極的なオーディオプリロード（遅延対策） ---
+            document.addEventListener('touchstart', function(e) {
+                if (e.target.closest('.option-btn') || e.target.closest('#next-btn') || e.target.closest('#results-btn')) {
+                    if (isSoundOn) {
+                        try {
+                            const AudioContext = window.AudioContext || window.webkitAudioContext;
+                            if (!audioCtx && AudioContext) {
+                                audioCtx = new AudioContext();
+                            }
+                            if (audioCtx && audioCtx.state === 'suspended') {
+                                audioCtx.resume();
+                            }
+                        } catch (err) {
+                            console.error("Audio warmup failed:", err);
+                        }
+                    }
+                }
+            }, { passive: true });
         });
+
 
         // --- クイズ初期化 ---
         function initQuiz() {
@@ -844,13 +894,13 @@
                 const newUrl = window.location.pathname + window.location.hash;
                 window.history.replaceState(null, '', newUrl);
             } else if (isResumeOn) {
-                const savedData = localStorage.getItem('quiz_progress_m1_1_5_6');
+                const savedData = localStorage.getItem('quiz_progress_M1-1-5-6');
                 if (savedData) {
                     if (confirm("前回の続きから始めますか？")) {
                         restoreProgress(JSON.parse(savedData));
                         return;
                     } else {
-                        localStorage.removeItem('quiz_progress_m1_1_5_6'); // キャンセルしたら削除
+                        localStorage.removeItem('quiz_progress_M1-1-5-6'); // キャンセルしたら削除
                     }
                 }
             }
@@ -1079,7 +1129,7 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
-                const prompt = `
+                                const prompt = `
 あなたは高校数学の「誤り診断」に特化した添削者です。
 以下の問題に対する生徒の手書き解答（画像）を読み取り，
 最終答案の正誤と，途中式の数学的整合性だけを判定してください。
@@ -1106,6 +1156,9 @@
    - 漢字の崩れやひらがな表記（例：「ただしい」）でも意図が明確なら採点。
    - 「〇」「×」はそれぞれ「正しい」「正しくない」に対応させて採点。
 9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\frac{a}{b} を用いる。
+   集合記号（\subset,\subseteq,\supset,\supseteq,\in,\notin,\cup,\cap,\emptyset など）も
+   必ず $...$ の中に入れる。
+   例：「AはBの部分集合なので $A \subset B$」。
 10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\」と記述してください。（例：「\{」ではなく「\\{」）
 
 【feedbackの書き方（やさしく短く）】
@@ -1127,6 +1180,7 @@
   "feedback": "誤り診断コメント。正解かつ過程も問題なければ空文字。"
 }
 `;
+
 
                 const response = await fetch(
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -1160,7 +1214,7 @@
                     .replace(/```/g, '')
                     .trim();
 
-                const result = JSON.parse(aiText);
+                const result = parseAIJsonWithRepair(aiText);
 
                 if (result.recognizedAnswer === 'null' || result.recognizedAnswer === null) result.recognizedAnswer = '';
                 if (result.feedback === 'null' || result.feedback === null) result.feedback = '';
@@ -1890,7 +1944,7 @@ function selectAnswer(selectedAnswer, btnElement) {
                 startTime: startTime,
                 timestamp: Date.now()
             };
-            localStorage.setItem('quiz_progress_m1_1_5_6', JSON.stringify(data));
+            localStorage.setItem('quiz_progress_M1-1-5-6', JSON.stringify(data));
         }
 
         function restoreProgress(data) {
@@ -1905,7 +1959,7 @@ function selectAnswer(selectedAnswer, btnElement) {
         }
 
         function clearProgress() {
-            localStorage.removeItem('quiz_progress_m1_1_5_6');
+            localStorage.removeItem('quiz_progress_M1-1-5-6');
         }
 
         // --- フルスクリーン機能 ---
@@ -1955,32 +2009,58 @@ function selectAnswer(selectedAnswer, btnElement) {
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
-                const prompt = `
-あなたは数学の先生です。生徒が以下の問題を間違えました。
+                                const prompt = `
+あなたは高校数学の「誤り診断」に特化した添削者です。
+以下の問題に対する生徒の手書き解答（画像）を読み取り，
+最終答案の正誤と，途中式の数学的整合性だけを判定してください。
+
 問題: ${currentQuestion.question}
 正解: ${currentQuestion.answer}
-解説: ${currentQuestion.rationale.replace(/<[^>]*>/g, '')}
 
-**指示:**
-1. **メモ帳に何も記述がない場合:**
-   - 「メモ帳に記述がない場合は分析ができないので，次はメモがあるときに聞いてくださいね！」とだけ答えて、分析を終了してください。
-   - **これ以外の文章や項目（間違いの指摘など）は一切出力しないでください。**
+【最重要ルール】
+1. 画像に何も書かれていない，または白紙に近い場合は必ず不正解とする。
+2. その場合は以下のJSONのみを出力して終了する：
+   {"isCorrect": false, "hasProcessError": false, "recognizedAnswer": "", "feedback": "メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！"}
+3. 最終答案が正解と一致している場合のみ isCorrect を true とする。
+   - 有理化で同じ，同値変形，積の順序違いなどは正解扱い。
+4. 途中式が存在する場合は，必ず途中式の整合性をチェックする。
+5. 最終答案が正解でも途中式に数学的な誤りや飛躍がある場合，
+   hasProcessError を true とし，
+   feedback で短く指摘する。
+6. 途中式がほぼ無い/読めない場合は hasProcessError を false にしてよいが，
+   feedback に「途中式が読み取れないため過程の検証は不十分」と短く書く。
+7. 間違いの要因として「計算ミス」だけでなく
+   「数式の写し間違い（問題文の式や条件の転記ミス）」も重要な誤りとして扱い，
+   可能なら優先して指摘する。
+8. 正誤判定問題（答えが「正しい」「正しくない」の場合）について:
+   - 漢字の崩れやひらがな表記（例：「ただしい」）でも意図が明確なら採点。
+   - 「〇」「×」はそれぞれ「正しい」「正しくない」に対応させて採点。
+9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\frac{a}{b} を用いる。
+   集合記号（\subset,\subseteq,\supset,\supseteq,\in,\notin,\cup,\cap,\emptyset など）も
+   必ず $...$ の中に入れる。
+   例：「AはBの部分集合なので $A \subset B$」。
+10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\」と記述してください。（例：「\{」ではなく「\\{」）
 
-2. **メモ帳に記述がある場合:**
-   - 以下のフォーマットに従って出力してください。
-   - **数式は必ずLaTeX形式（$ または $$ で囲む）**で記述してください。
-   - 分数は \\frac{分子}{分母} の形式を使用してください。
+【feedbackの書き方（やさしく短く）】
+- 50〜120字程度。
+- 指摘は最大2点まで。
+- 解説や模範解答の再提示は禁止（解説は別に表示される）。
+- 誤りタイプの例：
+  計算ミス／符号ミス／公式の適用条件ミス／同値変形の誤り／論理の飛躍／写し間違い
+- 不正解の場合は最も致命的な誤り箇所を優先して指摘。
+- 正解だが hasProcessError が true の場合は
+  「答えは合っていますが，途中式に誤りが見られます。」のように自然な表現で短く指摘。
 
-   **出力フォーマット:**
-   あなたの解答：[メモ帳から読み取った生徒の解答]
-   正解：${currentQuestion.answer}
-
-   [ここから分析とアドバイスを記述]
-   - 間違いの指摘（復唱はせず、原因を分析）
-   - 間違いを防ぐには
-   - 復習のポイント
-   （全体で200字程度。励ますような口調で。「お待たせしました！」から始めてください。最後に正解を繰り返さないでください。）
+【出力】
+以下のJSON形式のみを出力してください。Markdownのコードブロックは不要です。
+{
+  "isCorrect": true または false,
+  "hasProcessError": true または false,
+  "recognizedAnswer": "画像から読み取った生徒の最終解答（LaTeX $...$）。読み取れない場合は空文字。",
+  "feedback": "誤り診断コメント。正解かつ過程も問題なければ空文字。"
+}
 `;
+
 
                 // ユーザーの環境で利用可能な gemini-2.0-flash を使用 (v1beta)
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
@@ -2155,4 +2235,10 @@ function selectAnswer(selectedAnswer, btnElement) {
 </body>
 
 </html>
+
+
+
+
+
+
 

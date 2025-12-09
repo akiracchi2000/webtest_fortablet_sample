@@ -606,28 +606,30 @@
             padding: 5px 10px;
             border-radius: 4px;
         }
-    
+
         /* ===== 追加：不正解時の2択（やり直す／正解を教えて） ===== */
-        .wrong-decision-area{
-            margin-top:12px;
-            display:flex;
-            gap:10px;
-            flex-wrap:wrap;
-            justify-content:center;
+        .wrong-decision-area {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-        .wrong-decision-btn{
-            padding:10px 18px;
-            font-size:1em;
+
+        .wrong-decision-btn {
+            padding: 10px 18px;
+            font-size: 1em;
         }
-        .wrong-decision-note{
-            margin-top:8px;
-            font-size:0.85em;
-            opacity:0.8;
-            text-align:center;
+
+        .wrong-decision-note {
+            margin-top: 8px;
+            font-size: 0.85em;
+            opacity: 0.8;
+            text-align: center;
         }
 
         /* ===== 追加：励ましコメント（気持ちよさUP） ===== */
-        #encouragement-under-question{
+        #encouragement-under-question {
             margin: 12px auto 0 auto;
             padding: 8px 12px;
             border-radius: 10px;
@@ -638,7 +640,6 @@
             max-width: 95%;
             opacity: 0.92;
         }
-
     </style>
 </head>
 
@@ -690,7 +691,6 @@
             <div id="results-container">
                 <h2>テスト終了！</h2>
                 <p id="score-text"></p>
-                <p id="final-message"></p>
                 <p id="final-message"></p>
 
                 <!-- 結果送信フォーム -->
@@ -763,36 +763,116 @@
         let currentUtterance = null;
         let audioCtx = null; // グローバルAudioContext
 
-// --- AIのJSONを安全にパース（\subset などの不正エスケープを自動修復） ---
-function parseAIJsonWithRepair(rawText) {
-    if (!rawText) throw new Error("Empty AI response");
+        // ===============================
+        // AI JSON を安全に読む（Invalid escape対策）
+        // ===============================
+        function safeParseAIJson(raw) {
+            if (!raw) return { isCorrect: false, hasProcessError: false, recognizedAnswer: "", feedback: "" };
 
-    const trimmed = rawText.trim();
+            let s = String(raw).trim();
 
-    // 余計な前後文が混ざっても最初の { から最後の } を拾う
-    const match = trimmed.match(/\{[\s\S]*\}/);
-    let jsonStr = match ? match[0] : trimmed;
+            // もしAIが余計な前後テキストやコードフェンスを付けた時の保険
+            s = s.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
 
-    // まず素直にパース
-    try {
-        return JSON.parse(jsonStr);
-    } catch (e1) {
-        // JSONとして無効なバックスラッシュだけを \\ に修復
-        // 例: "\subset" -> "\\subset"
-        let repaired = jsonStr.replace(
-            /\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g,
-            '\\\\'
-        );
+            // JSONっぽい最初の { ... } を抜き出す（周辺ゴミ対策）
+            const m = s.match(/\{[\s\S]*\}/);
+            if (m) s = m[0];
 
-        try {
-            return JSON.parse(repaired);
-        } catch (e2) {
-            // 最終保険：全部の \ を \\ に（多少荒いが止血になる）
-            repaired = jsonStr.replace(/\\/g, '\\\\');
-            return JSON.parse(repaired);
+            // 無効なエスケープを「\\」に補正
+            // 例: "\subset" -> "\\subset"
+            s = s.replace(/\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
+
+            // ありがちな末尾カンマ保険
+            s = s.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+
+            try {
+                return JSON.parse(s);
+            } catch (e) {
+                console.warn("safeParseAIJson failed:", e, raw);
+                return { isCorrect: false, hasProcessError: false, recognizedAnswer: "", feedback: "AIの出力形式が崩れたため再度お試しください。" };
+            }
         }
-    }
-}
+
+        // ===============================
+        // AI文章内の「生の \\subset」等を人間向け表記へ
+        // （$...$ 内は触らない）
+        // ===============================
+        const BARE_LATEX_WORD_MAP = {
+            // 集合
+            "subset": "⊂",
+            "subseteq": "⊆",
+            "supset": "⊃",
+            "supseteq": "⊇",
+            "in": "∈",
+            "notin": "∉",
+            "cap": "∩",
+            "cup": "∪",
+            "setminus": "∖",
+            "emptyset": "∅",
+            "varnothing": "∅",
+
+            // よく出る論理/記号
+            "forall": "∀",
+            "exists": "∃",
+            "Rightarrow": "⇒",
+            "Leftarrow": "⇐",
+            "Leftrightarrow": "⇔",
+            "rightarrow": "→",
+            "leftarrow": "←",
+            "leq": "≤",
+            "geq": "≥",
+            "neq": "≠",
+            "approx": "≈"
+        };
+
+        // $...$ の外側だけ置換
+        function replaceBareLatexOutsideMath(text) {
+            if (!text) return "";
+
+            const parts = String(text).split(/(\$[^$]*\$)/g); // $...$ を保持したまま分割
+
+            for (let i = 0; i < parts.length; i++) {
+                const p = parts[i];
+                if (p.startsWith("$") && p.endsWith("$")) continue;
+
+                // \command だけを単語として置換
+                parts[i] = p.replace(/\\([A-Za-z]+)\b/g, (match, cmd) => {
+                    return BARE_LATEX_WORD_MAP[cmd] ?? match;
+                });
+            }
+            return parts.join("");
+        }
+
+        // --- AIのJSONを安全にパース（\subset などの不正エスケープを自動修復） ---
+        function parseAIJsonWithRepair(rawText) {
+            if (!rawText) throw new Error("Empty AI response");
+
+            const trimmed = rawText.trim();
+
+            // 余計な前後文が混ざっても最初の { から最後の } を拾う
+            const match = trimmed.match(/\{[\s\S]*\}/);
+            let jsonStr = match ? match[0] : trimmed;
+
+            // まず素直にパース
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e1) {
+                // JSONとして無効なバックスラッシュだけを \\ に修復
+                // 例: "\subset" -> "\\subset"
+                let repaired = jsonStr.replace(
+                    /\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g,
+                    '\\\\'
+                );
+
+                try {
+                    return JSON.parse(repaired);
+                } catch (e2) {
+                    // 最終保険：全部の \ を \\ に（多少荒いが止血になる）
+                    repaired = jsonStr.replace(/\\/g, '\\\\');
+                    return JSON.parse(repaired);
+                }
+            }
+        }
 
         // --- キャンバス関連 ---
         const canvas = document.getElementById('memo-pad');
@@ -831,10 +911,10 @@ function parseAIJsonWithRepair(rawText) {
                     !e.target.closest('#memo-toolbar')) {
                     e.preventDefault();
                 }
-                        }, { passive: false });
+            }, { passive: false });
 
             // --- 積極的なオーディオプリロード（遅延対策） ---
-            document.addEventListener('touchstart', function(e) {
+            document.addEventListener('touchstart', function (e) {
                 if (e.target.closest('.option-btn') || e.target.closest('#next-btn') || e.target.closest('#results-btn')) {
                     if (isSoundOn) {
                         try {
@@ -895,13 +975,13 @@ function parseAIJsonWithRepair(rawText) {
                 const newUrl = window.location.pathname + window.location.hash;
                 window.history.replaceState(null, '', newUrl);
             } else if (isResumeOn) {
-                const savedData = localStorage.getItem('quiz_progress_m1_1_5_6');
+                const savedData = localStorage.getItem('quiz_progress_M1-2-1-1');
                 if (savedData) {
                     if (confirm("前回の続きから始めますか？")) {
                         restoreProgress(JSON.parse(savedData));
                         return;
                     } else {
-                        localStorage.removeItem('quiz_progress_m1_1_5_6'); // キャンセルしたら削除
+                        localStorage.removeItem('quiz_progress_M1-2-1-1'); // キャンセルしたら削除
                     }
                 }
             }
@@ -957,7 +1037,7 @@ function parseAIJsonWithRepair(rawText) {
             renderAllMath();
         }
 
-        
+
         // --- 不正解時の分岐（もう一度解く／正解を教えて） ---
         let pendingAIResult = null; // { questionIndex, recognizedAnswer, feedback }
 
@@ -1157,6 +1237,9 @@ function parseAIJsonWithRepair(rawText) {
    - 漢字の崩れやひらがな表記（例：「ただしい」）でも意図が明確なら採点。
    - 「〇」「×」はそれぞれ「正しい」「正しくない」に対応させて採点。
 9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\frac{a}{b} を用いる。
+   集合記号（\subset,\subseteq,\supset,\supseteq,\in,\notin,\cup,\cap,\emptyset など）も
+   必ず $...$ の中に入れる。
+   例：「AはBの部分集合なので $A \subset B$」。
 10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\」と記述してください。（例：「\{」ではなく「\\{」）
 
 【feedbackの書き方（やさしく短く）】
@@ -1211,7 +1294,10 @@ function parseAIJsonWithRepair(rawText) {
                     .replace(/```/g, '')
                     .trim();
 
-                const result = parseAIJsonWithRepair(aiText);
+                const result = safeParseAIJson(aiText);
+
+                result.recognizedAnswer = replaceBareLatexOutsideMath(result.recognizedAnswer || "");
+                result.feedback = replaceBareLatexOutsideMath(result.feedback || "")
 
                 if (result.recognizedAnswer === 'null' || result.recognizedAnswer === null) result.recognizedAnswer = '';
                 if (result.feedback === 'null' || result.feedback === null) result.feedback = '';
@@ -1295,7 +1381,7 @@ function parseAIJsonWithRepair(rawText) {
             }
         }
 
-function selectAnswer(selectedAnswer, btnElement) {
+        function selectAnswer(selectedAnswer, btnElement) {
             // iOS対策: ユーザー操作の直後にAudioContextを再開する
             if (isSoundOn && audioCtx) {
                 if (audioCtx.state === 'suspended') {
@@ -1941,7 +2027,7 @@ function selectAnswer(selectedAnswer, btnElement) {
                 startTime: startTime,
                 timestamp: Date.now()
             };
-            localStorage.setItem('quiz_progress_m1_1_5_6', JSON.stringify(data));
+            localStorage.setItem('quiz_progress_M1-2-1-1', JSON.stringify(data));
         }
 
         function restoreProgress(data) {
@@ -1956,7 +2042,7 @@ function selectAnswer(selectedAnswer, btnElement) {
         }
 
         function clearProgress() {
-            localStorage.removeItem('quiz_progress_m1_1_5_6');
+            localStorage.removeItem('quiz_progress_M1-2-1-1');
         }
 
         // --- フルスクリーン機能 ---
@@ -2206,5 +2292,4 @@ function selectAnswer(selectedAnswer, btnElement) {
 </body>
 
 </html>
-
 
