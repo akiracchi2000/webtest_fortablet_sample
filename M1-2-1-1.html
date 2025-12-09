@@ -1080,7 +1080,8 @@
             pendingAIResult = {
                 questionIndex: currentQuestionIndex,
                 recognizedAnswer: result.recognizedAnswer || '',
-                feedback: result.feedback || ''
+                feedback: result.feedback || '',
+                rawDebug: result.rawDebug || ''
             };
 
             feedbackEl.className = 'incorrect-feedback';
@@ -1093,6 +1094,7 @@
                     <button class="tool-btn ai-btn wrong-decision-btn" onclick="revealCorrectWithAI()">✅ 正解を教えて！AIカガワ先生</button>
                 </div>
                 <div class="wrong-decision-note">※「もう一度解く」を選ぶと，メモを消して解き直せます。</div>
+                <details style="margin-top:10px;color:#999;font-size:0.8em;white-space:pre-wrap;"><summary>Debug</summary>${(pendingAIResult && pendingAIResult.rawDebug ? pendingAIResult.rawDebug.replace(/</g, "&lt;") : "")}</details>
             `;
             feedbackEl.style.display = 'block';
             renderAllMath();
@@ -1210,7 +1212,7 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
-                                const prompt = `
+                                                const prompt = `
 あなたは高校数学の「誤り診断」に特化した添削者です。
 以下の問題に対する生徒の手書き解答（画像）を読み取り，
 最終答案の正誤と，途中式の数学的整合性だけを判定してください。
@@ -1218,11 +1220,19 @@
 問題: ${currentQuestion.question}
 正解: ${currentQuestion.answer}
 
-【最重要ルール】
-1. 画像に何も書かれていない，または白紙に近い場合は必ず不正解とする。
-    ただし，「{}」や「∅」などの記号が書かれている場合は，白紙とはみなさず，通常の採点を行うこと。
-2. その場合は以下のJSONのみを出力して終了する：
+【最重要・優先ルール】
+1. 「白紙」の判定について:
+   画像に何も書かれていない場合は不正解とする。
+   ★しかし，画像に「{}」（空集合の記号としての波括弧）や「∅」が書かれている場合は，絶対に白紙とみなしてはいけない。
+   
+   【特記事項】
+   画像に「{}」が書かれている場合:
+   - recognizedAnswer は必ず「$\{\\}$」として出力する。
+   - isCorrect は（正解が空集合なら）true とする。
+
+2. その上で，白紙の場合のみ以下のJSONを出力して終了する：
    {"isCorrect": false, "hasProcessError": false, "recognizedAnswer": "", "feedback": "メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！"}
+
 3. 最終答案が正解と一致している場合のみ isCorrect を true とする。
    - 有理化で同じ，同値変形，積の順序違いなどは正解扱い。
 4. 途中式が存在する場合は，必ず途中式の整合性をチェックする。
@@ -1234,47 +1244,28 @@
 7. 間違いの要因として「計算ミス」だけでなく
    「数式の写し間違い（問題文の式や条件の転記ミス）」も重要な誤りとして扱い，
    可能なら優先して指摘する。
-8. 正誤判定問題（答えが「正しい」「正しくない」の場合）について:
-   - 漢字の崩れやひらがな表記（例：「ただしい」）でも意図が明確なら採点。
-   - 「〇」「×」はそれぞれ「正しい」「正しくない」に対応させて採点。
-9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\frac{a}{b} を用いる。
+8. 数式は必ずLaTeX形式（$...$）で記述する。
     集合記号（\\subset,\\subseteq,\\supset,\\supseteq,\\in,\\notin,\\cup,\\cap,\\emptyset など）も
     必ず $...$ の中に入れる。
-    例：「AはBの部分集合なので $A \\subset B$」。
+    
+    【記号判定の厳格化】
+    - 「C」と「$\\subset$」
+    - 「U」と「$\\cup$」
+    - 「$\\in$」と「e」
+    これらは厳密に区別し，形が崩れていれば不正解とする。
 
-    【記号判定の厳格化について】
-    以下の記号は形が似ているため，明確に書き分けられていない場合は「不正解」または「hasProcessError: true」として厳しく判定すること。
-    - 「C」（アルファベット）と「$\\subset$」（部分集合）
-    - 「U」（アルファベット）と「$\\cup$」（和集合）
-    - 「$\\in$」（要素）と「$\\epsilon$」（イプシロン）や「e」
-    生徒が意図している記号が文脈から明らかでも，形が崩れていて別の記号に見える場合は，
-    「記号の形が正しくありません（Cに見えます，など）」と指摘して不正解にすること。
+    【空集合と括弧】
+    - 「{}」は空文字ではなく「$\\{\\}$」と出力する。（重要）
 
-    【空集合と括弧の判定について】
-    - 空集合の記号「$\\emptyset$」は，数字の「0」やギリシャ文字の「$\\phi$」と明確に区別して読み取ること。
-    - 集合を表す中括弧「$\\{ \\}$」は，丸括弧「$( )$」と厳密に区別すること。
-      集合の要素を列挙する問題で中括弧がない，あるいは丸括弧で書かれている場合は不正解とする。
-    - 画像に「{}」と書かれていた場合は，空文字ではなく「$\\{\\}$」と出力すること。
-
-10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\\\」と記述してください。（例：「\\{」ではなく「\\\\{」）
-
-【feedbackの書き方（やさしく短く）】
-- 50〜120字程度。
-- 指摘は最大2点まで。
-- 解説や模範解答の再提示は禁止（解説は別に表示される）。
-- 誤りタイプの例：
-  計算ミス／符号ミス／公式の適用条件ミス／同値変形の誤り／論理の飛躍／写し間違い
-- 不正解の場合は最も致命的な誤り箇所を優先して指摘。
-- 正解だが hasProcessError が true の場合は
-  「答えは合っていますが，途中式に誤りが見られます。」のように自然な表現で短く指摘。
+10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\\\」と記述してください。
 
 【出力】
 以下のJSON形式のみを出力してください。Markdownのコードブロックは不要です。
 {
   "isCorrect": true または false,
   "hasProcessError": true または false,
-  "recognizedAnswer": "画像から読み取った生徒の最終解答（LaTeX $...$）。読み取れない場合は空文字。ただし「{}」の場合は「$\\{\\}$」とする。",
-  "feedback": "誤り診断コメント。正解かつ過程も問題なければ空文字。"
+  "recognizedAnswer": "生徒の解答。読み取れない場合のみ空文字。「{}」は「$\\{\\}$」とする。",
+  "feedback": "誤り診断コメント。"
 }
 `;
 
@@ -1305,12 +1296,14 @@
                 }
 
                 const data = await response.json();
-                const aiText = data.candidates[0].content.parts[0].text
+                const rawAiText = data.candidates[0].content.parts[0].text;
+                const aiText = rawAiText
                     .replace(/```json/g, '')
                     .replace(/```/g, '')
                     .trim();
 
                 const result = safeParseAIJson(aiText);
+                result.rawDebug = rawAiText;
 
                 result.recognizedAnswer = replaceBareLatexOutsideMath(result.recognizedAnswer || "");
                 result.feedback = replaceBareLatexOutsideMath(result.feedback || "")
