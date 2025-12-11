@@ -640,6 +640,24 @@
             max-width: 95%;
             opacity: 0.92;
         }
+
+        /* 共通問題文のスタイル */
+        .question-context {
+            background: #f9f9f9;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            color: #333;
+            /* 明示的に指定 */
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode .question-context {
+            background: #2d2d2d;
+            border-left-color: #66b0ff;
+            color: #e0e0e0;
+        }
     </style>
 </head>
 
@@ -725,6 +743,12 @@
             <canvas id="memo-pad"></canvas>
         </div>
         <div id="memo-toolbar">
+            <div style="margin-right: auto; display: flex; align-items: center; gap: 5px;">
+                <button class="tool-btn" onclick="prevMemoPage()">◀</button>
+                <span id="memo-page-indicator" style="font-size: 0.9em; user-select: none;">1 / 1</span>
+                <button class="tool-btn" onclick="nextMemoPage(true)">▶</button>
+                <button class="tool-btn" onclick="addMemoPage()" title="新しいページを追加">＋</button>
+            </div>
             <button class="tool-btn active" id="btn-pen" onclick="setTool('pen')">✏️ ペン</button>
             <button class="tool-btn" id="btn-pen-red" onclick="setTool('pen-red')">🔴 赤ペン</button>
             <button class="tool-btn" id="btn-eraser" onclick="setTool('eraser')">🧽 消しゴム</button>
@@ -733,7 +757,7 @@
             <span style="margin: 0 10px; color: #ccc;">|</span>
             <button class="tool-btn" id="btn-toggle-question" onclick="toggleQuestionOverlay()">📖 問題を表示</button>
             <button class="tool-btn" onclick="saveMemo()">💾 画像保存</button>
-            <button class="tool-btn" onclick="clearMemo()">🗑️ メモを消去</button>
+            <button class="tool-btn" onclick="clearMemoPage()">🗑️ ページ消去</button>
         </div>
     </div>
 
@@ -801,6 +825,11 @@
         let currentTool = 'pen'; // 'pen' or 'eraser'
         let memoHistory = []; // Undo用履歴
         let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
+
+        // --- マルチページメモ用変数 ---
+        let memoPages = []; // 各ページのImageDataまたはDataURLを保存
+        let currentMemoPageIndex = 0;
+        const MAX_PAGES = 5;
 
         document.addEventListener("DOMContentLoaded", function () {
             initAudioContext(); // オーディオコンテキストの初期化準備
@@ -895,20 +924,56 @@
                 const newUrl = window.location.pathname + window.location.hash;
                 window.history.replaceState(null, '', newUrl);
             } else if (isResumeOn) {
-                const savedData = localStorage.getItem('quiz_progress_M1-2-3-2');
+                const savedData = localStorage.getItem('quiz_progress_M1-2-3-2_v2');
                 if (savedData) {
                     if (confirm("前回の続きから始めますか？")) {
                         restoreProgress(JSON.parse(savedData));
                         return;
                     } else {
-                        localStorage.removeItem('quiz_progress_M1-2-3-2'); // キャンセルしたら削除
+                        localStorage.removeItem('quiz_progress_M1-2-3-2_v2'); // キャンセルしたら削除
                     }
                 }
             }
 
-            // シャッフルして10問抽出
-            const shuffled = [...allData].sort(() => 0.5 - Math.random());
-            quizData = shuffled.slice(0, 10);
+            // シャッフルして10問抽出... ではなく、グループ構造を考慮してフラット化
+            // M1-2-3-2 改修に伴いランダム出題機能を一時停止し、固定順（またはグループ単位シャッフル）に変更
+
+            // 全問使う（または適当にスライス）
+            const sourceData = allData;
+
+            quizData = [];
+            let qCount = 1;
+
+            sourceData.forEach(item => {
+                if (item.type === 'group') {
+                    // グループの場合はサブ問題を展開
+                    item.subQuestions.forEach((sub, idx) => {
+                        quizData.push({
+                            ...sub,
+                            groupIndex: qCount,
+                            subIndex: idx + 1,
+                            totalSub: item.subQuestions.length,
+                            mainQuestion: item.mainQuestion, // 親の共通問題文
+                            originalGroup: item
+                        });
+                    });
+                    qCount++;
+                } else {
+                    // 従来の問題
+                    quizData.push({
+                        ...item,
+                        groupIndex: qCount,
+                        subIndex: 0, // 0なら単独問題扱い
+                        totalSub: 0
+                    });
+                    qCount++;
+                }
+            });
+
+            // メモページ初期化
+            memoPages = [null];
+            currentMemoPageIndex = 0;
+            updateMemoPageIndicator();
 
             startTime = Date.now(); // タイマー開始
             loadQuestion();
@@ -937,10 +1002,10 @@
             document.getElementById('answer-btn').style.display = 'block';
             document.getElementById('analyzing-indicator').style.display = 'none';
 
-            // メモは消さない（ユーザーが前の計算を残したいかもしれないので）
-            clearMemo();
+            // メモは消さない（ユーザーが前の計算を残したいかもしれないので） -> ページだけ維持
+            // clearMemo(); // 自動クリアは廃止
 
-            // メモの「問題を表示」をリセット
+            // メモの「問題を表示」を更新
             document.getElementById('memo-question-overlay').style.display = 'none';
             document.getElementById('btn-toggle-question').classList.remove('active');
 
@@ -948,11 +1013,24 @@
             saveProgress(); // 進行状況を保存
 
             const currentQuestion = quizData[currentQuestionIndex];
-            questionNumberEl.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
-            questionTextEl.innerHTML = currentQuestion.question;
+
+            // 問題番号表示の生成
+            let numText = `問題 ${currentQuestion.groupIndex}`;
+            if (currentQuestion.totalSub > 0) {
+                numText += ` (${currentQuestion.subIndex}/${currentQuestion.totalSub})`;
+            }
+            questionNumberEl.textContent = numText;
+
+            // 問題文の表示
+            let qHtml = "";
+            if (currentQuestion.mainQuestion) {
+                qHtml += `<div class="question-context">${currentQuestion.mainQuestion}</div>`;
+            }
+            qHtml += currentQuestion.question;
+            questionTextEl.innerHTML = qHtml;
 
             // メモパッド上の問題文更新
-            document.getElementById('memo-question-overlay').innerHTML = `<strong>問題 ${currentQuestionIndex + 1}:</strong><br>${currentQuestion.question}`;
+            document.getElementById('memo-question-overlay').innerHTML = `<strong>${numText}:</strong><br>${qHtml}`;
 
             renderAllMath();
         }
@@ -1130,12 +1208,17 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
+                let questionBody = currentQuestion.question;
+                if (currentQuestion.mainQuestion) {
+                    questionBody = currentQuestion.mainQuestion + "\n" + currentQuestion.question;
+                }
+
                 const prompt = `
 あなたは高校数学の「誤り診断」に特化した添削者です。
 以下の問題に対する生徒の手書き解答（画像）を読み取り，
 最終答案の正誤と，途中式の数学的整合性だけを判定してください。
 
-問題: ${currentQuestion.question}
+問題: ${questionBody}
 正解: ${currentQuestion.answer}
 
 【最重要ルール】
@@ -1945,7 +2028,7 @@
                 startTime: startTime,
                 timestamp: Date.now()
             };
-            localStorage.setItem('quiz_progress_M1-2-3-2', JSON.stringify(data));
+            localStorage.setItem('quiz_progress_M1-2-3-2_v2', JSON.stringify(data));
         }
 
         function restoreProgress(data) {
@@ -2010,12 +2093,17 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
+                let questionBody = currentQuestion.question;
+                if (currentQuestion.mainQuestion) {
+                    questionBody = currentQuestion.mainQuestion + "\n" + currentQuestion.question;
+                }
+
                 const prompt = `
 あなたは高校数学の「誤り診断」に特化した添削者です。
 以下の問題に対する生徒の手書き解答（画像）を読み取り，
 最終答案の正誤と，途中式の数学的整合性だけを判定してください。
 
-問題: ${currentQuestion.question}
+問題: ${questionBody}
 正解: ${currentQuestion.answer}
 
 【最重要ルール】
@@ -2222,6 +2310,87 @@
                 resizeCanvas();
             }
         });
+
+        // --- マルチページメモ機能 ---
+        function updateMemoPageIndicator() {
+            const ind = document.getElementById('memo-page-indicator');
+            ind.textContent = `${currentMemoPageIndex + 1} / ${memoPages.length}`;
+        }
+
+        function saveCurrentMemoToState() {
+            // 現在のキャンバスの状態を保存 (描画されている場合のみ更新)
+            // 何も描かれていない初期状態(null)かどうか判定してもいいが、
+            // シンプルに常に保存する。保存しないと「消しゴムで消した」状態が保存されない。
+            memoPages[currentMemoPageIndex] = canvas.toDataURL();
+        }
+
+        function restoreMemoFromState(index) {
+            clearCanvasOnly();
+            const dataUrl = memoPages[index];
+            if (dataUrl) {
+                const img = new Image();
+                img.onload = function () {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height); // サイズ合わせ
+                    // 切り替え時はUndo履歴クリア（簡易実装）
+                    memoHistory = [];
+                };
+                img.src = dataUrl;
+            } else {
+                memoHistory = [];
+            }
+        }
+
+        function addMemoPage() {
+            if (memoPages.length >= MAX_PAGES) {
+                alert(`メモは最大${MAX_PAGES}ページまでです。`);
+                return;
+            }
+            saveCurrentMemoToState();
+            memoPages.push(null); // 新しい空白ページ
+            currentMemoPageIndex = memoPages.length - 1;
+            clearCanvasOnly();
+            updateMemoPageIndicator();
+        }
+
+        function prevMemoPage() {
+            if (currentMemoPageIndex > 0) {
+                saveCurrentMemoToState();
+                currentMemoPageIndex--;
+                restoreMemoFromState(currentMemoPageIndex);
+                updateMemoPageIndicator();
+            }
+        }
+
+        function nextMemoPage(createIfLast = false) {
+            if (currentMemoPageIndex < memoPages.length - 1) {
+                saveCurrentMemoToState();
+                currentMemoPageIndex++;
+                restoreMemoFromState(currentMemoPageIndex);
+                updateMemoPageIndicator();
+            } else if (createIfLast) {
+                // 右矢印で新規作成はしない
+            }
+        }
+
+        function clearMemoPage() {
+            if (confirm("現在のページのメモを消去しますか？")) {
+                clearCanvasOnly();
+                memoPages[currentMemoPageIndex] = null;
+                memoHistory = []; // 履歴もクリア
+            }
+        }
+
+        function clearCanvasOnly() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 互換性のため（もし他から呼ばれていれば）
+        function clearMemo() {
+            clearCanvasOnly();
+            if (memoPages[currentMemoPageIndex]) {
+                memoPages[currentMemoPageIndex] = null;
+            }
+        }
 
     </script>
     <!-- Image Preview Modal -->
