@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第3節-5 たすき掛けの因数分解のテスト (ランダム10題)</title>
+    <title>第1節-2 2次関数と平行移動のテスト (ランダム10題)</title>
 
     <!-- KaTeX（数式表示ライブラリ） -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <!-- クイズデータ読み込み -->
-    <script src="M1-1-3-5QD.js"></script>
+    <script src="M1-3-1-2QD.js"></script>
 
     <style>
         /* 共通スタイル */
@@ -648,7 +648,7 @@
     <!-- 左パネル：クイズ -->
     <div id="left-panel">
         <header>
-            <h1>第3節-5 たすき掛けの因数分解</h1>
+            <h1>第1節-2 2次関数と平行移動</h1>
             <div>
                 <!-- <button id="fullscreen-toggle" class="tool-btn" onclick="toggleFullscreen()"
                     style="padding: 5px 10px; font-size: 1.2em;" title="フルスクリーン／フルスクリーン解除">⛶</button> -->
@@ -895,13 +895,13 @@
                 const newUrl = window.location.pathname + window.location.hash;
                 window.history.replaceState(null, '', newUrl);
             } else if (isResumeOn) {
-                const savedData = localStorage.getItem('quiz_progress_M1-1-3-5');
+                const savedData = localStorage.getItem('quiz_progress_M1-3-1-2');
                 if (savedData) {
                     if (confirm("前回の続きから始めますか？")) {
                         restoreProgress(JSON.parse(savedData));
                         return;
                     } else {
-                        localStorage.removeItem('quiz_progress_M1-1-3-5'); // キャンセルしたら削除
+                        localStorage.removeItem('quiz_progress_M1-3-1-2'); // キャンセルしたら削除
                     }
                 }
             }
@@ -946,8 +946,6 @@
 
             updateProgressAndScore();
             saveProgress(); // 進行状況を保存
-
-            
 
             const currentQuestion = quizData[currentQuestionIndex];
             questionNumberEl.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
@@ -1142,8 +1140,6 @@
             }
 
 
-            
-
             const currentQuestion = quizData[currentQuestionIndex];
 
             try {
@@ -1208,6 +1204,7 @@
   のように，解説とのズレを意識した一言を含めなさい（ただし字数は守る）。
 
 【最重要ルール】
+0. 【最重要】画像にユーザーの手書きが全く見当たらない（白紙）場合は、絶対に「不正解」と判定し、isCorrect: false を返してください。「回答が見当たりません」と指摘してください。
 1. 画像に何も書かれていない，または白紙に近い場合は必ず不正解とする。
 2. その場合は以下のJSONのみを出力して終了する：
    {"isCorrect": false, "hasProcessError": false, "recognizedAnswer": "", "feedback": "メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！"}
@@ -1414,8 +1411,6 @@
                     audioCtx.resume();
                 }
             }
-
-            
 
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = (selectedAnswer === currentQuestion.answer);
@@ -1677,16 +1672,6 @@
         }
 
         // --- キャンバス機能 ---
-                // --- 逋ｽ邏吝愛螳・---
-        function isCanvasBlank(canvas) {
-            const context = canvas.getContext('2d', { willReadFrequently: true });
-            const pixelBuffer = new Uint32Array(
-                context.getImageData(0, 0, canvas.width, canvas.height).data.buffer
-            );
-            return !pixelBuffer.some(color => color !== 0);
-        }
-
-        // --- 繧ｭ繝｣繝ｳ繝舌せ讖溯・ ---
         function initCanvas() {
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
@@ -2059,7 +2044,7 @@
                 startTime: startTime,
                 timestamp: Date.now()
             };
-            localStorage.setItem('quiz_progress_M1-1-3-5', JSON.stringify(data));
+            localStorage.setItem('quiz_progress_M1-3-1-2', JSON.stringify(data));
         }
 
         function restoreProgress(data) {
@@ -2074,7 +2059,7 @@
         }
 
         function clearProgress() {
-            localStorage.removeItem('quiz_progress_M1-1-3-5');
+            localStorage.removeItem('quiz_progress_M1-3-1-2');
         }
 
         // --- フルスクリーン機能 ---
@@ -2112,8 +2097,6 @@
                 `;
                 return;
             }
-
-            
 
             const currentQuestion = quizData[currentQuestionIndex];
 
@@ -2340,7 +2323,15 @@
             }
         });
 
-    </script>
+    
+// --- 逋ｽ邏吝愛螳・---
+function isCanvasBlank(canvas) {
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const pixelBuffer = new Uint32Array(
+        context.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+    );
+    return !pixelBuffer.some(color => color !== 0);
+}</script>
     <!-- Image Preview Modal -->
     <div id="image-preview-modal">
         <img id="preview-image" src="" alt="Memo Preview">
@@ -2353,7 +2344,5 @@
 </body>
 
 </html>
-
-
 
 

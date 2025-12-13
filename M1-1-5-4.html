@@ -606,28 +606,30 @@
             padding: 5px 10px;
             border-radius: 4px;
         }
-    
+
         /* ===== 追加：不正解時の2択（やり直す／正解を教えて） ===== */
-        .wrong-decision-area{
-            margin-top:12px;
-            display:flex;
-            gap:10px;
-            flex-wrap:wrap;
-            justify-content:center;
+        .wrong-decision-area {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-        .wrong-decision-btn{
-            padding:10px 18px;
-            font-size:1em;
+
+        .wrong-decision-btn {
+            padding: 10px 18px;
+            font-size: 1em;
         }
-        .wrong-decision-note{
-            margin-top:8px;
-            font-size:0.85em;
-            opacity:0.8;
-            text-align:center;
+
+        .wrong-decision-note {
+            margin-top: 8px;
+            font-size: 0.85em;
+            opacity: 0.8;
+            text-align: center;
         }
 
         /* ===== 追加：励ましコメント（気持ちよさUP） ===== */
-        #encouragement-under-question{
+        #encouragement-under-question {
             margin: 12px auto 0 auto;
             padding: 8px 12px;
             border-radius: 10px;
@@ -638,7 +640,6 @@
             max-width: 95%;
             opacity: 0.92;
         }
-
     </style>
 </head>
 
@@ -763,7 +764,7 @@
         let audioCtx = null; // グローバルAudioContext
 
         // --- キャンバス関連 ---
-                // --- AIのJSONを安全にパース（\subset などの不正エスケープを自動修復） ---
+        // --- AIのJSONを安全にパース（\subset などの不正エスケープを自動修復） ---
         function parseAIJsonWithRepair(rawText) {
             if (!rawText) throw new Error("Empty AI response");
 
@@ -830,10 +831,11 @@
                     !e.target.closest('#memo-toolbar')) {
                     e.preventDefault();
                 }
-                        }, { passive: false });
+            }, { passive: false });
+
 
             // --- 積極的なオーディオプリロード（遅延対策） ---
-            document.addEventListener('touchstart', function(e) {
+            document.addEventListener('touchstart', function (e) {
                 if (e.target.closest('.option-btn') || e.target.closest('#next-btn') || e.target.closest('#results-btn')) {
                     if (isSoundOn) {
                         try {
@@ -851,7 +853,6 @@
                 }
             }, { passive: true });
         });
-
 
         // --- クイズ初期化 ---
         function initQuiz() {
@@ -946,6 +947,8 @@
             updateProgressAndScore();
             saveProgress(); // 進行状況を保存
 
+            
+
             const currentQuestion = quizData[currentQuestionIndex];
             questionNumberEl.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
             questionTextEl.innerHTML = currentQuestion.question;
@@ -956,7 +959,7 @@
             renderAllMath();
         }
 
-        
+
         // --- 不正解時の分岐（もう一度解く／正解を教えて） ---
         let pendingAIResult = null; // { questionIndex, recognizedAnswer, feedback }
 
@@ -1117,6 +1120,29 @@
                 answerBtn.style.display = 'block';
                 return;
             }
+            // --- 逋ｽ邏吶メ繧ｧ繝・け ---
+            const memoPad = document.getElementById('memo-pad');
+                        if (typeof isCanvasBlank === 'function' && isCanvasBlank(memoPad)) {
+                indicator.style.display = 'none';
+                playSound('incorrect');
+
+                const feedbackEl = document.getElementById('feedback');
+                
+                feedbackEl.className = 'incorrect-feedback';
+                feedbackEl.innerHTML = `
+                    <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                    <span style="color: var(--incorrect-color);"><strong>メモが白紙のようです💦</strong></span><br>
+                    メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！<br>
+                    <div class="wrong-decision-area">
+                        <button class="tool-btn ai-btn wrong-decision-btn" onclick="retryCurrentQuestion()">🔁 もう一度解く</button>
+                    </div>
+                `;
+                feedbackEl.style.display = 'block';
+                return;
+            }
+
+
+            
 
             const currentQuestion = quizData[currentQuestionIndex];
 
@@ -1129,7 +1155,7 @@
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
-                                const prompt = `
+                const prompt = `
 あなたは高校数学の「誤り診断」に特化した添削者です。
 以下の問題に対する生徒の手書き解答（画像）を読み取り，
 最終答案の正誤と，途中式の数学的整合性だけを判定してください。
@@ -1182,6 +1208,7 @@
   のように，解説とのズレを意識した一言を含めなさい（ただし字数は守る）。
 
 【最重要ルール】
+0. 【最重要】画像にユーザーの手書きが全く見当たらない（白紙）場合は、絶対に「不正解」と判定し、isCorrect: false を返してください。「回答が見当たりません」と指摘してください。
 1. 画像に何も書かれていない，または白紙に近い場合は必ず不正解とする。
 2. その場合は以下のJSONのみを出力して終了する：
    {"isCorrect": false, "hasProcessError": false, "recognizedAnswer": "", "feedback": "メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！"}
@@ -1375,7 +1402,7 @@
             }
         }
 
-function selectAnswer(selectedAnswer, btnElement) {
+        function selectAnswer(selectedAnswer, btnElement) {
             // iOS対策: ユーザー操作の直後にAudioContextを再開する
             if (isSoundOn && audioCtx) {
                 if (audioCtx.state === 'suspended') {
@@ -1388,6 +1415,8 @@ function selectAnswer(selectedAnswer, btnElement) {
                     audioCtx.resume();
                 }
             }
+
+            
 
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = (selectedAnswer === currentQuestion.answer);
@@ -1649,6 +1678,16 @@ function selectAnswer(selectedAnswer, btnElement) {
         }
 
         // --- キャンバス機能 ---
+                // --- 逋ｽ邏吝愛螳・---
+        function isCanvasBlank(canvas) {
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            const pixelBuffer = new Uint32Array(
+                context.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+            );
+            return !pixelBuffer.some(color => color !== 0);
+        }
+
+        // --- 繧ｭ繝｣繝ｳ繝舌せ讖溯・ ---
         function initCanvas() {
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
@@ -2075,6 +2114,8 @@ function selectAnswer(selectedAnswer, btnElement) {
                 return;
             }
 
+            
+
             const currentQuestion = quizData[currentQuestionIndex];
 
             try {
@@ -2086,7 +2127,7 @@ function selectAnswer(selectedAnswer, btnElement) {
                 });
                 const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
 
-                                const prompt = `
+                const prompt = `
 あなたは高校数学の「誤り診断」に特化した添削者です。
 以下の問題に対する生徒の手書き解答（画像）を読み取り，
 最終答案の正誤と，途中式の数学的整合性だけを判定してください。
@@ -2095,6 +2136,7 @@ function selectAnswer(selectedAnswer, btnElement) {
 正解: ${currentQuestion.answer}
 
 【最重要ルール】
+0. 【最重要】画像にユーザーの手書きが全く見当たらない（白紙）場合は、絶対に「不正解」と判定し、isCorrect: false を返してください。「回答が見当たりません」と指摘してください。
 1. 画像に何も書かれていない，または白紙に近い場合は必ず不正解とする。
 2. その場合は以下のJSONのみを出力して終了する：
    {"isCorrect": false, "hasProcessError": false, "recognizedAnswer": "", "feedback": "メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！"}
@@ -2312,9 +2354,6 @@ function selectAnswer(selectedAnswer, btnElement) {
 </body>
 
 </html>
-
-
-
 
 
 

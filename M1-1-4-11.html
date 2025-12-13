@@ -952,6 +952,8 @@
             updateProgressAndScore();
             saveProgress(); // 進行状況を保存
 
+            
+
             const currentQuestion = quizData[currentQuestionIndex];
             questionNumberEl.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
             questionTextEl.innerHTML = currentQuestion.question;
@@ -1098,6 +1100,9 @@ ${isAnalyzeError ? "画像2: 正解のグラフ" : "画像2: 正解のグラフ�
 
 以下の手順で判定してください。
 
+【最重要ルール】
+0. 【最重要】画像にユーザーの手書きが全く見当たらない（白紙）場合は、絶対に「不正解」と判定し、isCorrect: false を返してください。「回答が見当たりません」と指摘してください。
+
 1. **基本方針**: メモ帳のグラフ（画像1）に正統のグラフ（画像2）を重ね合わせて採点するイメージで判定してください。
 2. **採点の優先度**:
    - **最重要1（向き）**: グラフの開く向き（上に凸か下に凸か）が合っているか。**これが逆の場合は、頂点が合っていても必ず「不正解」にしてください。**
@@ -1152,6 +1157,29 @@ ${isAnalyzeError ? "画像2: 正解のグラフ" : "画像2: 正解のグラフ�
                 answerBtn.style.display = 'block';
                 return;
             }
+            // --- 逋ｽ邏吶メ繧ｧ繝・け ---
+            const memoPad = document.getElementById('memo-pad');
+                        if (typeof isCanvasBlank === 'function' && isCanvasBlank(memoPad)) {
+                indicator.style.display = 'none';
+                playSound('incorrect');
+
+                const feedbackEl = document.getElementById('feedback');
+                
+                feedbackEl.className = 'incorrect-feedback';
+                feedbackEl.innerHTML = `
+                    <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                    <span style="color: var(--incorrect-color);"><strong>メモが白紙のようです💦</strong></span><br>
+                    メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！<br>
+                    <div class="wrong-decision-area">
+                        <button class="tool-btn ai-btn wrong-decision-btn" onclick="retryCurrentQuestion()">🔁 もう一度解く</button>
+                    </div>
+                `;
+                feedbackEl.style.display = 'block';
+                return;
+            }
+
+
+            
 
             const currentQuestion = quizData[currentQuestionIndex];
 
@@ -1306,6 +1334,8 @@ ${isAnalyzeError ? "画像2: 正解のグラフ" : "画像2: 正解のグラフ�
                     audioCtx.resume();
                 }
             }
+
+            
 
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = (selectedAnswer === currentQuestion.answer);
@@ -1567,6 +1597,16 @@ ${isAnalyzeError ? "画像2: 正解のグラフ" : "画像2: 正解のグラフ�
         }
 
         // --- キャンバス機能 ---
+                // --- 逋ｽ邏吝愛螳・---
+        function isCanvasBlank(canvas) {
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            const pixelBuffer = new Uint32Array(
+                context.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+            );
+            return !pixelBuffer.some(color => color !== 0);
+        }
+
+        // --- 繧ｭ繝｣繝ｳ繝舌せ讖溯・ ---
         function initCanvas() {
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
@@ -1994,6 +2034,8 @@ ${isAnalyzeError ? "画像2: 正解のグラフ" : "画像2: 正解のグラフ�
                 return;
             }
 
+            
+
             const currentQuestion = quizData[currentQuestionIndex];
 
             try {
@@ -2190,3 +2232,7 @@ ${isAnalyzeError ? "画像2: 正解のグラフ" : "画像2: 正解のグラフ�
 </body>
 
 </html>
+
+
+
+

@@ -1027,6 +1027,8 @@
             updateProgressAndScore();
             saveProgress(); // 進行状況を保存
 
+            
+
             const currentQuestion = quizData[currentQuestionIndex];
             questionNumberEl.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
             questionTextEl.innerHTML = currentQuestion.question;
@@ -1200,6 +1202,29 @@
                 answerBtn.style.display = 'block';
                 return;
             }
+            // --- 逋ｽ邏吶メ繧ｧ繝・け ---
+            const memoPad = document.getElementById('memo-pad');
+                        if (typeof isCanvasBlank === 'function' && isCanvasBlank(memoPad)) {
+                indicator.style.display = 'none';
+                playSound('incorrect');
+
+                const feedbackEl = document.getElementById('feedback');
+                
+                feedbackEl.className = 'incorrect-feedback';
+                feedbackEl.innerHTML = `
+                    <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                    <span style="color: var(--incorrect-color);"><strong>メモが白紙のようです💦</strong></span><br>
+                    メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！<br>
+                    <div class="wrong-decision-area">
+                        <button class="tool-btn ai-btn wrong-decision-btn" onclick="retryCurrentQuestion()">🔁 もう一度解く</button>
+                    </div>
+                `;
+                feedbackEl.style.display = 'block';
+                return;
+            }
+
+
+            
 
             const currentQuestion = quizData[currentQuestionIndex];
 
@@ -1467,6 +1492,8 @@ result.recognizedAnswer = normalizeSetAnswer(result.recognizedAnswer || "");
                 }
             }
 
+            
+
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = (selectedAnswer === currentQuestion.answer);
             const feedbackEl = document.getElementById('feedback');
@@ -1727,6 +1754,16 @@ result.recognizedAnswer = normalizeSetAnswer(result.recognizedAnswer || "");
         }
 
         // --- キャンバス機能 ---
+                // --- 逋ｽ邏吝愛螳・---
+        function isCanvasBlank(canvas) {
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            const pixelBuffer = new Uint32Array(
+                context.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+            );
+            return !pixelBuffer.some(color => color !== 0);
+        }
+
+        // --- 繧ｭ繝｣繝ｳ繝舌せ讖溯・ ---
         function initCanvas() {
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
@@ -2153,6 +2190,8 @@ result.recognizedAnswer = normalizeSetAnswer(result.recognizedAnswer || "");
                 return;
             }
 
+            
+
             const currentQuestion = quizData[currentQuestionIndex];
 
             try {
@@ -2364,3 +2403,7 @@ result.recognizedAnswer = normalizeSetAnswer(result.recognizedAnswer || "");
 </body>
 
 </html>
+
+
+
+
