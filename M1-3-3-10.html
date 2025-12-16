@@ -1120,12 +1120,12 @@
             }
             // --- 逋ｽ邏吶メ繧ｧ繝・け ---
             const memoPad = document.getElementById('memo-pad');
-                        if (typeof isCanvasBlank === 'function' && isCanvasBlank(memoPad)) {
+            if (typeof isCanvasBlank === 'function' && isCanvasBlank(memoPad)) {
                 indicator.style.display = 'none';
                 playSound('incorrect');
 
                 const feedbackEl = document.getElementById('feedback');
-                
+
                 feedbackEl.className = 'incorrect-feedback';
                 feedbackEl.innerHTML = `
                     <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
@@ -1673,7 +1673,9 @@
 
         // --- キャンバス機能 ---
         function initCanvas() {
+            // イベントリスナーのセットアップ
             resizeCanvas();
+            // resizeCanvasは初期サイズ設定を行う
             window.addEventListener('resize', resizeCanvas);
             canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -1682,22 +1684,31 @@
                 canvas.addEventListener('pointerdown', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
-                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
                     canvas.setPointerCapture(e.pointerId);
                     startDrawing(e);
                 });
+
                 canvas.addEventListener('pointermove', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
-                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
-                    // if (e.pointerType === 'touch') e.preventDefault(); // This was already here, but moved to the top
+
+                    // 補間イベント（Coalesced Events）の処理
+                    // これにより、描画ポイントが増え、線が滑らかになります
+                    if (e.getCoalescedEvents) {
+                        const events = e.getCoalescedEvents();
+                        for (const event of events) {
+                            draw(event);
+                        }
+                    } else {
+                        draw(e);
+                    }
                     updateCursor(e);
-                    draw(e);
                 });
+
                 canvas.addEventListener('pointerup', (e) => {
                     e.preventDefault();
                     canvas.releasePointerCapture(e.pointerId);
@@ -1734,6 +1745,7 @@
                 canvas.addEventListener('touchmove', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode) return;
+                    // Touch events do not support coalesced events in the same way directly here
                     const touch = e.touches[0];
                     const mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
                     canvas.dispatchEvent(mouseEvent);
@@ -1748,27 +1760,53 @@
 
         function resizeCanvas() {
             const container = document.getElementById('memo-container');
+            const dpr = window.devicePixelRatio || 1;
+
             // 現在の描画内容を一時保存
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width;
             tempCanvas.height = canvas.height;
-            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+            const tempCtx = tempCanvas.getContext('2d');
             if (canvas.width > 0 && canvas.height > 0) {
                 tempCtx.drawImage(canvas, 0, 0);
             }
 
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+            // コンテナのサイズを取得
+            const rect = container.getBoundingClientRect();
 
-            // 描画内容を復元
+            // キャンバスの実サイズをDPIに合わせて設定
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            // CSSサイズはコンテナに合わせる
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+
+            // コンテキストのスケールを設定
+            // これにより、以後の描画座標（CSSピクセル単位）が自動的にDPIに合わせて拡大される
+            ctx.scale(dpr, dpr);
+
+            // 描画内容を復元 (ピクセル等倍で書き戻す)
             if (tempCanvas.width > 0 && tempCanvas.height > 0) {
+                ctx.save();
+                ctx.resetTransform(); // スケールを一時的に解除
                 ctx.drawImage(tempCanvas, 0, 0);
+                ctx.restore();
             }
         }
 
         function startDrawing(e) {
             saveMemoState(); // 描画開始前に履歴保存
             isDrawing = true;
+
+            // 開始点へ移動（これがないと変な線がつながることがある）
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+
+            // 点描（クリックしただけ）の場合も描画するため
             draw(e);
         }
 
@@ -1779,6 +1817,7 @@
             const y = e.clientY - rect.top;
 
             ctx.lineCap = 'round';
+            ctx.lineJoin = 'round'; // 角を丸くする
 
             if (currentTool === 'pen') {
                 ctx.globalCompositeOperation = 'source-over';
@@ -1791,7 +1830,7 @@
             } else if (currentTool === 'eraser') {
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.lineWidth = 20;
-                ctx.strokeStyle = 'rgba(0,0,0,1)'; // 色は関係ないが念のため
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
             }
 
             ctx.lineTo(x, y);
@@ -2323,15 +2362,15 @@
             }
         });
 
-    
-// --- 逋ｽ邏吝愛螳・---
-function isCanvasBlank(canvas) {
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-    const pixelBuffer = new Uint32Array(
-        context.getImageData(0, 0, canvas.width, canvas.height).data.buffer
-    );
-    return !pixelBuffer.some(color => color !== 0);
-}</script>
+
+        // --- 逋ｽ邏吝愛螳・---
+        function isCanvasBlank(canvas) {
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            const pixelBuffer = new Uint32Array(
+                context.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+            );
+            return !pixelBuffer.some(color => color !== 0);
+        }</script>
     <!-- Image Preview Modal -->
     <div id="image-preview-modal">
         <img id="preview-image" src="" alt="Memo Preview">
@@ -2344,5 +2383,3 @@ function isCanvasBlank(canvas) {
 </body>
 
 </html>
-
-
