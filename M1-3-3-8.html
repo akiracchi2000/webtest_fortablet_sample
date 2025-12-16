@@ -795,8 +795,8 @@
             }
         }
 
-        const canvas = document.getElementById('memo-pad');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        let canvas;
+        let ctx;
         let isDrawing = false;
         let currentTool = 'pen'; // 'pen' or 'eraser'
         let memoHistory = []; // Undo用履歴
@@ -1085,6 +1085,82 @@
             updateProgressAndScore();
         }
 
+        // --- キャンバス画像取得用ヘルパー (AIお助け用: 白背景・黒文字・クロッピング) ---
+        function getCanvasImageBase64(scale = 1) {
+            const originalCanvas = document.getElementById('memo-pad');
+            const width = originalCanvas.width;
+            const height = originalCanvas.height;
+            const ctx = originalCanvas.getContext('2d');
+
+            // 1. 元のピクセルデータを取得
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+
+            let minX = width, minY = height, maxX = 0, maxY = 0;
+            let hasPixels = false;
+
+            // 2. ピクセル操作 & バウンディングボックス検出
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    const alpha = data[i + 3];
+
+                    if (alpha > 50) { // 描画あり
+                        data[i] = 0;     // R -> 黒
+                        data[i + 1] = 0; // G -> 黒
+                        data[i + 2] = 0; // B -> 黒
+                        data[i + 3] = 255; // 完全不透明
+
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        hasPixels = true;
+                    } else {
+                        data[i + 3] = 0; // 透明
+                    }
+                }
+            }
+
+            if (!hasPixels) {
+                // 白紙の場合はそのまま返す（後続の判定で弾かれるはず）
+                return originalCanvas.toDataURL('image/png').split(',')[1];
+            }
+
+            // 3. 作業用キャンバスを作る（黒文字のみ）
+            const workCanvas = document.createElement('canvas');
+            workCanvas.width = width;
+            workCanvas.height = height;
+            const workCtx = workCanvas.getContext('2d');
+            workCtx.putImageData(imageData, 0, 0);
+
+            // 4. 切り抜き範囲の計算（パディング追加）
+            const padding = 20;
+            const cropX = Math.max(0, minX - padding);
+            const cropY = Math.max(0, minY - padding);
+            const cropWidth = Math.min(width, maxX + padding) - cropX;
+            const cropHeight = Math.min(height, maxY + padding) - cropY;
+
+            // 5. 提出用キャンバスを作る（切り抜いたサイズ）
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = cropWidth * scale;
+            exportCanvas.height = cropHeight * scale;
+            const exportCtx = exportCanvas.getContext('2d');
+
+            // 背景を白で塗りつぶす
+            exportCtx.fillStyle = '#FFFFFF';
+            exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            // 切り抜いて描画
+            exportCtx.drawImage(
+                workCanvas,
+                cropX, cropY, cropWidth, cropHeight, // 元画像の範囲
+                0, 0, exportCanvas.width, exportCanvas.height // 出力先の範囲
+            );
+
+            return exportCanvas.toDataURL('image/png').split(',')[1];
+        }
+
         async function checkAnswerWithAI() {
             const answerBtn = document.getElementById('answer-btn');
             const indicator = document.getElementById('analyzing-indicator');
@@ -1120,12 +1196,12 @@
             }
             // --- 逋ｽ邏吶メ繧ｧ繝・け ---
             const memoPad = document.getElementById('memo-pad');
-                        if (typeof isCanvasBlank === 'function' && isCanvasBlank(memoPad)) {
+            if (typeof isCanvasBlank === 'function' && isCanvasBlank(memoPad)) {
                 indicator.style.display = 'none';
                 playSound('incorrect');
 
                 const feedbackEl = document.getElementById('feedback');
-                
+
                 feedbackEl.className = 'incorrect-feedback';
                 feedbackEl.innerHTML = `
                     <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
@@ -1143,18 +1219,18 @@
             const currentQuestion = quizData[currentQuestionIndex];
 
             try {
-                // html2canvasでメモコンテナを画像化
-                const memoContainer = document.getElementById('memo-container');
-                const capturedCanvas = await html2canvas(memoContainer, {
-                    backgroundColor: isDarkMode ? '#121212' : '#ffffff',
-                    scale: 2
-                });
-                const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
+                // html2canvas廃止 -> 直接キャンバスから画像を生成
+                const imageData = getCanvasImageBase64(1);
 
                 const prompt = `
 あなたは高校数学の「誤り診断」に特化した添削者です。
 以下の問題に対する生徒の手書き解答（画像）を読み取り，
 最終答案の正誤と，途中式の数学的整合性だけを判定してください。
+
+【重要確認事項】
+- 画像は手書きの文字です。特に**数字の「0」や「6」「8」「9」などの閉じた数字**を注意深く読み取ってください。
+- 少し線が離れていたり、かすれていても、数学的な文脈から数字を推測してください。
+- 小さな丸や点も「0」や「小数点」の可能性があります。
 
 問題: ${currentQuestion.question}
 正解: ${currentQuestion.answer}
@@ -1231,12 +1307,12 @@
 8. 正誤判定問題（答えが「正しい」「正しくない」の場合）について:
    - 漢字の崩れやひらがな表記（例：「ただしい」）でも意図が明確なら採点する。
    - 「〇」「×」はそれぞれ「正しい」「正しくない」に対応させて採点する。
-9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\frac{a}{b} を用いる。
-   集合記号（\\subset,\\subseteq,\\supset,\\supseteq,\\in,\\notin,\\cup,\\cap,\\emptyset など）も
+9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\\\frac{a}{b} を用いる。
+   集合記号（\\\\subset,\\\\subseteq,\\\\supset,\\\\supseteq,\\\\in,\\\\notin,\\\\cup,\\\\cap,\\\\emptyset など）も
    必ず $...$ の中に入れる。
-   例：「AはBの部分集合なので $A \\subset B$」。
-10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\」と記述してください。
-    （例：「\\{」ではなく「\\\\{」）
+   例：「AはBの部分集合なので $A \\\\subset B$」。
+10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\\\」と記述してください。
+    （例：「\\\\{」ではなく「\\\\\\\\{」）
 
 【背理法などの証明問題に関する追加ルール】
 - 解答が背理法を用いている場合は，次の 4 点を必ず確認しなさい。
@@ -1279,8 +1355,6 @@
   "feedback": "誤り診断コメント。正解かつ過程も問題なければ空文字。"
 }
 `;
-
-
 
                 const response = await fetch(
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -1386,11 +1460,11 @@
                     msg.includes('429')
                 ) {
                     alert(
-                        "AIの無料利用回数の上限に達しました。\n" +
+                        "AIの無料利用回数の上限に達しました。\\n" +
                         "少し時間をおいてから、もう一度お試しください。"
                     );
                 } else {
-                    alert("採点中にエラーが発生しました。\n詳細: " + msg);
+                    alert("採点中にエラーが発生しました。\\n詳細: " + msg);
                 }
 
                 indicator.style.display = 'none';
@@ -1673,7 +1747,11 @@
 
         // --- キャンバス機能 ---
         function initCanvas() {
+            canvas = document.getElementById('memo-pad');
+            ctx = canvas.getContext('2d', { willReadFrequently: true });
+            // イベントリスナーのセットアップ
             resizeCanvas();
+            // resizeCanvasは初期サイズ設定を行う
             window.addEventListener('resize', resizeCanvas);
             canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -1682,22 +1760,31 @@
                 canvas.addEventListener('pointerdown', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
-                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
                     canvas.setPointerCapture(e.pointerId);
                     startDrawing(e);
                 });
+
                 canvas.addEventListener('pointermove', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
-                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
-                    // if (e.pointerType === 'touch') e.preventDefault(); // This was already here, but moved to the top
+
+                    // 補間イベント（Coalesced Events）の処理
+                    // これにより、描画ポイントが増え、線が滑らかになります
+                    if (e.getCoalescedEvents) {
+                        const events = e.getCoalescedEvents();
+                        for (const event of events) {
+                            draw(event);
+                        }
+                    } else {
+                        draw(e);
+                    }
                     updateCursor(e);
-                    draw(e);
                 });
+
                 canvas.addEventListener('pointerup', (e) => {
                     e.preventDefault();
                     canvas.releasePointerCapture(e.pointerId);
@@ -1734,6 +1821,7 @@
                 canvas.addEventListener('touchmove', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode) return;
+                    // Touch events do not support coalesced events in the same way directly here
                     const touch = e.touches[0];
                     const mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
                     canvas.dispatchEvent(mouseEvent);
@@ -1748,26 +1836,42 @@
 
         function resizeCanvas() {
             const container = document.getElementById('memo-container');
+            const dpr = window.devicePixelRatio || 1;
+
             // 現在の描画内容を一時保存
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width;
             tempCanvas.height = canvas.height;
-            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+            const tempCtx = tempCanvas.getContext('2d');
             if (canvas.width > 0 && canvas.height > 0) {
                 tempCtx.drawImage(canvas, 0, 0);
             }
 
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+            // コンテナのサイズを取得
+            const rect = container.getBoundingClientRect();
 
-            // 描画内容を復元
+            // キャンバスの実サイズをDPIに合わせて設定
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            // CSSサイズはコンテナに合わせる
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+
+            // コンテキストのスケールを設定
+            // これにより、以後の描画座標（CSSピクセル単位）が自動的にDPIに合わせて拡大される
+            ctx.scale(dpr, dpr);
+
+            // 描画内容を復元 (ピクセル等倍で書き戻す)
             if (tempCanvas.width > 0 && tempCanvas.height > 0) {
+                ctx.save();
+                ctx.resetTransform(); // スケールを一時的に解除
                 ctx.drawImage(tempCanvas, 0, 0);
+                ctx.restore();
             }
         }
 
         function startDrawing(e) {
-            saveMemoState(); // 描画開始前に履歴保存
             isDrawing = true;
             draw(e);
         }
@@ -1779,19 +1883,20 @@
             const y = e.clientY - rect.top;
 
             ctx.lineCap = 'round';
+            ctx.lineJoin = 'round'; // 角を丸くする
 
             if (currentTool === 'pen') {
                 ctx.globalCompositeOperation = 'source-over';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4;
                 ctx.strokeStyle = currentPenColor;
             } else if (currentTool === 'pen-red') {
                 ctx.globalCompositeOperation = 'source-over';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4;
                 ctx.strokeStyle = '#ff0000';
             } else if (currentTool === 'eraser') {
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.lineWidth = 20;
-                ctx.strokeStyle = 'rgba(0,0,0,1)'; // 色は関係ないが念のため
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
             }
 
             ctx.lineTo(x, y);
@@ -1803,25 +1908,17 @@
         function stopDrawing() {
             isDrawing = false;
             ctx.beginPath();
-            // 描画終了後に設定を戻しておくと安全
-            ctx.globalCompositeOperation = 'source-over';
+            saveMemoState();
         }
 
         function updateCursor(e) {
             const cursor = document.getElementById('eraser-cursor');
             if (currentTool === 'eraser') {
+                cursor.style.display = 'block';
+                // Cursor position logic (simple following)
                 const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                // キャンバス内にあるか確認
-                if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
-                    cursor.style.display = 'block';
-                    cursor.style.left = x + 'px';
-                    cursor.style.top = y + 'px';
-                } else {
-                    cursor.style.display = 'none';
-                }
+                cursor.style.left = (e.clientX - rect.left - 10) + 'px'; // Center roughly (assuming 20px cursor)
+                cursor.style.top = (e.clientY - rect.top - 10) + 'px';
             } else {
                 cursor.style.display = 'none';
             }
@@ -2101,18 +2198,18 @@
             const currentQuestion = quizData[currentQuestionIndex];
 
             try {
-                // html2canvasでメモコンテナを画像化 (背景色も反映される)
-                const memoContainer = document.getElementById('memo-container');
-                const capturedCanvas = await html2canvas(memoContainer, {
-                    backgroundColor: isDarkMode ? '#121212' : '#ffffff',
-                    scale: 1 // 分析用なので標準解像度で十分
-                });
-                const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
+                // html2canvas廃止 -> 直接キャンバスから画像を生成
+                const imageData = getCanvasImageBase64(1);
 
                 const prompt = `
 あなたは高校数学の「誤り診断」に特化した添削者です。
 以下の問題に対する生徒の手書き解答（画像）を読み取り，
 最終答案の正誤と，途中式の数学的整合性だけを判定してください。
+
+【重要確認事項】
+- 画像は手書きの文字です。特に**数字の「0」や「6」「8」「9」などの閉じた数字**を注意深く読み取ってください。
+- 少し線が離れていたり、かすれていても、数学的な文脈から数字を推測してください。
+- 小さな丸や点も「0」や「小数点」の可能性があります。
 
 問題: ${currentQuestion.question}
 正解: ${currentQuestion.answer}
@@ -2136,11 +2233,11 @@
 8. 正誤判定問題（答えが「正しい」「正しくない」の場合）について:
    - 漢字の崩れやひらがな表記（例：「ただしい」）でも意図が明確なら採点。
    - 「〇」「×」はそれぞれ「正しい」「正しくない」に対応させて採点。
-9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\frac{a}{b} を用いる。
-   集合記号（\subset,\subseteq,\supset,\supseteq,\in,\notin,\cup,\cap,\emptyset など）も
+9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\\\frac{a}{b} を用いる。
+   集合記号（\\\\subset,\\\\subseteq,\\\\supset,\\\\supseteq,\\\\in,\\\\notin,\\\\cup,\\\\cap,\\\\emptyset など）も
    必ず $...$ の中に入れる。
-   例：「AはBの部分集合なので $A \subset B$」。
-10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\」と記述してください。（例：「\{」ではなく「\\{」）
+   例：「AはBの部分集合なので $A \\\\subset B$」。
+10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\\\」と記述してください。（例：「\\\\{」ではなく「\\\\\\\\{」）
 
 【feedbackの書き方（やさしく短く）】
 - 50〜120字程度。
@@ -2198,7 +2295,7 @@
 
                 content.innerHTML = `
                     <h4>🤖 AIカガワ先生からのアドバイス</h4>
-                    <p>${aiText.replace(/\n/g, '<br>')}</p>
+                    <p>${aiText.replace(/\\n/g, '<br>')}</p>
                     <button class="tool-btn" onclick="closeAiModal()">閉じる</button>
                 `;
 
@@ -2341,6 +2438,28 @@ function isCanvasBlank(canvas) {
             <button class="close-btn" onclick="closeImagePreview()">閉じる</button>
         </div>
     </div>
+    <!-- Version Info -->
+    <script>
+        (function(){
+            const APP_VERSION = "v1.1.0";
+            if (!document.getElementById('app-version')) {
+                const vDiv = document.createElement('div');
+                vDiv.id = 'app-version';
+                vDiv.textContent = APP_VERSION;
+                Object.assign(vDiv.style, {
+                    position: 'fixed',
+                    bottom: '5px',
+                    right: '10px',
+                    fontSize: '12px',
+                    color: 'rgba(0,0,0,0.3)',
+                    pointerEvents: 'none',
+                    zIndex: '9999',
+                    fontFamily: 'sans-serif'
+                });
+                document.body.appendChild(vDiv);
+            }
+        })();
+    </script>
 </body>
 
 </html>
