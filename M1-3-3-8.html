@@ -1,0 +1,2348 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-8 放物線と直線の共有点の座標のテスト (ランダム10題)</title>
+
+    <!-- KaTeX（数式表示ライブラリ） -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- クイズデータ読み込み -->
+    <script src="M1-3-3-8QD.js"></script>
+
+    <style>
+        /* 共通スタイル */
+        :root {
+            --bg-color: #f0f2f5;
+            --text-color: #333;
+            --panel-bg: #ffffff;
+            --border-color: #ccc;
+            --header-bg: #007bff;
+            --header-text: #fff;
+            --btn-bg: #fff;
+            --btn-text: #333;
+            --btn-hover: #dee2e6;
+            --btn-active-bg: #007bff;
+            --btn-active-text: #fff;
+            --memo-bg: #ffffff;
+            --overlay-bg: rgba(255, 255, 255, 0.9);
+            --correct-color: #007bff;
+            --incorrect-color: #dc3545;
+            --correct-bg: #d4edda;
+            --incorrect-bg: #f8d7da;
+            --link-color: #007bff;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --panel-bg: #1e1e1e;
+            --border-color: #444;
+            --header-bg: #1a1a1a;
+            --header-text: #e0e0e0;
+            --btn-bg: #2d2d2d;
+            --btn-text: #e0e0e0;
+            --btn-hover: #3d3d3d;
+            --btn-active-bg: #bb86fc;
+            --btn-active-text: #000;
+            --memo-bg: #121212;
+            --overlay-bg: rgba(30, 30, 30, 0.9);
+            --correct-color: #66b0ff;
+            --incorrect-color: #ff6b6b;
+            --correct-bg: #1e4620;
+            --incorrect-bg: #4c1d1d;
+            --link-color: #8ab4f8;
+        }
+
+        html,
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            overscroll-behavior: none;
+            touch-action: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- 左パネル（クイズ） --- */
+        #left-panel {
+            flex: 0 0 50vw;
+            width: 50vw;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            background-color: var(--panel-bg);
+            transition: background-color 0.3s;
+            overscroll-behavior: none;
+            touch-action: pan-y;
+            border-right: none;
+        }
+
+        /* --- リサイザー（境界線） --- */
+        #resizer {
+            width: 10px;
+            background-color: var(--border-color);
+            cursor: col-resize;
+            z-index: 100;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        #resizer:hover,
+        #resizer.active {
+            background-color: #007bff;
+        }
+
+        #resizer::after {
+            content: "⋮";
+            color: #666;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        /* --- 右パネル（メモパッド） --- */
+        #right-panel {
+            flex: 0 0 50vw;
+            width: 50vw;
+            height: 100%;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            /* スクロールバーによる余白防止 */
+            background-color: var(--panel-bg);
+            transition: background-color 0.3s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            touch-action: none;
+            overscroll-behavior: none;
+        }
+
+        #memo-toolbar {
+            height: 50px;
+            background: var(--panel-bg);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 15px;
+            border-top: 1px solid var(--border-color);
+            padding-bottom: env(safe-area-inset-bottom);
+            height: auto;
+            min-height: 50px;
+            touch-action: manipulation;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        #memo-container {
+            flex: 1;
+            position: relative;
+            cursor: crosshair;
+            background: var(--memo-bg);
+            /* 変数を使用 */
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            overflow: hidden;
+            touch-action: none;
+            transition: background-color 0.3s;
+        }
+
+        #memo-pad {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        #memo-question-overlay {
+            position: absolute;
+            top: calc(10px + env(safe-area-inset-top));
+            left: 10px;
+            right: 10px;
+            background: var(--overlay-bg);
+            color: var(--text-color);
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            pointer-events: none;
+            /* ペン入力を邪魔しないように */
+            display: none;
+            z-index: 10;
+            font-size: 0.9em;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        #eraser-cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #555;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            display: none;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .tool-btn {
+            background: var(--btn-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: var(--btn-text);
+            touch-action: manipulation;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .tool-btn:hover:not(:disabled) {
+            background: var(--btn-hover);
+        }
+
+        .tool-btn.active {
+            background: var(--btn-active-bg);
+            color: var(--btn-active-text);
+            border-color: var(--btn-active-bg);
+        }
+
+        /* --- クイズ用スタイル (既存のスタイルを調整) --- */
+        header {
+            background-color: var(--header-bg);
+            color: var(--header-text);
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        header h1 {
+            margin: 0;
+            color: inherit;
+            /* 親要素のcolorを継承 */
+            font-size: 1.5em;
+        }
+
+        #quiz-container {
+            min-height: 300px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            transition: background-color 0.3s;
+        }
+
+        #progress {
+            width: 0%;
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease-in-out;
+        }
+
+        #question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        #question-number {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #score {
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        #question-text {
+            font-size: 1.2em;
+            margin: 15px 0 25px 0;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        #options-container {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        #options-container.options-vertical {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            background-color: var(--panel-bg);
+            cursor: pointer;
+            font-size: 1.0em;
+            transition: all 0.3s;
+            width: 100%;
+            text-align: left;
+            color: var(--text-color);
+            touch-action: manipulation;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: var(--btn-hover);
+            border-color: #007bff;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .option-btn.correct {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            font-weight: bold;
+        }
+
+        .option-btn.incorrect {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .option-btn.incorrect.selected {
+            opacity: 1;
+            border-width: 3px;
+        }
+
+        #show-options-btn {
+            display: none;
+            margin: 20px auto;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #17a2b8;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #show-options-btn:hover {
+            background-color: #138496;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            border: 2px solid;
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #feedback.correct-feedback {
+            background-color: var(--correct-bg);
+            border-color: var(--correct-color);
+            color: var(--text-color);
+        }
+
+        #feedback.incorrect-feedback {
+            background-color: var(--incorrect-bg);
+            border-color: var(--incorrect-color);
+            color: var(--text-color);
+        }
+
+        .close-modal:hover,
+        .close-modal:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* リンクのスタイル */
+        a {
+            color: var(--link-color);
+        }
+
+        .speak-button {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            margin-left: 8px;
+            padding: 2px 5px;
+        }
+
+        #next-btn,
+        #results-btn {
+            display: none;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            float: right;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+            touch-action: manipulation;
+        }
+
+        #next-btn:hover,
+        #results-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #results-container {
+            text-align: center;
+            font-size: 1.4em;
+            display: none;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        #results-container h2 {
+            color: #007bff;
+        }
+
+        #homepage-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background-color: #6c757d;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+        }
+
+        #homepage-link:hover {
+            background-color: #5a6268;
+        }
+
+        /* AI分析ボタン */
+        .ai-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .ai-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.4);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        /* AIバナー（ヘッダー用） */
+        .ai-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .explanation-banner {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+        }
+
+        /* モーダル */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            max-height: 80vh;
+            overflow-y: auto;
+            overscroll-behavior: none;
+            touch-action: pan-y;
+            text-align: left;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: relative;
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #999;
+        }
+
+        /* Image Preview Modal */
+        #image-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #image-preview-modal img {
+            max-width: 90%;
+            max-height: 70%;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        #image-preview-modal .modal-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        #image-preview-modal button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        #image-preview-modal .close-btn {
+            background: #6c757d;
+            color: #fff;
+        }
+
+        #image-preview-modal .share-btn {
+            background: #007bff;
+            color: #fff;
+        }
+
+        #image-preview-modal .save-hint {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1em;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        /* ===== 追加：不正解時の2択（やり直す／正解を教えて） ===== */
+        .wrong-decision-area {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .wrong-decision-btn {
+            padding: 10px 18px;
+            font-size: 1em;
+        }
+
+        .wrong-decision-note {
+            margin-top: 8px;
+            font-size: 0.85em;
+            opacity: 0.8;
+            text-align: center;
+        }
+
+        /* ===== 追加：励ましコメント（気持ちよさUP） ===== */
+        #encouragement-under-question {
+            margin: 12px auto 0 auto;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px dashed var(--border-color);
+            background: var(--panel-bg);
+            font-size: 0.98em;
+            text-align: center;
+            max-width: 95%;
+            opacity: 0.92;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 左パネル：クイズ -->
+    <div id="left-panel">
+        <header>
+            <h1>3-8 放物線と直線の共有点の座標</h1>
+            <div>
+                <!-- <button id="fullscreen-toggle" class="tool-btn" onclick="toggleFullscreen()"
+                    style="padding: 5px 10px; font-size: 1.2em;" title="フルスクリーン／フルスクリーン解除">⛶</button> -->
+                <button id="dark-mode-toggle" class="tool-btn" onclick="toggleDarkMode()"
+                    style="padding: 5px 10px; font-size: 1.2em;" title="ダークモード／ライトモード">🌙</button>
+                <button id="resume-toggle" class="tool-btn" onclick="toggleResume()"
+                    style="padding: 5px 10px; font-size: 1.2em; display: none;" title="途中保存機能のON/OFF">📂</button>
+                <button id="sound-toggle" class="tool-btn" onclick="toggleSound()"
+                    style="padding: 5px 10px; font-size: 1.2em;" title="効果音の有／無">🔊</button>
+            </div>
+        </header>
+        <main>
+            <div id="quiz-container">
+                <div id="progress-bar">
+                    <div id="progress"></div>
+                </div>
+                <div id="question-header">
+                    <span id="question-number"></span>
+                    <span id="score"></span>
+                </div>
+                <h2 id="question-text"></h2>
+
+                <div id="encouragement-under-question" style="display:none;"></div>
+
+                <button id="answer-btn" class="tool-btn ai-btn"
+                    style="display:block; margin: 20px auto; padding: 12px 30px; font-size: 1.2em;"
+                    onclick="checkAnswerWithAI()">🤖AIカガワ先生🤖に添削してもらう</button>
+                <div id="analyzing-indicator" style="display:none; text-align:center; margin: 10px 0;">
+                    <span style="font-size: 2em;">🤖</span> 採点中...
+                </div>
+
+                <div id="options-container" style="display:none;"></div>
+
+                <div id="feedback"></div>
+
+                <button id="next-btn">次の問題へ</button>
+                <button id="results-btn">結果を見る</button>
+            </div>
+
+            <div id="results-container">
+                <h2>テスト終了！</h2>
+                <p id="score-text"></p>
+                <p id="final-message"></p>
+
+                <!-- 結果送信フォーム -->
+                <!-- 結果送信フォーム -->
+                <div
+                    style="margin: 20px 0; padding: 15px; background: var(--panel-bg); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <p style="margin-bottom: 10px; font-size: 0.9em;">※名前とGAS URLはトップページで設定してください。</p>
+                    <button class="tool-btn" onclick="sendResults()" style="background-color: #28a745; color: white;">📤
+                        先生に送信</button>
+                    <p id="send-status" style="margin-top: 5px; font-size: 0.9em; color: var(--text-color);"></p>
+                </div>
+
+                <button id="retry-btn" style="display:none; margin: 10px auto; background-color: #ffc107; color: #000;"
+                    class="tool-btn" onclick="retryIncorrect()">🔥 間違えた問題だけリトライ</button>
+                <br>
+                <a href="index.html" id="homepage-link">トップページに戻る</a>
+            </div>
+        </main>
+        <footer>
+            <p>&copy; 2025 [香川亮]</p>
+        </footer>
+    </div>
+
+    <!-- リサイザー -->
+    <div id="resizer"></div>
+
+    <!-- 右パネル：メモパッド -->
+    <div id="right-panel">
+        <div id="memo-container">
+            <div id="memo-question-overlay"></div>
+            <div id="eraser-cursor"></div>
+            <canvas id="memo-pad"></canvas>
+        </div>
+        <div id="memo-toolbar">
+            <button class="tool-btn active" id="btn-pen" onclick="setTool('pen')">✏️ ペン</button>
+            <button class="tool-btn" id="btn-pen-red" onclick="setTool('pen-red')">🔴 赤ペン</button>
+            <button class="tool-btn" id="btn-eraser" onclick="setTool('eraser')">🧽 消しゴム</button>
+            <button class="tool-btn active" id="btn-pen-only" onclick="togglePenOnly()">🖊️ ペンのみ</button>
+            <button class="tool-btn" onclick="undoMemo()">↩️ 元に戻す</button>
+            <span style="margin: 0 10px; color: #ccc;">|</span>
+            <button class="tool-btn" id="btn-toggle-question" onclick="toggleQuestionOverlay()">📖 問題を表示</button>
+            <button class="tool-btn" onclick="saveMemo()">💾 画像保存</button>
+            <button class="tool-btn" onclick="clearMemo()">🗑️ メモを消去</button>
+        </div>
+    </div>
+
+    <!-- AI分析モーダル -->
+    <div id="ai-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAiModal()">&times;</span>
+            <h3>🤖 AIカガワ先生の分析</h3>
+            <div id="ai-content">
+                <p>分析中...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- グローバル変数 ---
+        let quizData = [];
+        let incorrectQuestions = []; // 間違えた問題を格納
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let startTime; // 開始時間
+        let isSoundOn = true; // 効果音ON/OFF
+        let isDarkMode = false; // ダークモードON/OFF
+        let isResumeOn = false; // レジューム機能ON/OFF (デフォルトOFF)
+        let currentPenColor = '#000'; // 現在のペンの色
+        const synth = window.speechSynthesis;
+        let currentUtterance = null;
+        let audioCtx = null; // グローバルAudioContext
+
+        // --- キャンバス関連 ---
+        // --- AIのJSONを安全にパース（\subset などの不正エスケープを自動修復） ---
+        function parseAIJsonWithRepair(rawText) {
+            if (!rawText) throw new Error("Empty AI response");
+
+            const trimmed = rawText.trim();
+
+            // 余計な前後文が混ざっても最初の { から最後の } を拾う
+            const match = trimmed.match(/\{[\s\S]*\}/);
+            let jsonStr = match ? match[0] : trimmed;
+
+            // まず素直にパース
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e1) {
+                // JSONとして無効なバックスラッシュだけを \\ に修復
+                // 例: "\subset" -> "\\subset"
+                let repaired = jsonStr.replace(
+                    /\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g,
+                    '\\\\'
+                );
+
+                try {
+                    return JSON.parse(repaired);
+                } catch (e2) {
+                    // 最終保険：全部の \ を \\ に（多少荒いが止血になる）
+                    repaired = jsonStr.replace(/\\/g, '\\\\');
+                    return JSON.parse(repaired);
+                }
+            }
+        }
+
+        const canvas = document.getElementById('memo-pad');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        let isDrawing = false;
+        let currentTool = 'pen'; // 'pen' or 'eraser'
+        let memoHistory = []; // Undo用履歴
+        let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initAudioContext(); // オーディオコンテキストの初期化準備
+            initCanvas();
+            setTimeout(resizeCanvas, 100); // レイアウト確定後に再調整
+            initQuiz();
+            // ダークモード設定を読み込む
+            const savedDarkMode = localStorage.getItem('darkMode');
+            if (savedDarkMode === 'true') {
+                isDarkMode = true;
+                document.body.classList.add('dark-mode');
+                document.getElementById('dark-mode-toggle').textContent = '☀️';
+                currentPenColor = '#fff'; // ペンの色を白に設定
+            }
+
+            // レジューム設定を読み込む (一時的に無効化)
+            // const savedResume = localStorage.getItem('resumeOn');
+            // if (savedResume !== null) {
+            //     isResumeOn = (savedResume === 'true');
+            // }
+            updateResumeButton();
+
+            // 全体スクロール防止（左パネルとモーダル以外）
+            document.addEventListener('touchmove', function (e) {
+                // 左パネル、モーダル、またはツールバー内の要素（ボタンなど）での操作は許可
+                if (!e.target.closest('#left-panel') &&
+                    !e.target.closest('.modal-content') &&
+                    !e.target.closest('#memo-toolbar')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+
+            // --- 積極的なオーディオプリロード（遅延対策） ---
+            document.addEventListener('touchstart', function (e) {
+                if (e.target.closest('.option-btn') || e.target.closest('#next-btn') || e.target.closest('#results-btn')) {
+                    if (isSoundOn) {
+                        try {
+                            const AudioContext = window.AudioContext || window.webkitAudioContext;
+                            if (!audioCtx && AudioContext) {
+                                audioCtx = new AudioContext();
+                            }
+                            if (audioCtx && audioCtx.state === 'suspended') {
+                                audioCtx.resume();
+                            }
+                        } catch (err) {
+                            console.error("Audio warmup failed:", err);
+                        }
+                    }
+                }
+            }, { passive: true });
+        });
+
+        // --- クイズ初期化 ---
+        function initQuiz() {
+            // KaTeX設定
+            const katexDelimiters = [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ];
+            const renderMath = () => {
+                if (window.renderMathInElement) {
+                    renderMathInElement(document.body, { delimiters: katexDelimiters, throwOnError: false });
+                } else {
+                    setTimeout(renderMath, 100);
+                }
+            };
+            renderMath();
+
+            // データ読み込み (window.QUIZ_DATA from M1-1-1-1QD.js)
+            let allData = [];
+            if (window.QUIZ_DATA) {
+                allData = window.QUIZ_DATA;
+            } else if (typeof allQuizData !== 'undefined') {
+                allData = allQuizData; // フォールバック
+            }
+
+            if (!allData || allData.length === 0) {
+                document.getElementById('question-text').innerText = "問題データが見つかりません。";
+                return;
+            }
+
+            // レジューム機能：保存されたデータがあるか確認
+            const urlParams = new URLSearchParams(window.location.search);
+            const isReset = urlParams.get('reset') === 'true';
+
+            if (isReset) {
+                // index.htmlから来た場合などはリセット（確認なしで最初から）
+                // URLからパラメータを削除して、リロード時はレジュームが効くようにする
+                const newUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState(null, '', newUrl);
+            } else if (isResumeOn) {
+                const savedData = localStorage.getItem('quiz_progress_M1-3-3-8');
+                if (savedData) {
+                    if (confirm("前回の続きから始めますか？")) {
+                        restoreProgress(JSON.parse(savedData));
+                        return;
+                    } else {
+                        localStorage.removeItem('quiz_progress_M1-3-3-8'); // キャンセルしたら削除
+                    }
+                }
+            }
+
+            // シャッフルして10問抽出
+            const shuffled = [...allData].sort(() => 0.5 - Math.random());
+            quizData = shuffled.slice(0, 10);
+
+            startTime = Date.now(); // タイマー開始
+            loadQuestion();
+
+
+        }
+
+        // --- クイズロジック ---
+        function loadQuestion() {
+            const quizContainer = document.getElementById('quiz-container');
+            const resultsContainer = document.getElementById('results-container');
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+            const optionsContainer = document.getElementById('options-container');
+            const showOptionsBtn = document.getElementById('show-options-btn');
+            const questionNumberEl = document.getElementById('question-number');
+            const questionTextEl = document.getElementById('question-text');
+
+            if (currentQuestionIndex >= quizData.length) return;
+
+            // リセット
+            feedbackEl.style.display = 'none';
+            nextBtn.style.display = 'none';
+            resultsBtn.style.display = 'none';
+            document.getElementById('answer-btn').style.display = 'block';
+            document.getElementById('analyzing-indicator').style.display = 'none';
+
+            // メモは消さない（ユーザーが前の計算を残したいかもしれないので）
+            clearMemo();
+
+            // メモの「問題を表示」をリセット
+            document.getElementById('memo-question-overlay').style.display = 'none';
+            document.getElementById('btn-toggle-question').classList.remove('active');
+
+            updateProgressAndScore();
+            saveProgress(); // 進行状況を保存
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionNumberEl.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
+            questionTextEl.innerHTML = currentQuestion.question;
+
+            // メモパッド上の問題文更新
+            document.getElementById('memo-question-overlay').innerHTML = `<strong>問題 ${currentQuestionIndex + 1}:</strong><br>${currentQuestion.question}`;
+
+            renderAllMath();
+        }
+
+
+        // --- 不正解時の分岐（もう一度解く／正解を教えて） ---
+        let pendingAIResult = null; // { questionIndex, recognizedAnswer, feedback }
+
+        // --- 励ましコメント（気持ちよさUP） ---
+        const ENCOURAGEMENTS = [
+            "OK！今の気づきを活かしてもう一度いこう。",
+            "ナイス判断。ここでやり直せるのが強い。",
+            "大丈夫。1回目で気づけたのが収穫！",
+            "落ち着いていけば必ず取れる。",
+            "今のミスは伸びしろ。次で回収しよう。",
+            "いいね。ここからが本番。",
+            "書き直してみよう。答えに近づいてるよ。"
+        ];
+
+        function showEncouragement() {
+            const el = document.getElementById("encouragement-under-question");
+            if (!el) return;
+            const msg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+            el.textContent = msg;
+            el.style.display = "block";
+        }
+
+        function hideEncouragement() {
+            const el = document.getElementById("encouragement-under-question");
+            if (!el) return;
+            el.style.display = "none";
+            el.textContent = "";
+        }
+
+        function showWrongDecisionUI(currentQuestion, result) {
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+            const answerBtn = document.getElementById('answer-btn');
+
+            nextBtn.style.display = 'none';
+            resultsBtn.style.display = 'none';
+            answerBtn.style.display = 'none';
+
+            pendingAIResult = {
+                questionIndex: currentQuestionIndex,
+                recognizedAnswer: result.recognizedAnswer || '',
+                feedback: result.feedback || ''
+            };
+
+            feedbackEl.className = 'incorrect-feedback';
+            feedbackEl.innerHTML = `
+                <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                <span style="color: var(--incorrect-color);"><strong>今回は不正解でした。</strong></span><br>
+                あなたの解答: ${pendingAIResult.recognizedAnswer || '(読み取り不可)'}<br>
+                <div class="wrong-decision-area">
+                    <button class="tool-btn ai-btn wrong-decision-btn" onclick="retryCurrentQuestion()">🔁 もう一度解く</button>
+                    <button class="tool-btn ai-btn wrong-decision-btn" onclick="revealCorrectWithAI()">✅ 正解を教えて！AIカガワ先生</button>
+                </div>
+                <div class="wrong-decision-note">※「もう一度解く」を選ぶと，メモを消して解き直せます。</div>
+            `;
+            feedbackEl.style.display = 'block';
+            renderAllMath();
+        }
+
+        function retryCurrentQuestion() {
+            pendingAIResult = null;
+
+            clearMemo();
+
+            const feedbackEl = document.getElementById('feedback');
+            const answerBtn = document.getElementById('answer-btn');
+            const indicator = document.getElementById('analyzing-indicator');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+
+            feedbackEl.style.display = 'none';
+            indicator.style.display = 'none';
+            nextBtn.style.display = 'none';
+            resultsBtn.style.display = 'none';
+
+            answerBtn.textContent = "🤖AIカガワ先生🤖に添削してもらう";
+            answerBtn.style.display = 'block';
+
+            showEncouragement();
+        }
+
+        function revealCorrectWithAI() {
+            if (!pendingAIResult) return;
+
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+
+            const q = quizData[pendingAIResult.questionIndex] || quizData[currentQuestionIndex];
+
+            if (!incorrectQuestions.includes(q)) {
+                incorrectQuestions.push(q);
+            }
+
+            let html = `
+                <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                <span style="color: var(--incorrect-color);"><strong>今回は不正解でした。</strong></span><br>
+                あなたの解答: ${pendingAIResult.recognizedAnswer || '(読み取り不可)'}<br>
+                <strong>正解: ${q.answer}</strong><br><br>
+            `;
+
+            if (pendingAIResult.feedback) {
+                html += `${pendingAIResult.feedback}<br>`;
+            }
+
+            html += `<hr><div class="explanation-banner">解説</div><br>${q.rationale || ""}`;
+
+            feedbackEl.className = 'incorrect-feedback';
+            feedbackEl.innerHTML = html;
+            feedbackEl.style.display = 'block';
+            renderAllMath();
+
+            if (pendingAIResult.questionIndex < quizData.length - 1) {
+                nextBtn.style.display = 'block';
+                resultsBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'none';
+                resultsBtn.style.display = 'block';
+            }
+
+            pendingAIResult = null;
+
+            saveProgress();
+            updateProgressAndScore();
+        }
+
+        async function checkAnswerWithAI() {
+            const answerBtn = document.getElementById('answer-btn');
+            const indicator = document.getElementById('analyzing-indicator');
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+
+            hideEncouragement();
+            pendingAIResult = null;
+
+            answerBtn.style.display = 'none';
+            indicator.style.display = 'block';
+
+            // iOS対策: ユーザー操作の直後にAudioContextを再開する
+            if (isSoundOn && audioCtx) {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } else if (isSoundOn && !audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                    audioCtx.resume();
+                }
+            }
+
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) {
+                alert("APIキーが設定されていません。トップページで設定してください。");
+                indicator.style.display = 'none';
+                answerBtn.style.display = 'block';
+                return;
+            }
+            // --- 逋ｽ邏吶メ繧ｧ繝・け ---
+            const memoPad = document.getElementById('memo-pad');
+                        if (typeof isCanvasBlank === 'function' && isCanvasBlank(memoPad)) {
+                indicator.style.display = 'none';
+                playSound('incorrect');
+
+                const feedbackEl = document.getElementById('feedback');
+                
+                feedbackEl.className = 'incorrect-feedback';
+                feedbackEl.innerHTML = `
+                    <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                    <span style="color: var(--incorrect-color);"><strong>メモが白紙のようです💦</strong></span><br>
+                    メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！<br>
+                    <div class="wrong-decision-area">
+                        <button class="tool-btn ai-btn wrong-decision-btn" onclick="retryCurrentQuestion()">🔁 もう一度解く</button>
+                    </div>
+                `;
+                feedbackEl.style.display = 'block';
+                return;
+            }
+
+
+            const currentQuestion = quizData[currentQuestionIndex];
+
+            try {
+                // html2canvasでメモコンテナを画像化
+                const memoContainer = document.getElementById('memo-container');
+                const capturedCanvas = await html2canvas(memoContainer, {
+                    backgroundColor: isDarkMode ? '#121212' : '#ffffff',
+                    scale: 2
+                });
+                const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
+
+                const prompt = `
+あなたは高校数学の「誤り診断」に特化した添削者です。
+以下の問題に対する生徒の手書き解答（画像）を読み取り，
+最終答案の正誤と，途中式の数学的整合性だけを判定してください。
+
+問題: ${currentQuestion.question}
+正解: ${currentQuestion.answer}
+解説(参考): ${currentQuestion.rationale}
+
+【採点者としての前提】
+- あなたは「厳密さを重視する高校数学教師」です。
+- 生徒を責めるのではなく，短くやさしいコメントで誤りの種類や原因を伝えますが，
+  正誤や途中式の判定そのものは甘くしてはいけません。
+
+【途中式チェックの方針（必ず実行する内部手順。出力には書かない）】
+- まず，与えられた「正解」と「解説(参考)」を手がかりに，
+  その問題の典型的な模範解答の流れを 3〜6 個程度のステップに
+  頭の中で整理しなさい（この内容は出力しない）。
+- 次に，生徒の解答を上から順に読み，
+  行やまとまりごとに「ステップ」とみなして，前後のつながりを確認しなさい。
+- 生徒の各ステップが，「解説(参考)」のどのステップに対応しているかを大まかに対応づけ，
+  どの段階でズレ・省略・誤りが生じているかを把握しなさい。
+- 各ステップについて，必ず次の 3 点をチェックしなさい：
+  1. 数学的に正しい式変形・論理になっているか。
+  2. 直前のステップから論理的に導かれているか（飛躍がないか）。
+  3. 等式・不等式の場合，同値変形になっているか。
+- 解説とは別解であっても，数学的に正しく，条件をきちんと使っていれば問題ありません。
+  ただし，条件抜けや論理の飛躍があれば誤りとして扱いなさい。
+- 途中に 1 箇所でも，次のようなものがあれば，
+  最終答案が正しくても hasProcessError を true としなさい：
+  - 明らかな計算ミスや変形ミス
+  - 同値でない式変形
+  - 条件の見落としや論理の飛躍
+  - 矛盾した記述
+- 誤った式や前提から出発しているのに，
+  その後の計算によりたまたま正しい最終結果に到達している場合は，
+  「途中に誤りがあるが結果が偶然一致している状態」とみなし，
+  isCorrect は最終答案で判定しつつ，必ず hasProcessError を true とし，
+  feedback では「途中に誤りがあるのに結果だけ合っている」ことを短く指摘しなさい。
+
+【解説(参考)の使い方】
+- 「解説(参考)」はその問題の正しい解法の一例です。
+- 途中式チェックでは，この解説の流れを基準にして，
+  生徒がどのステップで
+  - 解説と違う計算や変形をしているか
+  - 必要な説明や変形を省略しているか
+  - 別の方針を取っていて，それが正しいかどうか
+  を推測しなさい。
+- feedbackを書くときは，可能であれば
+  「解説の○○にあたる部分で〜をしていない／別の式を書いているようです」
+  のように，解説とのズレを意識した一言を含めなさい（ただし字数は守る）。
+
+【最重要ルール】
+0. 【最重要】画像にユーザーの手書きが全く見当たらない（白紙）場合は、絶対に「不正解」と判定し、isCorrect: false を返してください。「回答が見当たりません」と指摘してください。
+1. 画像に何も書かれていない，または白紙に近い場合は必ず不正解とする。
+2. その場合は以下のJSONのみを出力して終了する：
+   {"isCorrect": false, "hasProcessError": false, "recognizedAnswer": "", "feedback": "メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！"}
+3. 最終答案が正解と一致している場合のみ isCorrect を true とする。
+   - 有理化で同じ，同値変形，積の順序違いなどは正解扱い。
+   - 途中式に誤りがあるかどうかは isCorrect ではなく hasProcessError で判定し，
+     誤りがあれば必ず hasProcessError を true にすること。
+4. 途中式が存在する場合は，必ず全ての途中式の整合性をチェックする。
+   - 1 行ごと，または意味のまとまりごとに，「前の行と論理的につながっているか」
+     「左辺と右辺が本当に等しいか／同値か」を確認する。
+5. 最終答案が正解でも途中式に数学的な誤りや飛躍がある場合，
+   hasProcessError を true とし，
+   feedback で短く指摘する。
+   - 途中に誤った式や不正確な同値変形が 1 回でもあれば，
+     「細かいからいいか」と見逃さずに hasProcessError を true にする。
+6. 途中式がほぼ無い，または文字がつぶれて読めない場合は，
+   hasProcessError を false にしてよいが，
+   feedback に「途中式が読み取れないため過程の検証は不十分」と短く書く。
+7. 間違いの要因として「計算ミス」だけでなく
+   「数式の写し間違い（問題文の式や条件の転記ミス）」も重要な誤りとして扱う。
+   - 特に，問題文の式や条件を書き写している最初の数行については，
+     符号・係数・指数・不等号の向きなどの違いがないかを優先的にチェックし，
+     誤りがあれば「写し間違い」として指摘する。
+8. 正誤判定問題（答えが「正しい」「正しくない」の場合）について:
+   - 漢字の崩れやひらがな表記（例：「ただしい」）でも意図が明確なら採点する。
+   - 「〇」「×」はそれぞれ「正しい」「正しくない」に対応させて採点する。
+9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\frac{a}{b} を用いる。
+   集合記号（\\subset,\\subseteq,\\supset,\\supseteq,\\in,\\notin,\\cup,\\cap,\\emptyset など）も
+   必ず $...$ の中に入れる。
+   例：「AはBの部分集合なので $A \\subset B$」。
+10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\」と記述してください。
+    （例：「\\{」ではなく「\\\\{」）
+
+【背理法などの証明問題に関する追加ルール】
+- 解答が背理法を用いている場合は，次の 4 点を必ず確認しなさい。
+  1. 証明したい命題の「否定」を，はっきり仮定しているか。
+  2. その仮定のもとで，正しい式変形・論理展開を行っているか。
+  3. 仮定と矛盾する内容（大小関係の矛盾，偶奇や整数性の矛盾など）を明確に導いているか。
+  4. 「仮定が誤り → 元の命題が成り立つ」という結論を，最後に明示しているか。
+- 上のいずれかが欠けている場合は，最終的な結論の文言が正しくても，
+  hasProcessError を true とし，論証として不十分であることを feedback で短く指摘しなさい。
+
+【feedbackの書き方（やさしく・原因も意識して短く）】
+- 50〜120字程度。
+- 指摘は最大2点まで。
+- 解説や模範解答の再提示は禁止（解説は別に表示される）。
+- できる限り，次の2つをセットで簡潔に書きなさい：
+  1. どの行・どの式でどんな誤りがあったか（表面的な誤り）
+  2. その背景にありそうな原因の推測（〜かもしれません，もしかして〜など）
+- 誤りタイプの例：
+  計算ミス／符号ミス／公式の適用条件ミス／同値変形の誤り／論理の飛躍／写し間違い
+- 原因が確実に特定できる場合は断定してよいが，
+  完全には特定できない場合は，
+  「〜かもしれません」「〜の可能性があります」「もしかして〜してしまったかな？」など，
+  推測であることが分かるやわらかい表現を用いなさい。
+  例：
+  - 「2行目で $-3$ を $+3$ としているので符号ミスかもしれません。」
+  - 「解説で使っている公式の形をうろ覚えで適用してしまった可能性があります。」
+- 不正解の場合は，最も致命的な誤り箇所を優先して指摘し，
+  可能であれば「なぜそう書いてしまったか」の推測も一言そえる。
+- 正解だが hasProcessError が true の場合は
+  「答えは合っていますが，途中式に誤りが見られます。」のように，
+  答えは認めつつ過程の問題とその原因の推測を短く指摘する。
+- 正解かつ途中式にも問題がない場合のみ，feedback を空文字にする。
+
+【出力】
+以下のJSON形式のみを出力してください。Markdownのコードブロックは不要です。
+{
+  "isCorrect": true または false,
+  "hasProcessError": true または false,
+  "recognizedAnswer": "画像から読み取った生徒の最終解答（LaTeX $...$）。読み取れない場合は空文字。",
+  "feedback": "誤り診断コメント。正解かつ過程も問題なければ空文字。"
+}
+`;
+
+
+
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: prompt },
+                                    {
+                                        inline_data: {
+                                            mime_type: "image/png",
+                                            data: imageData
+                                        }
+                                    }
+                                ]
+                            }]
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || "API Error");
+                }
+
+                const data = await response.json();
+                const aiText = data.candidates[0].content.parts[0].text
+                    .replace(/```json/g, '')
+                    .replace(/```/g, '')
+                    .trim();
+
+                const result = parseAIJsonWithRepair(aiText);
+
+                if (result.recognizedAnswer === 'null' || result.recognizedAnswer === null) result.recognizedAnswer = '';
+                if (result.feedback === 'null' || result.feedback === null) result.feedback = '';
+                if (result.hasProcessError === 'null' || result.hasProcessError === null) result.hasProcessError = false;
+
+                // 不正解なのに誤誘導表現が混ざった場合の安全弁
+                const misleading = /(答え|結論)は合って(い|)ます|偶然正解/;
+                if (result.isCorrect === false && misleading.test(result.feedback || "")) {
+                    result.feedback = "途中の計算や条件の確認が必要です。ゆっくり見直してみましょう。";
+                }
+
+                indicator.style.display = 'none';
+
+                if (result.isCorrect) {
+                    score++;
+                    playSound('correct');
+
+                    // 正解済みなら不正解リストから外す（任意）
+                    const idx = incorrectQuestions.indexOf(currentQuestion);
+                    if (idx !== -1) incorrectQuestions.splice(idx, 1);
+
+                    feedbackEl.className = 'correct-feedback';
+
+                    const caution = result.hasProcessError
+                        ? `<br><span style="color: var(--incorrect-color);"><strong>※答えは合っていますが，途中式に誤りが見られます。</strong></span><br>`
+                        : `<br>`;
+
+                    let feedbackHtml =
+                        `<div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>` +
+                        `<span style="color: var(--correct-color);"><strong>正解！💐</strong></span>${caution}` +
+                        `あなたの解答: ${result.recognizedAnswer || '(読み取り不可)'}<br>`;
+
+                    if (result.feedback) {
+                        feedbackHtml += `<br>${result.feedback}<br>`;
+                    }
+
+                    feedbackEl.innerHTML = feedbackHtml;
+
+                    saveProgress();
+                    updateProgressAndScore();
+
+                    feedbackEl.innerHTML += `<hr><div class="explanation-banner">解説</div><br>${currentQuestion.rationale || ""}`;
+                    feedbackEl.style.display = 'block';
+                    renderAllMath();
+
+                    if (currentQuestionIndex < quizData.length - 1) {
+                        nextBtn.style.display = 'block';
+                    } else {
+                        resultsBtn.style.display = 'block';
+                    }
+
+                } else {
+                    playSound('incorrect');
+
+                    // 不正解時は2択を提示（ここではまだ正解も解説も出さない）
+                    showWrongDecisionUI(currentQuestion, result);
+
+                    saveProgress();
+                    updateProgressAndScore();
+                }
+
+            } catch (error) {
+                console.error("Gemini API error:", error);
+                const msg = String(error.message || '');
+
+                if (
+                    msg.includes('Quota exceeded') ||
+                    msg.includes('rate limit') ||
+                    msg.includes('429')
+                ) {
+                    alert(
+                        "AIの無料利用回数の上限に達しました。\n" +
+                        "少し時間をおいてから、もう一度お試しください。"
+                    );
+                } else {
+                    alert("採点中にエラーが発生しました。\n詳細: " + msg);
+                }
+
+                indicator.style.display = 'none';
+                answerBtn.style.display = 'block';
+            }
+        }
+
+        function selectAnswer(selectedAnswer, btnElement) {
+            // iOS対策: ユーザー操作の直後にAudioContextを再開する
+            if (isSoundOn && audioCtx) {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } else if (isSoundOn && !audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                    audioCtx.resume();
+                }
+            }
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            const isCorrect = (selectedAnswer === currentQuestion.answer);
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+
+            document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+            document.getElementById('show-options-btn').style.display = 'none';
+
+            if (isCorrect) {
+                score++;
+                playSound('correct');
+                btnElement.classList.add('correct');
+                feedbackEl.className = 'correct-feedback';
+                feedbackEl.innerHTML = `<span style="color: var(--correct-color);"><strong>正解！💐</strong></span><br>`;
+            } else {
+                playSound('incorrect');
+                btnElement.classList.add('incorrect', 'selected');
+                feedbackEl.className = 'incorrect-feedback';
+                feedbackEl.innerHTML = `<span style="color: var(--incorrect-color);"><strong>不正解💦</strong></span><br>（正解: ${currentQuestion.answer}）<br>`;
+            }     // 正解をハイライト
+            document.querySelectorAll('.option-btn').forEach(b => {
+                if (b.dataset.optionValue === currentQuestion.answer) b.classList.add('correct');
+            });
+
+            // ★ AI分析ボタンを追加 (不正解時のみ)
+            if (!isCorrect) {
+                feedbackEl.innerHTML += `<button class="ai-btn" onclick="analyzeError()">🤖 AIカガワ先生に聞く (v2)</button><small> (メモを分析します)<small><br>`;
+
+                // 間違えた問題を記録
+                if (!incorrectQuestions.includes(currentQuestion)) {
+                    incorrectQuestions.push(currentQuestion);
+                }
+            }
+
+            saveProgress(); // 進行状況を保存
+
+            updateProgressAndScore();
+
+            // 解説追加
+            feedbackEl.innerHTML += currentQuestion.rationale || "";
+            feedbackEl.style.display = 'block';
+            renderAllMath();
+
+            if (currentQuestionIndex < quizData.length - 1) {
+                nextBtn.style.display = 'block';
+            } else {
+                resultsBtn.style.display = 'block';
+            }
+        }
+
+        function updateProgressAndScore() {
+            document.getElementById('score').textContent = `スコア: ${score} / ${quizData.length}`;
+            const progress = (currentQuestionIndex + 1) / quizData.length * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            currentQuestionIndex++;
+            loadQuestion();
+        });
+
+        document.getElementById('results-btn').addEventListener('click', () => {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('results-container').style.display = 'block';
+
+            clearProgress(); // 終了したら保存データを削除
+
+            const endTime = Date.now();
+            const elapsedSeconds = Math.floor((endTime - startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            const timeString = `${minutes}分${seconds}秒`;
+
+            const percentage = Math.round((score / quizData.length) * 100);
+            document.getElementById('score-text').innerHTML = `${quizData.length} 問中 ${score} 問正解！ (正答率: ${percentage}%)<br>かかった時間: ${timeString}`;
+
+            let msg = "";
+            if (percentage === 100) {
+                msg = "完璧です！";
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            } else if (percentage >= 80) {
+                msg = "素晴らしい！";
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            } else {
+                msg = "復習しましょう。";
+            }
+            document.getElementById('final-message').textContent = msg;
+
+            // リトライボタンの表示制御
+            const retryBtn = document.getElementById('retry-btn');
+            if (incorrectQuestions.length > 0) {
+                retryBtn.style.display = 'inline-block';
+                retryBtn.textContent = `🔥 間違えた問題だけリトライ (${incorrectQuestions.length}問)`;
+            } else {
+                retryBtn.style.display = 'none';
+            }
+        });
+
+        function retryIncorrect() {
+            if (incorrectQuestions.length === 0) return;
+
+            // 間違えた問題だけでクイズを再構成
+            quizData = [...incorrectQuestions];
+            incorrectQuestions = []; // リセット（リトライ中にさらに間違えたらまた追加されるように）
+            currentQuestionIndex = 0;
+            score = 0;
+
+            // 画面切り替え
+            document.getElementById('results-container').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+
+            startTime = Date.now(); // リトライ時もタイマーリセット
+            loadQuestion();
+        }
+
+        function sendResults() {
+            // 共通設定から読み込み
+            let name = localStorage.getItem('quiz_student_name') || "";
+            let GAS_URL = localStorage.getItem('quiz_gas_url') || "";
+
+            const statusEl = document.getElementById('send-status');
+
+            if (!name) {
+                alert("お名前が設定されていません。\nトップページ（歯車アイコン）で設定してください。");
+                return;
+            }
+
+            statusEl.textContent = "送信中...";
+
+            if (!GAS_URL) {
+                statusEl.textContent = "⚠️ エラー: GAS URLが設定されていません。";
+                alert("トップページでGAS URLを設定してください。");
+                return;
+            }
+
+            const endTime = Date.now();
+            const elapsedSeconds = Math.floor((endTime - startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            const timeString = `${minutes}分${seconds}秒`;
+
+            const data = {
+                quizName: document.querySelector('h1').textContent, // タイトルを送信
+                name: name,
+                score: score,
+                total: quizData.length,
+                time: timeString
+            };
+
+            fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors', // CORS回避のためno-cors（レスポンスは読めないが送信はできる）
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(() => {
+                    statusEl.textContent = "✅ 送信しました！";
+                    statusEl.style.color = "green";
+                    // 送信ボタンを無効化して連打防止
+                    document.querySelector('button[onclick="sendResults()"]').disabled = true;
+                })
+                .catch(err => {
+                    console.error(err);
+                    statusEl.textContent = "❌ 送信に失敗しました。";
+                    statusEl.style.color = "red";
+                });
+        }
+
+        // --- 効果音機能 ---
+        function initAudioContext() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+
+            // Create/Resume AudioContext on user action
+            const unlockAudio = () => {
+                if (!audioCtx) {
+                    audioCtx = new AudioContext();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                // Play silent buffer to force wake up audio engine (iOS fix)
+                const buffer = audioCtx.createBuffer(1, 1, 22050);
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioCtx.destination);
+                source.start(0);
+
+                // Remove event listeners (only need once)
+                document.removeEventListener('click', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+                document.removeEventListener('keydown', unlockAudio);
+            };
+
+            document.addEventListener('click', unlockAudio);
+            document.addEventListener('touchstart', unlockAudio);
+            document.addEventListener('keydown', unlockAudio);
+        }
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            const btn = document.getElementById('sound-toggle');
+            btn.textContent = isSoundOn ? '🔊' : '🔇';
+        }
+
+        function playSound(type) {
+            if (!isSoundOn) return;
+
+            // Try to create/resume AudioContext if missing or closed
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(e => console.log("Audio resume failed:", e));
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                // Ping-pong (high pitch x2)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(1500, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'incorrect') {
+                // Buzzer (low saw wave)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // --- キャンバス機能 ---
+        function initCanvas() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            if (window.PointerEvent) {
+                // Pointer Events (モダンブラウザ・タブレット向け)
+                canvas.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    if (isPenOnlyMode && e.pointerType === 'touch') {
+                        // e.preventDefault(); // This was already here, but moved to the top
+                        return;
+                    }
+                    canvas.setPointerCapture(e.pointerId);
+                    startDrawing(e);
+                });
+                canvas.addEventListener('pointermove', (e) => {
+                    e.preventDefault();
+                    if (isPenOnlyMode && e.pointerType === 'touch') {
+                        // e.preventDefault(); // This was already here, but moved to the top
+                        return;
+                    }
+                    // if (e.pointerType === 'touch') e.preventDefault(); // This was already here, but moved to the top
+                    updateCursor(e);
+                    draw(e);
+                });
+                canvas.addEventListener('pointerup', (e) => {
+                    e.preventDefault();
+                    canvas.releasePointerCapture(e.pointerId);
+                    stopDrawing();
+                    updateCursor(e);
+                });
+                canvas.addEventListener('pointerenter', (e) => {
+                    if (currentTool === 'eraser') {
+                        document.getElementById('eraser-cursor').style.display = 'block';
+                    }
+                });
+                canvas.addEventListener('pointerleave', (e) => {
+                    document.getElementById('eraser-cursor').style.display = 'none';
+                });
+                canvas.addEventListener('pointercancel', (e) => {
+                    canvas.releasePointerCapture(e.pointerId);
+                    stopDrawing();
+                });
+            } else {
+                // フォールバック (古いブラウザ用)
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseout', stopDrawing);
+
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (isPenOnlyMode) return;
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent("mousedown", { clientX: touch.clientX, clientY: touch.clientY });
+                    canvas.dispatchEvent(mouseEvent);
+                }, { passive: false });
+
+                canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (isPenOnlyMode) return;
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
+                    canvas.dispatchEvent(mouseEvent);
+                }, { passive: false });
+
+                canvas.addEventListener('touchend', () => {
+                    if (isPenOnlyMode) return;
+                    canvas.dispatchEvent(new MouseEvent("mouseup", {}));
+                });
+            }
+        }
+
+        function resizeCanvas() {
+            const container = document.getElementById('memo-container');
+            // 現在の描画内容を一時保存
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+            if (canvas.width > 0 && canvas.height > 0) {
+                tempCtx.drawImage(canvas, 0, 0);
+            }
+
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+
+            // 描画内容を復元
+            if (tempCanvas.width > 0 && tempCanvas.height > 0) {
+                ctx.drawImage(tempCanvas, 0, 0);
+            }
+        }
+
+        function startDrawing(e) {
+            saveMemoState(); // 描画開始前に履歴保存
+            isDrawing = true;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.lineCap = 'round';
+
+            if (currentTool === 'pen') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = currentPenColor;
+            } else if (currentTool === 'pen-red') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#ff0000';
+            } else if (currentTool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineWidth = 20;
+                ctx.strokeStyle = 'rgba(0,0,0,1)'; // 色は関係ないが念のため
+            }
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+            // 描画終了後に設定を戻しておくと安全
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        function updateCursor(e) {
+            const cursor = document.getElementById('eraser-cursor');
+            if (currentTool === 'eraser') {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // キャンバス内にあるか確認
+                if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+                    cursor.style.display = 'block';
+                    cursor.style.left = x + 'px';
+                    cursor.style.top = y + 'px';
+                } else {
+                    cursor.style.display = 'none';
+                }
+            } else {
+                cursor.style.display = 'none';
+            }
+        }
+
+        function saveMemoState() {
+            // 履歴は最大10件まで
+            if (memoHistory.length >= 10) {
+                memoHistory.shift();
+            }
+            memoHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        }
+
+        function undoMemo() {
+            if (memoHistory.length > 0) {
+                const lastState = memoHistory.pop();
+                ctx.putImageData(lastState, 0, 0);
+            }
+        }
+
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            if (tool === 'pen') {
+                document.getElementById('btn-pen').classList.add('active');
+                document.getElementById('eraser-cursor').style.display = 'none';
+            } else if (tool === 'pen-red') {
+                document.getElementById('btn-pen-red').classList.add('active');
+                document.getElementById('eraser-cursor').style.display = 'none';
+            } else if (tool === 'eraser') {
+                document.getElementById('btn-eraser').classList.add('active');
+            }
+        }
+
+        function clearMemo() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function saveMemo() {
+            // html2canvasを使ってメモコンテナ全体（問題文含む）を画像化
+            const element = document.getElementById('memo-container');
+            const overlay = document.getElementById('memo-question-overlay');
+            const wasHidden = (overlay.style.display === 'none' || overlay.style.display === '');
+
+            // 保存時のみ一時的に問題文を表示
+            if (wasHidden) {
+                overlay.style.display = 'block';
+                // 数式などが正しくレンダリングされているか確認（非表示だと崩れることがあるため念のため）
+                renderAllMath();
+            }
+
+            html2canvas(element, {
+                backgroundColor: isDarkMode ? '#121212' : '#ffffff', // 背景色を明示
+                scale: 2 // 高解像度で取得
+            }).then(canvas => {
+                // 元の状態に戻す（キャプチャ完了後すぐに戻す）
+                if (wasHidden) {
+                    overlay.style.display = 'none';
+                }
+
+                const now = new Date();
+                const dateStr = now.getFullYear() +
+                    ('0' + (now.getMonth() + 1)).slice(-2) +
+                    ('0' + now.getDate()).slice(-2) + '_' +
+                    ('0' + now.getHours()).slice(-2) +
+                    ('0' + now.getMinutes()).slice(-2) +
+                    ('0' + now.getSeconds()).slice(-2);
+                const fileName = `memo_${dateStr}.png`;
+
+                canvas.toBlob(async (blob) => {
+                    if (!blob) return;
+
+                    const file = new File([blob], fileName, { type: 'image/png' });
+
+                    // プレビュー表示
+                    const previewImg = document.getElementById('preview-image');
+                    previewImg.src = URL.createObjectURL(blob);
+
+                    // シェアボタンの表示制御
+                    const shareBtn = document.getElementById('preview-share-btn');
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        shareBtn.style.display = 'inline-block';
+                        shareBtn.onclick = async () => {
+                            try {
+                                await navigator.share({
+                                    files: [file],
+                                    title: 'メモを保存',
+                                    text: 'メモ画像を保存します'
+                                });
+                            } catch (err) {
+                                console.log('Share cancelled or failed', err);
+                            }
+                        };
+                    } else {
+                        shareBtn.style.display = 'none';
+                    }
+
+                    document.getElementById('image-preview-modal').style.display = 'flex';
+                });
+            });
+        }
+
+        function closeImagePreview() {
+            document.getElementById('image-preview-modal').style.display = 'none';
+            // メモリ解放のためにURLをrevoke（念のため）
+            const img = document.getElementById('preview-image');
+            if (img.src) URL.revokeObjectURL(img.src);
+            img.src = '';
+        }
+
+        function downloadImage(canvas, fileName) {
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function toggleQuestionOverlay() {
+            const overlay = document.getElementById('memo-question-overlay');
+            const btn = document.getElementById('btn-toggle-question');
+            if (overlay.style.display === 'none' || overlay.style.display === '') {
+                overlay.style.display = 'block';
+                btn.classList.add('active');
+                renderAllMath(); // 数式レンダリング
+            } else {
+                overlay.style.display = 'none';
+                btn.classList.remove('active');
+            }
+        }
+
+        function togglePenOnly() {
+            isPenOnlyMode = !isPenOnlyMode;
+            const btn = document.getElementById('btn-pen-only');
+            if (isPenOnlyMode) {
+                btn.innerHTML = '🖊️ ペンのみ';
+                btn.classList.add('active');
+            } else {
+                btn.innerHTML = '🖐️ 手書き';
+                btn.classList.remove('active');
+            }
+        }
+
+        // --- ダークモード機能 ---
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            const btn = document.getElementById('dark-mode-toggle');
+            btn.textContent = isDarkMode ? '☀️' : '🌙';
+
+            // 設定を保存
+            localStorage.setItem('darkMode', isDarkMode);
+
+            // ペンの色を変更
+            currentPenColor = isDarkMode ? '#fff' : '#000';
+
+            // キャンバスの色反転
+            invertCanvas();
+        }
+
+        function invertCanvas() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                // アルファ値が0でない（描画されている）ピクセルのみ処理
+                if (data[i + 3] > 0) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+
+                    // グレースケール（黒・白・グレー）の場合のみ反転
+                    // これにより赤色などはそのまま維持される
+                    if (r === g && g === b) {
+                        data[i] = 255 - r;     // R
+                        data[i + 1] = 255 - g; // G
+                        data[i + 2] = 255 - b; // B
+                    }
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            // 履歴も反転させる必要があるが、今回は簡易的に履歴をクリアする
+            memoHistory = [];
+        }
+
+        // --- レジューム機能 ---
+        function toggleResume() {
+            isResumeOn = !isResumeOn;
+            localStorage.setItem('resumeOn', isResumeOn);
+            updateResumeButton();
+
+            if (!isResumeOn) {
+                clearProgress(); // OFFにしたら保存データも消す（オプション）
+            } else {
+                saveProgress(); // ONにしたら即保存
+            }
+        }
+
+        function updateResumeButton() {
+            const btn = document.getElementById('resume-toggle');
+            if (isResumeOn) {
+                btn.textContent = '📂';
+                btn.style.opacity = '1';
+            } else {
+                btn.textContent = '📁'; // 閉じたフォルダなど
+                btn.style.opacity = '0.5';
+            }
+        }
+
+        function saveProgress() {
+            if (!isResumeOn) return;
+
+            const data = {
+                quizData: quizData,
+                currentQuestionIndex: currentQuestionIndex,
+                score: score,
+                incorrectQuestions: incorrectQuestions,
+                startTime: startTime,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('quiz_progress_M1-3-3-8', JSON.stringify(data));
+        }
+
+        function restoreProgress(data) {
+            // データの復元
+            quizData = data.quizData;
+            currentQuestionIndex = data.currentQuestionIndex;
+            score = data.score;
+            incorrectQuestions = data.incorrectQuestions || [];
+            startTime = data.startTime || Date.now(); // スタート時間がなければ現在時刻
+
+            loadQuestion();
+        }
+
+        function clearProgress() {
+            localStorage.removeItem('quiz_progress_M1-3-3-8');
+        }
+
+        // --- フルスクリーン機能 ---
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(e => console.log(e));
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // フルスクリーン変更イベントの監視（アイコン切り替え用）
+        document.addEventListener('fullscreenchange', () => {
+            const btn = document.getElementById('fullscreen-toggle');
+            if (document.fullscreenElement) {
+                btn.textContent = '🗕'; // 縮小アイコン
+            } else {
+                btn.textContent = '⛶'; // 拡大アイコン
+            }
+        });
+
+        // --- AI分析 ---
+        async function analyzeError() {
+            const modal = document.getElementById('ai-modal');
+            const content = document.getElementById('ai-content');
+            modal.style.display = 'flex';
+            content.innerHTML = '<p>AIカガワ先生が分析中・・・<br><span style="font-size:2em;">🤖💭</span></p>';
+
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) {
+                content.innerHTML = `
+                    <p>APIキーが設定されていません。</p>
+                    <p><a href="index.html" target="_blank">トップページ</a>の「APIキー設定」からキーを保存してください。</p>
+                    <button class="tool-btn" onclick="closeAiModal()">閉じる</button>
+                `;
+                return;
+            }
+
+            const currentQuestion = quizData[currentQuestionIndex];
+
+            try {
+                // html2canvasでメモコンテナを画像化 (背景色も反映される)
+                const memoContainer = document.getElementById('memo-container');
+                const capturedCanvas = await html2canvas(memoContainer, {
+                    backgroundColor: isDarkMode ? '#121212' : '#ffffff',
+                    scale: 1 // 分析用なので標準解像度で十分
+                });
+                const imageData = capturedCanvas.toDataURL('image/png').split(',')[1];
+
+                const prompt = `
+あなたは高校数学の「誤り診断」に特化した添削者です。
+以下の問題に対する生徒の手書き解答（画像）を読み取り，
+最終答案の正誤と，途中式の数学的整合性だけを判定してください。
+
+問題: ${currentQuestion.question}
+正解: ${currentQuestion.answer}
+
+【最重要ルール】
+0. 【最重要】画像にユーザーの手書きが全く見当たらない（白紙）場合は、絶対に「不正解」と判定し、isCorrect: false を返してください。「回答が見当たりません」と指摘してください。
+1. 画像に何も書かれていない，または白紙に近い場合は必ず不正解とする。
+2. その場合は以下のJSONのみを出力して終了する：
+   {"isCorrect": false, "hasProcessError": false, "recognizedAnswer": "", "feedback": "メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！"}
+3. 最終答案が正解と一致している場合のみ isCorrect を true とする。
+   - 有理化で同じ，同値変形，積の順序違いなどは正解扱い。
+4. 途中式が存在する場合は，必ず途中式の整合性をチェックする。
+5. 最終答案が正解でも途中式に数学的な誤りや飛躍がある場合，
+   hasProcessError を true とし，
+   feedback で短く指摘する。
+6. 途中式がほぼ無い/読めない場合は hasProcessError を false にしてよいが，
+   feedback に「途中式が読み取れないため過程の検証は不十分」と短く書く。
+7. 間違いの要因として「計算ミス」だけでなく
+   「数式の写し間違い（問題文の式や条件の転記ミス）」も重要な誤りとして扱い，
+   可能なら優先して指摘する。
+8. 正誤判定問題（答えが「正しい」「正しくない」の場合）について:
+   - 漢字の崩れやひらがな表記（例：「ただしい」）でも意図が明確なら採点。
+   - 「〇」「×」はそれぞれ「正しい」「正しくない」に対応させて採点。
+9. 数式は必ずLaTeX形式（$...$）で記述する。分数は \\frac{a}{b} を用いる。
+   集合記号（\subset,\subseteq,\supset,\supseteq,\in,\notin,\cup,\cap,\emptyset など）も
+   必ず $...$ の中に入れる。
+   例：「AはBの部分集合なので $A \subset B$」。
+10. JSON出力時、文字列内のバックスラッシュは必ずエスケープして「\\」と記述してください。（例：「\{」ではなく「\\{」）
+
+【feedbackの書き方（やさしく短く）】
+- 50〜120字程度。
+- 指摘は最大2点まで。
+- 解説や模範解答の再提示は禁止（解説は別に表示される）。
+- 誤りタイプの例：
+  計算ミス／符号ミス／公式の適用条件ミス／同値変形の誤り／論理の飛躍／写し間違い
+- 不正解の場合は最も致命的な誤り箇所を優先して指摘。
+- 正解だが hasProcessError が true の場合は
+  「答えは合っていますが，途中式に誤りが見られます。」のように自然な表現で短く指摘。
+
+【出力】
+以下のJSON形式のみを出力してください。Markdownのコードブロックは不要です。
+{
+  "isCorrect": true または false,
+  "hasProcessError": true または false,
+  "recognizedAnswer": "画像から読み取った生徒の最終解答（LaTeX $...$）。読み取れない場合は空文字。",
+  "feedback": "誤り診断コメント。正解かつ過程も問題なければ空文字。"
+}
+`;
+
+
+                // ユーザーの環境で利用可能な gemini-2.0-flash を使用 (v1beta)
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inline_data: {
+                                        mime_type: "image/png",
+                                        data: imageData
+                                    }
+                                }
+                            ]
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
+                }
+
+                const data = await response.json();
+
+                // レスポンス構造のチェック
+                if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
+                    throw new Error("No candidates returned from API");
+                }
+
+                const aiText = data.candidates[0].content.parts[0].text;
+
+                content.innerHTML = `
+                    <h4>🤖 AIカガワ先生からのアドバイス</h4>
+                    <p>${aiText.replace(/\n/g, '<br>')}</p>
+                    <button class="tool-btn" onclick="closeAiModal()">閉じる</button>
+                `;
+
+                // KaTeXレンダリングを適用
+                renderAllMath();
+
+            } catch (error) {
+                console.error(error);
+                let errorMsg = "不明なエラーが発生しました。";
+                if (error.message.includes("404")) {
+                    errorMsg = "モデルが見つかりません (404)。APIキーまたはモデル名を確認してください。";
+                } else if (error.message.includes("400")) {
+                    errorMsg = "リクエストが不正です (400)。APIキーが無効な可能性があります。";
+                } else if (error.message.includes("403")) {
+                    errorMsg = "アクセス権限がありません (403)。APIキーを確認してください。";
+                } else if (error.message.includes("429")) {
+                    errorMsg = "リクエスト回数制限を超えました (429)。しばらく待ってから再試行してください。";
+                } else {
+                    errorMsg = error.message;
+                }
+
+                content.innerHTML = `
+                    <p>分析中にエラーが発生しました。</p>
+                    <p style="color:red; font-size:0.9em;">${errorMsg}</p>
+                    <p>詳細: <span style="font-size:0.8em; color:#666;">${error.message}</span></p>
+                    <button class="tool-btn" onclick="closeAiModal()">閉じる</button>
+                `;
+            }
+        }
+
+        function closeAiModal() {
+            document.getElementById('ai-modal').style.display = 'none';
+        }
+
+        // --- 読み上げ ---
+        window.speakRationale = function (btn) {
+            if (synth.speaking) { synth.cancel(); return; }
+            // 簡易実装
+            const text = btn.parentElement.innerText.replace(/🔊/g, '');
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ja-JP';
+            synth.speak(u);
+        };
+
+        function renderAllMath() {
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false }
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+        // --- リサイザー機能 ---
+        const resizer = document.getElementById('resizer');
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizer.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            // 選択防止
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const containerWidth = document.body.clientWidth;
+            const x = e.clientX;
+            const leftWidthPercent = (x / containerWidth) * 100;
+
+            if (leftWidthPercent > 10 && leftWidthPercent < 90) {
+                leftPanel.style.flex = `0 0 ${leftWidthPercent}vw`;
+                leftPanel.style.width = `${leftWidthPercent}vw`;
+                rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
+                rightPanel.style.width = `${100 - leftWidthPercent}vw`;
+                resizeCanvas();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('active');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                resizeCanvas();
+            }
+        });
+
+        // タッチ対応
+        resizer.addEventListener('touchstart', (e) => {
+            isResizing = true;
+            resizer.classList.add('active');
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isResizing) return;
+            const touch = e.touches[0];
+            const containerWidth = document.body.clientWidth;
+            const x = touch.clientX;
+            const leftWidthPercent = (x / containerWidth) * 100;
+
+            if (leftWidthPercent > 10 && leftWidthPercent < 90) {
+                leftPanel.style.flex = `0 0 ${leftWidthPercent}vw`;
+                leftPanel.style.width = `${leftWidthPercent}vw`;
+                rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
+                rightPanel.style.width = `${100 - leftWidthPercent}vw`;
+                resizeCanvas();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('active');
+                resizeCanvas();
+            }
+        });
+
+    
+// --- 逋ｽ邏吝愛螳・---
+function isCanvasBlank(canvas) {
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const pixelBuffer = new Uint32Array(
+        context.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+    );
+    return !pixelBuffer.some(color => color !== 0);
+}</script>
+    <!-- Image Preview Modal -->
+    <div id="image-preview-modal">
+        <img id="preview-image" src="" alt="Memo Preview">
+        <p class="save-hint">画像を長押しして「写真」に保存してください</p>
+        <div class="modal-controls">
+            <button id="preview-share-btn" class="share-btn">共有 / 他のアプリで開く</button>
+            <button class="close-btn" onclick="closeImagePreview()">閉じる</button>
+        </div>
+    </div>
+</body>
+
+</html>
+
+

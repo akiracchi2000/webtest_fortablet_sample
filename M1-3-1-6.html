@@ -1130,24 +1130,18 @@
                 }
 
                 memoPages[currentPageIndex] = {
-
                     imageData: img,
                     graphData: (graphState !== 'none') ? {
                         state: graphState,
                         vertex: graphVertex,
                         point: graphPoint,
                         systemData: systemGraphData
-                    }
-
-                        : null
-                }
-
-                    ;
+                    } : null
+                };
             }
         }
 
         function loadPageFromMemory(index) {
-            console.log(`[DEBUG] loadPageFromMemory: switching from ${currentPageIndex} to ${index}`);
             // 現在のページを保存してから移動
             // (呼び出し元でsaveCurrentPageToMemoryしている場合は重複するが安全側に倒す)
             saveCurrentPageToMemory();
@@ -1297,7 +1291,7 @@
                     document.getElementById('answer-btn').style.display = 'block';
                     document.getElementById('answer-btn').textContent = "🤖AIカガワ先生🤖に添削してもらう";
                     document.getElementById('encouragement-under-question').style.display = 'none';
-                    resetMemoPad();
+
 
                     // 上までスクロール
                     window.scrollTo({
@@ -1409,12 +1403,13 @@
 
                 quizData = [];
 
-                selectedItems.forEach(item => {
+                selectedItems.forEach((item, groupIndex) => {
                     if (item.type === 'group') {
                         const mainQ = item.mainQuestion;
                         if (item.subQuestions) {
                             item.subQuestions.forEach(sub => {
                                 quizData.push({
+                                    groupId: `group-${groupIndex}`, // Add group ID
                                     question: mainQ + "<br>" + sub.question,
                                     answer: sub.answer,
                                     rationale: sub.rationale,
@@ -1425,7 +1420,10 @@
                             console.warn("Group item missing subQuestions:", item);
                         }
                     } else {
-                        quizData.push(item);
+                        quizData.push({
+                            ...item,
+                            groupId: `single-${groupIndex}` // Unique ID for non-groups
+                        });
                     }
                 });
 
@@ -1452,26 +1450,27 @@
 
             if (currentQuestionIndex >= quizData.length) return;
 
-            // リセット
+            const currentQuestion = quizData[currentQuestionIndex];
+            const previousQuestion = (currentQuestionIndex > 0) ? quizData[currentQuestionIndex - 1] : null;
+            // groupId が同じなら同じ大問の小問とみなす
+            const isSameGroup = previousQuestion && currentQuestion.groupId && (previousQuestion.groupId === currentQuestion.groupId);
+
+            // リセット (グループが変わった時だけ)
             feedbackEl.style.display = 'none';
             nextBtn.style.display = 'none';
-            resetMemoPad(); // メモをリセット
-            initMultiPage(); // マルチページ初期化
 
-            // 最初のページを作成
-            memoPages = [{
-                imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
-                graphData: null
+            if (!isSameGroup) {
+                resetMemoPad(); // メモをリセット (includes initMultiPage)
+                // initMultiPage was called, but we ensure page 0 is set
+                // If initMultiPage already did it, we might be double-doing, but initMultiPage is safe.
+            } else {
+                // If same group, we keep the pages.
             }
 
-            ];
             updatePageControls();
 
             document.getElementById('feedback').style.display = 'none';
             document.getElementById('analyzing-indicator').style.display = 'none';
-
-            // メモは消さない（ユーザーが前の計算を残したいかもしれないので）
-            resetMemoPad(); // 新しい問題ごとにメモパッドをリセット
 
             // メモの「問題を表示」をリセット
             document.getElementById('memo-question-overlay').style.display = 'none';
@@ -1480,11 +1479,8 @@
             updateProgressAndScore();
             saveProgress(); // 進行状況を保存
 
-            const currentQuestion = quizData[currentQuestionIndex];
-
             // DEBUG: Check data integrity
             // alert(`Debug: Index=${currentQuestionIndex}, DataLen=${quizData.length}\ncurrentQuestion=${JSON.stringify(currentQuestion)}`);
-            console.log("Current Question:", currentQuestion);
 
             if (!currentQuestion) {
                 alert("エラー: 問題データがありません (currentQuestion is undefined)");
@@ -1824,10 +1820,15 @@ ${(activeSystemGraphData && currentQuestion.answerType === 'graph') ? `【重要
 1. 「ユーザー指定の頂点」が正解の頂点と一致するか。
 2. 「ユーザー指定の通過点」が正解のy切片座標(0, c) と一致するか。
 ※両方が一致している場合のみ、グラフ描画は「正解」と判定してください。
-※座標数値が分数の場合、0.1程度の誤差は許容するか、整数部分が整合していれば正解扱いとしてください。
-※もし、y切片以外の点を通過点として選んでいる場合でも、その点が放物線上にあれば数学的には間違いではありませんが、
-今回は「y切片を通るグラフを描く」ことが求められているため、y切片を選んでいない場合は
-「通過点としてy切片を選んでみましょう」とfeedbackで誘導してください。` : ''}
+※座標数値が分数の場合：以下の **いずれか** を満たせば必ず「正解」と判定してください。
+1. **整数区間の一致**: 正解の座標 $X$ がある整数 $N$ と $N+1$ の間にあるとき（ $N \le X < N+1$ ）、ユーザーの入力 $x$ も同じ区間（ $N \le x < N+1$ ）にあれば正解（例: 正解 $-2.25$ は $-3$ と $-2$ の間。入力もその間にあれば正解）。
+2. **数値の誤差**: 数値の差が $0.5$ 以内（ $|X - x| \le 0.5$ ）なら正解。
+**強い指示**: AIは「ズレ」を指摘したがりますが、この問題では「正しい区間に点が打たれているか」だけを重視してください。「値が違う」という理由で不正解にしないでください。
+3. **通過点の判定（最重要の変更点）**:
+   - **非常に重要**: ユーザーが指定した点が「y切片」でなくても、**絶対に不正解にしないでください**。
+   - 正解の2次関数式に代入して成立する点（誤差考慮）なら、**それがどの点であっても100%「正解」**としてください。
+   - AIが「y切片を選んでください」と指摘して不正解にすることは**固く禁止**します。
+   - 「別の正しい点を選んでいるので正解です」「計算して通る点を見つけられていて素晴らしい」と**称賛**してください。` : ''}
 
 ${(currentQuestion.answerType !== 'graph') ? `【判定ルール（計算 / 記述問題）】
 0. 【最重要】画像にユーザーの手書きが全く見当たらない（白紙）場合は、絶対に「不正解」と判定し、isCorrect: false と返してください。「回答が見当たりません」と指摘してください。
@@ -3003,42 +3004,27 @@ ${(currentQuestion.answerType !== 'graph') ? `【判定ルール（計算 / 記�
             ctx.fillStyle = vertexColor;
             ctx.beginPath(); ctx.arc(cv.x, cv.y, 5, 0, Math.PI * 2); ctx.fill();
 
-            // 座標表示 (Vertex)
-            ctx.fillStyle = vertexColor;
-            ctx.font = 'bold 14px "OutFit", sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'bottom';
-
-            // 表示用の数値整形（整数なら整数、少数なら最大1桁）
-            const vxStr = Number(graphVertex.x).toLocaleString(undefined, {
-                maximumFractionDigits: 1
-            });
-
-            const vyStr = Number(graphVertex.y).toLocaleString(undefined, {
-                maximumFractionDigits: 1
-            });
-
-            ctx.fillText(`(${vxStr}, ${vyStr})`, cv.x + 8, cv.y - 8);
+            // 座標表示 (Vertex) - 整数座標の場合のみ表示
+            if (Number.isInteger(graphVertex.x) && Number.isInteger(graphVertex.y)) {
+                ctx.fillStyle = vertexColor;
+                ctx.font = 'bold 14px "OutFit", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(`(${graphVertex.x}, ${graphVertex.y})`, cv.x + 8, cv.y - 8);
+            }
 
             if (graphPoint) {
                 const cp = logicalToCanvas(graphPoint.x, graphPoint.y);
                 ctx.fillStyle = pointColor;
                 ctx.beginPath(); ctx.arc(cp.x, cp.y, 5, 0, Math.PI * 2); ctx.fill();
 
-                // 座標表示 (Pass Point)
-                ctx.fillStyle = pointColor;
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'bottom'; // 統一
-
-                const pxStr = Number(graphPoint.x).toLocaleString(undefined, {
-                    maximumFractionDigits: 1
-                });
-
-                const pyStr = Number(graphPoint.y).toLocaleString(undefined, {
-                    maximumFractionDigits: 1
-                });
-
-                ctx.fillText(`(${pxStr}, ${pyStr})`, cp.x + 8, cp.y - 8);
+                // 座標表示 (Pass Point) - 整数座標の場合のみ表示
+                if (Number.isInteger(graphPoint.x) && Number.isInteger(graphPoint.y)) {
+                    ctx.fillStyle = pointColor;
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'bottom'; // 統一
+                    ctx.fillText(`(${graphPoint.x}, ${graphPoint.y})`, cp.x + 8, cp.y - 8);
+                }
 
                 // Draw Parabola
                 // y = a(x-p)^2 + q
