@@ -2437,7 +2437,7 @@
                 leftPanel.style.width = `${leftWidthPercent}vw`;
                 rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
                 rightPanel.style.width = `${100 - leftWidthPercent}vw`;
-                resizeCanvas();
+                // resizeCanvas(); // 描画中のリサイズ負荷軽減のため、ドラッグ中はリサイズしない
             }
         });
 
@@ -2469,7 +2469,7 @@
                 leftPanel.style.width = `${leftWidthPercent}vw`;
                 rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
                 rightPanel.style.width = `${100 - leftWidthPercent}vw`;
-                resizeCanvas();
+                // resizeCanvas(); // 描画中のリサイズ負荷軽減のため、ドラッグ中はリサイズしない
             }
         }, { passive: false });
 
