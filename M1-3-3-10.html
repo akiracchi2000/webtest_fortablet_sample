@@ -801,6 +801,11 @@
         let currentTool = 'pen'; // 'pen' or 'eraser'
         let memoHistory = []; // Undo用履歴
         let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
+        // スムージング用の変数
+        let lastX = 0;
+        let lastY = 0;
+        let lastTipX = 0;
+        let lastTipY = 0;
 
         document.addEventListener("DOMContentLoaded", function () {
             initAudioContext(); // オーディオコンテキストの初期化準備
@@ -1873,17 +1878,18 @@
 
         function startDrawing(e) {
             isDrawing = true;
-            draw(e);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
+            lastX = x;
+            lastY = y;
+            lastTipX = x;
+            lastTipY = y;
+
+            ctx.beginPath();
             ctx.lineCap = 'round';
-            ctx.lineJoin = 'round'; // 角を丸くする
+            ctx.lineJoin = 'round';
 
             if (currentTool === 'pen') {
                 ctx.globalCompositeOperation = 'source-over';
@@ -1899,15 +1905,45 @@
                 ctx.strokeStyle = 'rgba(0,0,0,1)';
             }
 
+            // 点を描画 (クリックだけの場合用)
+            ctx.moveTo(x, y);
             ctx.lineTo(x, y);
             ctx.stroke();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // 中点を計算 (制御点: lastX, lastY, 終点: midX, midY)
+            const midX = (lastX + x) / 2;
+            const midY = (lastY + y) / 2;
+
             ctx.beginPath();
-            ctx.moveTo(x, y);
+            ctx.moveTo(lastTipX, lastTipY);
+            ctx.quadraticCurveTo(lastX, lastY, midX, midY);
+            ctx.stroke();
+
+            // 変数を更新
+            lastX = x;
+            lastY = y;
+            lastTipX = midX;
+            lastTipY = midY;
         }
 
         function stopDrawing() {
+            if (!isDrawing) return;
             isDrawing = false;
+
+            // 最後の区間を描画 (lastTipから現在のlastX, lastYまで)
             ctx.beginPath();
+            ctx.moveTo(lastTipX, lastTipY);
+            ctx.lineTo(lastX, lastY);
+            ctx.stroke();
+            ctx.closePath();
+
             saveMemoState();
         }
 
@@ -2440,7 +2476,7 @@
     </div>
     <!-- Version Info -->
     <script>
-        (function(){
+        (function () {
             const APP_VERSION = "v1.1.0";
             if (!document.getElementById('app-version')) {
                 const vDiv = document.createElement('div');
@@ -2463,4 +2499,3 @@
 </body>
 
 </html>
-
