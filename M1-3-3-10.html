@@ -585,6 +585,7 @@
             border-radius: 5px;
             font-weight: bold;
             transition: background 0.3s;
+            touch-action: manipulation;
         }
 
         #image-preview-modal .close-btn {
@@ -837,6 +838,7 @@
                 // 左パネル、モーダル、またはツールバー内の要素（ボタンなど）での操作は許可
                 if (!e.target.closest('#left-panel') &&
                     !e.target.closest('.modal-content') &&
+                    !e.target.closest('#image-preview-modal') &&
                     !e.target.closest('#memo-toolbar')) {
                     e.preventDefault();
                 }
