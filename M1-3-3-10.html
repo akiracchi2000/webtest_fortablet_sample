@@ -799,13 +799,15 @@
         let ctx;
         let isDrawing = false;
         let currentTool = 'pen'; // 'pen' or 'eraser'
-        let memoHistory = []; // Undo用履歴
-        let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
         // スムージング用の変数
         let lastX = 0;
         let lastY = 0;
-        let lastTipX = 0;
+        let lastTipX = 0; // 最後に描画した曲線の終点（次の曲線の始点）
         let lastTipY = 0;
+
+        let currentRawX = 0; // 最新の生の座標（補間用）
+        let currentRawY = 0;
+        const minDistance = 2; // 描画処理を行う最小距離 (px)
 
         document.addEventListener("DOMContentLoaded", function () {
             initAudioContext(); // オーディオコンテキストの初期化準備
@@ -858,6 +860,11 @@
                 }
             }, { passive: true });
         });
+
+        // (中略)
+
+
+
 
         // --- クイズ初期化 ---
         function initQuiz() {
@@ -1883,6 +1890,8 @@
             lastY = y;
             lastTipX = x;
             lastTipY = y;
+            currentRawX = x;
+            currentRawY = y;
 
             ctx.beginPath();
             ctx.lineCap = 'round';
@@ -1915,10 +1924,20 @@
             ctx.beginPath();
             ctx.moveTo(lastTipX, lastTipY);
 
-            // 全イベントを1つのパスとして処理
+            // 全イベントを処理
             for (const e of events) {
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
+
+                // 生の座標は常に更新（stopDrawingで使用するため）
+                currentRawX = x;
+                currentRawY = y;
+
+                // 距離判定 (filter)
+                const dist = Math.hypot(x - lastX, y - lastY);
+                if (dist < minDistance) {
+                    continue; // 距離が近すぎる場合は無視（ジッター軽減）
+                }
 
                 // 中点を計算 (制御点: lastX, lastY, 終点: midX, midY)
                 const midX = (lastX + x) / 2;
@@ -1940,10 +1959,11 @@
             if (!isDrawing) return;
             isDrawing = false;
 
-            // 最後の区間を描画 (lastTipから現在のlastX, lastYまで)
+            // 最後の区間を描画 (lastTipから現在の生の座標まで)
+            // これにより、フィルタリングで無視された最後の微小区間もしっかり閉じる
             ctx.beginPath();
             ctx.moveTo(lastTipX, lastTipY);
-            ctx.lineTo(lastX, lastY);
+            ctx.lineTo(currentRawX, currentRawY);
             ctx.stroke();
             ctx.closePath();
 
