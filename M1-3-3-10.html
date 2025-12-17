@@ -1751,6 +1751,7 @@
         }
 
         // --- キャンバス機能 ---
+        // --- キャンバス機能 ---
         function initCanvas() {
             canvas = document.getElementById('memo-pad');
             ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -1777,16 +1778,12 @@
                         return;
                     }
 
-                    // 補間イベント（Coalesced Events）の処理
-                    // これにより、描画ポイントが増え、線が滑らかになります
-                    if (e.getCoalescedEvents) {
-                        const events = e.getCoalescedEvents();
-                        for (const event of events) {
-                            draw(event);
-                        }
-                    } else {
-                        draw(e);
-                    }
+                    // バッチ処理で描画 (太さを一定にするため)
+                    const events = (e.getCoalescedEvents && e.getCoalescedEvents().length > 0)
+                        ? e.getCoalescedEvents()
+                        : [e];
+                    drawBatch(events);
+
                     updateCursor(e);
                 });
 
@@ -1811,7 +1808,7 @@
             } else {
                 // フォールバック (古いブラウザ用)
                 canvas.addEventListener('mousedown', startDrawing);
-                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mousemove', (e) => drawBatch([e]));
                 canvas.addEventListener('mouseup', stopDrawing);
                 canvas.addEventListener('mouseout', stopDrawing);
 
@@ -1911,26 +1908,32 @@
             ctx.stroke();
         }
 
-        function draw(e) {
+        function drawBatch(events) {
             if (!isDrawing) return;
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            // 中点を計算 (制御点: lastX, lastY, 終点: midX, midY)
-            const midX = (lastX + x) / 2;
-            const midY = (lastY + y) / 2;
 
             ctx.beginPath();
             ctx.moveTo(lastTipX, lastTipY);
-            ctx.quadraticCurveTo(lastX, lastY, midX, midY);
-            ctx.stroke();
 
-            // 変数を更新
-            lastX = x;
-            lastY = y;
-            lastTipX = midX;
-            lastTipY = midY;
+            // 全イベントを1つのパスとして処理
+            for (const e of events) {
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // 中点を計算 (制御点: lastX, lastY, 終点: midX, midY)
+                const midX = (lastX + x) / 2;
+                const midY = (lastY + y) / 2;
+
+                ctx.quadraticCurveTo(lastX, lastY, midX, midY);
+
+                // 変数を更新
+                lastX = x;
+                lastY = y;
+                lastTipX = midX;
+                lastTipY = midY;
+            }
+
+            ctx.stroke();
         }
 
         function stopDrawing() {
