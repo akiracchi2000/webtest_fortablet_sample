@@ -799,6 +799,8 @@
         let ctx;
         let isDrawing = false;
         let currentTool = 'pen'; // 'pen' or 'eraser'
+        let memoHistory = []; // Undo用履歴
+        let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
         // スムージング用の変数
         let lastX = 0;
         let lastY = 0;
