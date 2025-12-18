@@ -1887,10 +1887,27 @@
             }
         }
 
+        // ストローク補間用の変数
+        let lastX = 0;
+        let lastY = 0;
+
         function startDrawing(e) {
             saveMemoState(); // 描画開始前に履歴保存
             isDrawing = true;
-            draw(e);
+
+            const rect = canvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            // 点描画（クリックのみの場合用）
+            ctx.lineTo(lastX, lastY);
+            ctx.stroke();
+
+            // 連続描画の準備
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
         }
 
         function draw(e) {
@@ -1900,6 +1917,7 @@
             const y = e.clientY - rect.top;
 
             ctx.lineCap = 'round';
+            ctx.lineJoin = 'round'; // 角を丸くする
 
             if (currentTool === 'pen') {
                 ctx.globalCompositeOperation = 'source-over';
@@ -1912,16 +1930,34 @@
             } else if (currentTool === 'eraser') {
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.lineWidth = 20;
-                ctx.strokeStyle = 'rgba(0,0,0,1)'; // 色は関係ないが念のため
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
             }
 
-            ctx.lineTo(x, y);
+            // ベジェ曲線による補間描画
+            // 前回の点(lastX, lastY)と今回の点(x, y)の中点を制御点として滑らかにつなぐ
+            const midX = (lastX + x) / 2;
+            const midY = (lastY + y) / 2;
+
+            ctx.quadraticCurveTo(lastX, lastY, midX, midY);
             ctx.stroke();
+
+            // 次の描画のためにパスをリセットして中点へ移動
             ctx.beginPath();
-            ctx.moveTo(x, y);
+            ctx.moveTo(midX, midY);
+
+            // 座標更新
+            lastX = x;
+            lastY = y;
         }
 
         function stopDrawing() {
+            if (!isDrawing) return;
+
+            // 最後の座標まで線を引いて閉じる
+            // (midX, midY) から (lastX, lastY) への直線
+            ctx.lineTo(lastX, lastY);
+            ctx.stroke();
+
             isDrawing = false;
             ctx.beginPath();
             // 描画終了後に設定を戻しておくと安全
