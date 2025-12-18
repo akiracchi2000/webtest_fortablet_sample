@@ -1758,7 +1758,7 @@
         function initCanvas() {
             canvas = document.getElementById('memo-pad');
             ctx = canvas.getContext('2d', { willReadFrequently: true });
-            
+
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -1834,8 +1834,11 @@
 
         function resizeCanvas() {
             const container = document.getElementById('memo-container');
+            const dpr = window.devicePixelRatio || 1;
+
             // 現在の描画内容を一時保存
             const tempCanvas = document.createElement('canvas');
+            // tempCanvasはバックアップ用なので、現在の物理解像度（canvas.width/height）をそのまま引き継ぐ
             tempCanvas.width = canvas.width;
             tempCanvas.height = canvas.height;
             const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
@@ -1843,12 +1846,44 @@
                 tempCtx.drawImage(canvas, 0, 0);
             }
 
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+            // コンテナのCSSサイズを取得
+            const rect = container.getBoundingClientRect();
+
+            // キャンバスの物理サイズをDPR倍にする
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            // CSSサイズはコンテナに合わせる
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+
+            // コンテキストをDPR倍にスケール
+            ctx.scale(dpr, dpr);
 
             // 描画内容を復元
             if (tempCanvas.width > 0 && tempCanvas.height > 0) {
-                ctx.drawImage(tempCanvas, 0, 0);
+                ctx.save();
+                // 復元時はスケールをリセットして物理ピクセル同士で転写する
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                // 元画像を引き伸ばして描画する必要がある場合と、そのまま描画する場合がある
+                // ここでは、resize前後でDPRが変わらない前提ならそのまま描画でよいが、
+                // 初回ロード時などで0から変わる場合などは注意。
+                // 基本的に tempCanvas の内容を 左上(0,0) に width, height そのままで描画すれば、
+                // 物理ピクセルは保存される。
+                // ただし、以前が低解像度(DPR=1)で今回が高解像度(DPR=2)になった場合、
+                // 画像が小さくなってしまう可能性がある。
+                // しかし「にじみ修正」の文脈では、既存の描画が多少ぼやけたまま拡大されても、これから書く線が綺麗ならOK。
+                // むしろ、拡大縮小で位置がずれるのが一番困る。
+                // ここでは「canvasの物理サイズが変わっても、以前の絵をキャンバス全体に引き伸ばす」か
+                // 「左上に配置する」かの選択になるが、
+                // ウィンドウリサイズ対応としては「以前の絵を拡大縮小して全体に合わせる」のが一般的。
+
+                // tempCanvas の元サイズ（物理）と 新しい canvas のサイズ（物理）の比率
+                // 基本的には同じ比率で拡大縮小されているはず（ウィンドウリサイズ時）
+
+                ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.width, canvas.height);
+
+                ctx.restore();
             }
         }
 
