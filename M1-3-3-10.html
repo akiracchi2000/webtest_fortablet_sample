@@ -802,15 +802,7 @@
         let currentTool = 'pen'; // 'pen' or 'eraser'
         let memoHistory = []; // Undo用履歴
         let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
-        // スムージング用の変数
-        let lastX = 0;
-        let lastY = 0;
-        let lastTipX = 0; // 最後に描画した曲線の終点（次の曲線の始点）
-        let lastTipY = 0;
 
-        let currentRawX = 0; // 最新の生の座標（補間用）
-        let currentRawY = 0;
-        const minDistance = 2; // 描画処理を行う最小距離 (px)
 
         document.addEventListener("DOMContentLoaded", function () {
             initAudioContext(); // オーディオコンテキストの初期化準備
@@ -1766,9 +1758,8 @@
         function initCanvas() {
             canvas = document.getElementById('memo-pad');
             ctx = canvas.getContext('2d', { willReadFrequently: true });
-            // イベントリスナーのセットアップ
+            
             resizeCanvas();
-            // resizeCanvasは初期サイズ設定を行う
             window.addEventListener('resize', resizeCanvas);
             canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -1777,27 +1768,22 @@
                 canvas.addEventListener('pointerdown', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
+                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
                     canvas.setPointerCapture(e.pointerId);
                     startDrawing(e);
                 });
-
                 canvas.addEventListener('pointermove', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
+                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
-
-                    // バッチ処理で描画 (太さを一定にするため)
-                    const events = (e.getCoalescedEvents && e.getCoalescedEvents().length > 0)
-                        ? e.getCoalescedEvents()
-                        : [e];
-                    drawBatch(events);
-
+                    // if (e.pointerType === 'touch') e.preventDefault(); // This was already here, but moved to the top
                     updateCursor(e);
+                    draw(e);
                 });
-
                 canvas.addEventListener('pointerup', (e) => {
                     e.preventDefault();
                     canvas.releasePointerCapture(e.pointerId);
@@ -1819,7 +1805,7 @@
             } else {
                 // フォールバック (古いブラウザ用)
                 canvas.addEventListener('mousedown', startDrawing);
-                canvas.addEventListener('mousemove', (e) => drawBatch([e]));
+                canvas.addEventListener('mousemove', draw);
                 canvas.addEventListener('mouseup', stopDrawing);
                 canvas.addEventListener('mouseout', stopDrawing);
 
@@ -1834,7 +1820,6 @@
                 canvas.addEventListener('touchmove', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode) return;
-                    // Touch events do not support coalesced events in the same way directly here
                     const touch = e.touches[0];
                     const mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
                     canvas.dispatchEvent(mouseEvent);
@@ -1849,57 +1834,37 @@
 
         function resizeCanvas() {
             const container = document.getElementById('memo-container');
-            const dpr = window.devicePixelRatio || 1;
-
             // 現在の描画内容を一時保存
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width;
             tempCanvas.height = canvas.height;
-            const tempCtx = tempCanvas.getContext('2d');
+            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
             if (canvas.width > 0 && canvas.height > 0) {
                 tempCtx.drawImage(canvas, 0, 0);
             }
 
-            // コンテナのサイズを取得
-            const rect = container.getBoundingClientRect();
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
 
-            // キャンバスの実サイズをDPIに合わせて設定
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-
-            // CSSサイズはコンテナに合わせる
-            canvas.style.width = `${rect.width}px`;
-            canvas.style.height = `${rect.height}px`;
-
-            // コンテキストのスケールを設定
-            // これにより、以後の描画座標（CSSピクセル単位）が自動的にDPIに合わせて拡大される
-            ctx.scale(dpr, dpr);
-
-            // 描画内容を復元 (ピクセル等倍で書き戻す)
+            // 描画内容を復元
             if (tempCanvas.width > 0 && tempCanvas.height > 0) {
-                ctx.save();
-                ctx.resetTransform(); // スケールを一時的に解除
                 ctx.drawImage(tempCanvas, 0, 0);
-                ctx.restore();
             }
         }
 
         function startDrawing(e) {
+            saveMemoState(); // 描画開始前に履歴保存
             isDrawing = true;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            lastX = x;
-            lastY = y;
-            lastTipX = x;
-            lastTipY = y;
-            currentRawX = x;
-            currentRawY = y;
-
-            ctx.beginPath();
             ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
 
             if (currentTool === 'pen') {
                 ctx.globalCompositeOperation = 'source-over';
@@ -1912,76 +1877,37 @@
             } else if (currentTool === 'eraser') {
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.lineWidth = 20;
-                ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.strokeStyle = 'rgba(0,0,0,1)'; // 色は関係ないが念のため
             }
 
-            // 点を描画 (クリックだけの場合用)
-            ctx.moveTo(x, y);
             ctx.lineTo(x, y);
             ctx.stroke();
-        }
-
-        function drawBatch(events) {
-            if (!isDrawing) return;
-            const rect = canvas.getBoundingClientRect();
-
             ctx.beginPath();
-            ctx.moveTo(lastTipX, lastTipY);
-
-            // 全イベントを処理
-            for (const e of events) {
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                // 生の座標は常に更新（stopDrawingで使用するため）
-                currentRawX = x;
-                currentRawY = y;
-
-                // 距離判定 (filter)
-                const dist = Math.hypot(x - lastX, y - lastY);
-                if (dist < minDistance) {
-                    continue; // 距離が近すぎる場合は無視（ジッター軽減）
-                }
-
-                // 中点を計算 (制御点: lastX, lastY, 終点: midX, midY)
-                const midX = (lastX + x) / 2;
-                const midY = (lastY + y) / 2;
-
-                ctx.quadraticCurveTo(lastX, lastY, midX, midY);
-
-                // 変数を更新
-                lastX = x;
-                lastY = y;
-                lastTipX = midX;
-                lastTipY = midY;
-            }
-
-            ctx.stroke();
+            ctx.moveTo(x, y);
         }
 
         function stopDrawing() {
-            if (!isDrawing) return;
             isDrawing = false;
-
-            // 最後の区間を描画 (lastTipから現在の生の座標まで)
-            // これにより、フィルタリングで無視された最後の微小区間もしっかり閉じる
             ctx.beginPath();
-            ctx.moveTo(lastTipX, lastTipY);
-            ctx.lineTo(currentRawX, currentRawY);
-            ctx.stroke();
-            ctx.closePath();
-
-            saveMemoState();
+            // 描画終了後に設定を戻しておくと安全
+            ctx.globalCompositeOperation = 'source-over';
         }
 
         function updateCursor(e) {
             const cursor = document.getElementById('eraser-cursor');
             if (currentTool === 'eraser') {
-                cursor.style.display = 'block';
-                // Cursor position logic (simple following)
                 const rect = canvas.getBoundingClientRect();
-                cursor.style.left = (e.clientX - rect.left - 10) + 'px'; // Center roughly (assuming 20px cursor)
-                cursor.style.top = (e.clientY - rect.top - 10) + 'px';
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // キャンバス内にあるか確認
+                if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+                    cursor.style.display = 'block';
+                    cursor.style.left = x + 'px';
+                    cursor.style.top = y + 'px';
+                } else {
+                    cursor.style.display = 'none';
+                }
             } else {
                 cursor.style.display = 'none';
             }
