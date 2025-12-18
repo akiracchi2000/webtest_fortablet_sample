@@ -1886,12 +1886,9 @@
             }
         }
 
-        // ストローク補間・安定化用の変数
+        // ストローク補間用の変数
         let lastX = 0;
         let lastY = 0;
-        let lastTP = { x: 0, y: 0 }; // 曲線接続用の終点座標(Target Point)
-        let lastPressure = 0.5;
-        let lastWidth = 3;
 
         function startDrawing(e) {
             saveMemoState(); // 描画開始前に履歴保存
@@ -1900,96 +1897,56 @@
             const rect = canvas.getBoundingClientRect();
             lastX = e.clientX - rect.left;
             lastY = e.clientY - rect.top;
-            lastTP = { x: lastX, y: lastY }; // 初期化
-
-            lastPressure = e.pressure !== undefined ? e.pressure : 0.5;
-            // 筆圧に応じた太さの初期値
-            lastWidth = (lastPressure * 4);
-            if (lastWidth < 1) lastWidth = 1;
 
             ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
             // 点描画（クリックのみの場合用）
-            ctx.fillStyle = (currentTool === 'pen') ? currentPenColor :
-                (currentTool === 'pen-red') ? '#ff0000' : 'rgba(0,0,0,1)';
+            ctx.lineTo(lastX, lastY);
+            ctx.stroke();
 
-            // 消しゴムの場合は大きく
-            let dotSize = (currentTool === 'eraser') ? 20 : lastWidth / 2;
-
-            ctx.arc(lastX, lastY, dotSize, 0, Math.PI * 2);
-            ctx.fill();
-
+            // 連続描画の準備
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
         }
 
         function draw(e) {
             if (!isDrawing) return;
-
-            // Coalesced Events（補間イベント）の取得
-            // これにより、画面リフレッシュレートより高い頻度でペン位置を取得できる
-            const events = (e.getCoalescedEvents && e.pointerType !== 'mouse') ? e.getCoalescedEvents() : [e];
-
-            for (const ev of events) {
-                _drawStroke(ev);
-            }
-        }
-
-        function _drawStroke(e) {
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            const pressure = e.pressure !== undefined ? e.pressure : 0.5;
-
-            // 手ブレ補正（Stabilization）
-            // 直前の点からの距離が近すぎる場合は無視する（ノイズ除去）
-            const dist = Math.hypot(x - lastX, y - lastY);
-            if (dist < 2.0) return;
-
-            // 筆圧による太さの計算
-            let targetWidth = 3; // デフォルト
-            if (currentTool === 'eraser') {
-                targetWidth = 20;
-            } else {
-                // ボールペン風にしたい場合はここを定数にするが
-                // 現状は「筆圧あり」を試すため変動させる（最大5px程度）
-                targetWidth = 1.0 + (pressure * 4.0);
-            }
-
-            // 太さの平滑化（急激な太さ変化を防ぐ）
-            const newWidth = lastWidth * 0.6 + targetWidth * 0.4;
 
             ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+            ctx.lineJoin = 'round'; // 角を丸くする
 
             if (currentTool === 'pen') {
                 ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = 3;
                 ctx.strokeStyle = currentPenColor;
             } else if (currentTool === 'pen-red') {
                 ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = 3;
                 ctx.strokeStyle = '#ff0000';
             } else if (currentTool === 'eraser') {
                 ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineWidth = 20;
                 ctx.strokeStyle = 'rgba(0,0,0,1)';
             }
 
-            ctx.lineWidth = newWidth;
-
-            // ベジェ曲線による補間
-            // Start: lastTP (前回の終点=中点)
-            // Control: lastX, lastY (前回の生座標)
-            // End: midX, midY (今回の中点)
+            // ベジェ曲線による補間描画
+            // 前回の点(lastX, lastY)と今回の点(x, y)の中点を制御点として滑らかにつなぐ
             const midX = (lastX + x) / 2;
             const midY = (lastY + y) / 2;
 
-            ctx.beginPath();
-            ctx.moveTo(lastTP.x, lastTP.y);
             ctx.quadraticCurveTo(lastX, lastY, midX, midY);
             ctx.stroke();
 
-            lastTP = { x: midX, y: midY };
+            // 次の描画のためにパスをリセットして中点へ移動
+            ctx.beginPath();
+            ctx.moveTo(midX, midY);
+
+            // 座標更新
             lastX = x;
             lastY = y;
-            lastWidth = newWidth;
         }
 
         function stopDrawing() {
