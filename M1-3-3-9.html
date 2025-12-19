@@ -1766,22 +1766,13 @@
                     startDrawing(e);
                 });
                 canvas.addEventListener('pointermove', (e) => {
-                    e.preventDefault(); // ブラウザのスクロール等を防止
+                    e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
                         return;
                     }
 
-                    // 補間イベント（Coalesced Events）の処理
-                    // これにより、描画ポイントが増え、線が滑らかになります
-                    if (e.getCoalescedEvents) {
-                        const events = e.getCoalescedEvents();
-                        for (const event of events) {
-                            draw(event);
-                        }
-                    } else {
-                        draw(e);
-                    }
                     updateCursor(e);
+                    draw(e);
                 });
                 canvas.addEventListener('pointerup', (e) => {
                     e.preventDefault();
