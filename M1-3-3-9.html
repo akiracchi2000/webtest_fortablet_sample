@@ -1760,21 +1760,28 @@
                 canvas.addEventListener('pointerdown', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
-                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
                     canvas.setPointerCapture(e.pointerId);
                     startDrawing(e);
                 });
                 canvas.addEventListener('pointermove', (e) => {
-                    e.preventDefault();
+                    e.preventDefault(); // ブラウザのスクロール等を防止
                     if (isPenOnlyMode && e.pointerType === 'touch') {
-                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
-                    // if (e.pointerType === 'touch') e.preventDefault(); // This was already here, but moved to the top
+
+                    // 補間イベント（Coalesced Events）の処理
+                    // これにより、描画ポイントが増え、線が滑らかになります
+                    if (e.getCoalescedEvents) {
+                        const events = e.getCoalescedEvents();
+                        for (const event of events) {
+                            draw(event);
+                        }
+                    } else {
+                        draw(e);
+                    }
                     updateCursor(e);
-                    draw(e);
                 });
                 canvas.addEventListener('pointerup', (e) => {
                     e.preventDefault();
@@ -1826,6 +1833,8 @@
 
         function resizeCanvas() {
             const container = document.getElementById('memo-container');
+            const dpr = window.devicePixelRatio || 1;
+
             // 現在の描画内容を一時保存
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width;
@@ -1835,19 +1844,50 @@
                 tempCtx.drawImage(canvas, 0, 0);
             }
 
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+            // コンテナのCSSサイズを取得
+            const rect = container.getBoundingClientRect();
+
+            // キャンバスの物理サイズをDPR倍にする
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            // CSSサイズはコンテナに合わせる
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+
+            // コンテキストをDPR倍にスケール
+            ctx.scale(dpr, dpr);
 
             // 描画内容を復元
             if (tempCanvas.width > 0 && tempCanvas.height > 0) {
-                ctx.drawImage(tempCanvas, 0, 0);
+                ctx.save();
+                ctx.resetTransform(); // スケールを一時的に解除
+                ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
             }
         }
+
+        // ストローク補間用の変数
+        let lastX = 0;
+        let lastY = 0;
 
         function startDrawing(e) {
             saveMemoState(); // 描画開始前に履歴保存
             isDrawing = true;
-            draw(e);
+
+            const rect = canvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            // 点描画（クリックのみの場合用）
+            ctx.lineTo(lastX, lastY);
+            ctx.stroke();
+
+            // 連続描画の準備
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
         }
 
         function draw(e) {
@@ -1857,6 +1897,7 @@
             const y = e.clientY - rect.top;
 
             ctx.lineCap = 'round';
+            ctx.lineJoin = 'round'; // 角を丸くする
 
             if (currentTool === 'pen') {
                 ctx.globalCompositeOperation = 'source-over';
@@ -1869,16 +1910,34 @@
             } else if (currentTool === 'eraser') {
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.lineWidth = 20;
-                ctx.strokeStyle = 'rgba(0,0,0,1)'; // 色は関係ないが念のため
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
             }
 
-            ctx.lineTo(x, y);
+            // ベジェ曲線による補間描画
+            // 前回の点(lastX, lastY)と今回の点(x, y)の中点を制御点として滑らかにつなぐ
+            const midX = (lastX + x) / 2;
+            const midY = (lastY + y) / 2;
+
+            ctx.quadraticCurveTo(lastX, lastY, midX, midY);
             ctx.stroke();
+
+            // 次の描画のためにパスをリセットして中点へ移動
             ctx.beginPath();
-            ctx.moveTo(x, y);
+            ctx.moveTo(midX, midY);
+
+            // 座標更新
+            lastX = x;
+            lastY = y;
         }
 
         function stopDrawing() {
+            if (!isDrawing) return;
+
+            // 最後の座標まで線を引いて閉じる
+            // (midX, midY) から (lastX, lastY) への直線
+            ctx.lineTo(lastX, lastY);
+            ctx.stroke();
+
             isDrawing = false;
             ctx.beginPath();
             // 描画終了後に設定を戻しておくと安全
