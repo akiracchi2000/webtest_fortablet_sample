@@ -1768,7 +1768,6 @@
                 canvas.addEventListener('pointerdown', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
-                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
                     canvas.setPointerCapture(e.pointerId);
@@ -1777,12 +1776,20 @@
                 canvas.addEventListener('pointermove', (e) => {
                     e.preventDefault();
                     if (isPenOnlyMode && e.pointerType === 'touch') {
-                        // e.preventDefault(); // This was already here, but moved to the top
                         return;
                     }
-                    // if (e.pointerType === 'touch') e.preventDefault(); // This was already here, but moved to the top
+
+                    // 補間イベント（Coalesced Events）の処理
+                    // これにより、描画ポイントが増え、線が滑らかになります
+                    if (e.getCoalescedEvents) {
+                        const events = e.getCoalescedEvents();
+                        for (const event of events) {
+                            draw(event);
+                        }
+                    } else {
+                        draw(e);
+                    }
                     updateCursor(e);
-                    draw(e);
                 });
                 canvas.addEventListener('pointerup', (e) => {
                     e.preventDefault();
@@ -1929,8 +1936,20 @@
         function draw(e) {
             if (!isDrawing) return;
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+
+            // 座標取得ロジックの統一 (startDrawingと同様に)
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+                clientX = e.changedTouches[0].clientX;
+                clientY = e.changedTouches[0].clientY;
+            }
+
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
 
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round'; // 角を丸くする
