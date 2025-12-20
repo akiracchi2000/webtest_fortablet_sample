@@ -1891,22 +1891,39 @@
         let lastY = 0;
 
         function startDrawing(e) {
-            saveMemoState(); // 描画開始前に履歴保存
+            // ここで履歴を保存
+            saveMemoState();
+
             isDrawing = true;
 
+            // --- 追加修正: ペン先を確実にセットする ---
+            // まず座標を取得
             const rect = canvas.getBoundingClientRect();
-            lastX = e.clientX - rect.left;
-            lastY = e.clientY - rect.top;
+            // タッチイベント等の互換性も考慮して座標計算（draw関数と同様のロジック）
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+            // タッチデバイス対応（もしe.touchesがあれば）
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length > 0) { // pointerup等
+                clientX = e.changedTouches[0].clientX;
+                clientY = e.changedTouches[0].clientY;
+            }
 
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            // 点描画（クリックのみの場合用）
-            ctx.lineTo(lastX, lastY);
-            ctx.stroke();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
 
-            // 連続描画の準備
+            // 互換性維持のため追加
+            lastX = x;
+            lastY = y;
+
+            // ★ここが重要: 新しいパスを開始し、始点に移動する
             ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
+            ctx.moveTo(x, y);
+
+            // 念のため draw も呼んでおく（クリックしただけの「点」を描画するため）
+            draw(e);
         }
 
         function draw(e) {
@@ -2480,7 +2497,83 @@
         });
 
 
-        // --- 逋ｽ邏吝愛螳・---
+        // --- キャンバス画像取得用ヘルパー (AIお助け用: 白背景・黒文字・クロッピング) ---
+        function getCanvasImageBase64(scale = 1) {
+            const originalCanvas = document.getElementById('memo-pad');
+            const width = originalCanvas.width;
+            const height = originalCanvas.height;
+            const ctx = originalCanvas.getContext('2d');
+
+            // 1. 元のピクセルデータを取得
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+
+            let minX = width, minY = height, maxX = 0, maxY = 0;
+            let hasPixels = false;
+
+            // 2. ピクセル操作 & バウンディングボックス検出
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    const alpha = data[i + 3];
+
+                    if (alpha > 50) { // 描画あり
+                        data[i] = 0;     // R -> 黒
+                        data[i + 1] = 0; // G -> 黒
+                        data[i + 2] = 0; // B -> 黒
+                        data[i + 3] = 255; // 完全不透明
+
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        hasPixels = true;
+                    } else {
+                        data[i + 3] = 0; // 透明
+                    }
+                }
+            }
+
+            if (!hasPixels) {
+                // 白紙の場合はそのまま返す（後続の判定で弾かれるはず）
+                return originalCanvas.toDataURL('image/png').split(',')[1];
+            }
+
+            // 3. 作業用キャンバスを作る（黒文字のみ）
+            const workCanvas = document.createElement('canvas');
+            workCanvas.width = width;
+            workCanvas.height = height;
+            const workCtx = workCanvas.getContext('2d');
+            workCtx.putImageData(imageData, 0, 0);
+
+            // 4. 切り抜き範囲の計算（パディング追加）
+            const padding = 20;
+            const cropX = Math.max(0, minX - padding);
+            const cropY = Math.max(0, minY - padding);
+            const cropWidth = Math.min(width, maxX + padding) - cropX;
+            const cropHeight = Math.min(height, maxY + padding) - cropY;
+
+            // 5. 提出用キャンバスを作る（切り抜いたサイズ）
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = cropWidth * scale;
+            exportCanvas.height = cropHeight * scale;
+            const exportCtx = exportCanvas.getContext('2d');
+
+            // 背景を白で塗りつぶす
+            exportCtx.fillStyle = '#FFFFFF';
+            exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            // 切り抜いて描画
+            exportCtx.drawImage(
+                workCanvas,
+                cropX, cropY, cropWidth, cropHeight, // 元画像の範囲
+                0, 0, exportCanvas.width, exportCanvas.height // 出力先の範囲
+            );
+
+            return exportCanvas.toDataURL('image/png').split(',')[1];
+        }
+
+        // --- 白紙判定 ---
         function isCanvasBlank(canvas) {
             const context = canvas.getContext('2d', { willReadFrequently: true });
             const pixelBuffer = new Uint32Array(
