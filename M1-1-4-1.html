@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第4節-1 循環小数のテスト (ランダム10題)</title>
+    <title>第4節-1 循環小数</title>
 
     <!-- KaTeX（数式表示ライブラリ） -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
@@ -132,6 +132,65 @@
             flex-direction: column;
             touch-action: none;
             overscroll-behavior: none;
+        }
+
+        /* ===== 解答入力欄 (手書き) ===== */
+        #answer-input-container {
+            padding: 10px;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        #answer-pad-wrapper {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            border: 1px solid var(--border-color);
+            background: var(--memo-bg);
+            /* ダークモード対応 */
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        #answer-pad {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+
+        .answer-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .answer-label {
+            background-color: #007bff;
+            color: #fff;
+            padding: 2px 10px;
+            font-size: 0.9em;
+            font-weight: bold;
+            z-index: 10;
+            border-radius: 3px;
+        }
+
+        .trash-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.0em;
         }
 
         #memo-toolbar {
@@ -585,6 +644,7 @@
             border-radius: 5px;
             font-weight: bold;
             transition: background 0.3s;
+            touch-action: manipulation;
         }
 
         #image-preview-modal .close-btn {
@@ -719,7 +779,17 @@
 
     <!-- 右パネル：メモパッド -->
     <div id="right-panel">
+        <div id="answer-input-container">
+            <div class="answer-tools">
+                <div class="answer-label">解答欄 (手書き)</div>
+                <button class="tool-btn trash-btn" onclick="clearAnswerPad()" title="解答欄をクリア">🗑️</button>
+            </div>
+            <div id="answer-pad-wrapper">
+                <canvas id="answer-pad"></canvas>
+            </div>
+        </div>
         <div id="memo-container">
+            <div class="answer-label">計算用紙</div>
             <div id="memo-question-overlay"></div>
             <div id="eraser-cursor"></div>
             <canvas id="memo-pad"></canvas>
@@ -795,17 +865,14 @@
             }
         }
 
-        let canvas;
-        let ctx;
-        let isDrawing = false;
         let currentTool = 'pen'; // 'pen' or 'eraser'
         let memoHistory = []; // Undo用履歴
         let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
 
         document.addEventListener("DOMContentLoaded", function () {
             initAudioContext(); // オーディオコンテキストの初期化準備
-            initCanvas();
-            setTimeout(resizeCanvas, 100); // レイアウト確定後に再調整
+            initCanvases();
+            setTimeout(resizeCanvases, 100); // レイアウト確定後に再調整
             initQuiz();
             // ダークモード設定を読み込む
             const savedDarkMode = localStorage.getItem('darkMode');
@@ -828,7 +895,7 @@
                 // 左パネル、モーダル、またはツールバー内の要素（ボタンなど）での操作は許可
                 if (!e.target.closest('#left-panel') &&
                     !e.target.closest('.modal-content') &&
-                    !e.target.closest('#memo-toolbar')) {
+                    !e.target.closest('#image-preview-modal') && !e.target.closest('#memo-toolbar')) {
                     e.preventDefault();
                 }
             }, { passive: false });
@@ -895,13 +962,13 @@
                 const newUrl = window.location.pathname + window.location.hash;
                 window.history.replaceState(null, '', newUrl);
             } else if (isResumeOn) {
-                const savedData = localStorage.getItem('quiz_progress_M1-1-4-1');
+                const savedData = localStorage.getItem('quiz_progress_M1-1-4-13');
                 if (savedData) {
                     if (confirm("前回の続きから始めますか？")) {
                         restoreProgress(JSON.parse(savedData));
                         return;
                     } else {
-                        localStorage.removeItem('quiz_progress_M1-1-4-1'); // キャンセルしたら削除
+                        localStorage.removeItem('quiz_progress_M1-1-4-13'); // キャンセルしたら削除
                     }
                 }
             }
@@ -939,6 +1006,7 @@
 
             // メモは消さない（ユーザーが前の計算を残したいかもしれないので）
             clearMemo();
+            clearAnswerPad();
 
             // メモの「問題を表示」をリセット
             document.getElementById('memo-question-overlay').style.display = 'none';
@@ -947,7 +1015,7 @@
             updateProgressAndScore();
             saveProgress(); // 進行状況を保存
 
-            
+
 
             const currentQuestion = quizData[currentQuestionIndex];
             questionNumberEl.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
@@ -1087,12 +1155,21 @@
             updateProgressAndScore();
         }
 
+        // --- 白紙チェック ---
+        function isCanvasBlank(canvas) {
+            if (!canvas) return true;
+            const ctx = canvas.getContext('2d');
+            const pixelBuffer = new Uint32Array(
+                ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+            );
+            return !pixelBuffer.some(color => color !== 0);
+        }
+
         // --- キャンバス画像取得用ヘルパー (AIお助け用: 白背景・黒文字・クロッピング) ---
-        function getCanvasImageBase64(scale = 1) {
-            const originalCanvas = document.getElementById('memo-pad');
-            const width = originalCanvas.width;
-            const height = originalCanvas.height;
-            const ctx = originalCanvas.getContext('2d');
+        function getCanvasImageBase64(canvasElement, scale = 1) {
+            const width = canvasElement.width;
+            const height = canvasElement.height;
+            const ctx = canvasElement.getContext('2d');
 
             // 1. 元のピクセルデータを取得
             const imageData = ctx.getImageData(0, 0, width, height);
@@ -1126,7 +1203,7 @@
 
             if (!hasPixels) {
                 // 白紙の場合はそのまま返す（後続の判定で弾かれるはず）
-                return originalCanvas.toDataURL('image/png').split(',')[1];
+                return canvasElement.toDataURL('image/png').split(',')[1];
             }
 
             // 3. 作業用キャンバスを作る（黒文字のみ）
@@ -1196,19 +1273,23 @@
                 answerBtn.style.display = 'block';
                 return;
             }
-            // --- 逋ｽ邏吶メ繧ｧ繝・け ---
+            // --- 白紙チェック (両方チェック) ---
             const memoPad = document.getElementById('memo-pad');
-            if (typeof isCanvasBlank === 'function' && isCanvasBlank(memoPad)) {
+            const answerPad = document.getElementById('answer-pad');
+
+            const isMemoBlank = isCanvasBlank(memoPad);
+            const isAnswerBlank = isCanvasBlank(answerPad);
+
+            if (isMemoBlank && isAnswerBlank) {
                 indicator.style.display = 'none';
                 playSound('incorrect');
 
                 const feedbackEl = document.getElementById('feedback');
-
                 feedbackEl.className = 'incorrect-feedback';
                 feedbackEl.innerHTML = `
                     <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
-                    <span style="color: var(--incorrect-color);"><strong>メモが白紙のようです💦</strong></span><br>
-                    メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！<br>
+                    <span style="color: var(--incorrect-color);"><strong>解答が見当たりません💦</strong></span><br>
+                    解答欄または計算用紙になにか書いてからボタンを押してくださいね！<br>
                     <div class="wrong-decision-area">
                         <button class="tool-btn ai-btn wrong-decision-btn" onclick="retryCurrentQuestion()">🔁 もう一度解く</button>
                     </div>
@@ -1221,13 +1302,17 @@
             const currentQuestion = quizData[currentQuestionIndex];
 
             try {
-                // html2canvas廃止 -> 直接キャンバスから画像を生成
-                const imageData = getCanvasImageBase64(1);
+                // 2つのキャンバスから画像を取得
+                const memoImage = getCanvasImageBase64(memoPad, 1);
+                const answerImage = getCanvasImageBase64(answerPad, 1);
 
                 const prompt = `
 あなたは高校数学の「誤り診断」に特化した添削者です。
-以下の問題に対する生徒の手書き解答（画像）を読み取り，
-最終答案の正誤と，途中式の数学的整合性だけを判定してください。
+画像データとして「生徒の手書き解答」が送られます。
+- **1枚目の画像**: 画面上部の「解答欄」（Final Answer）です。
+- **2枚目の画像**: 画面下部の「計算用紙」（Scratchpad / Process）です。
+
+これらを読み取り，最終答案の正誤と，途中式の数学的整合性だけを判定してください。
 
 【重要確認事項】
 - 画像は手書きの文字です。特に**数字の「0」や「6」「8」「9」などの閉じた数字**を注意深く読み取ってください。
@@ -1285,7 +1370,7 @@
 0. 【最重要】画像にユーザーの手書きが全く見当たらない（白紙）場合は、絶対に「不正解」と判定し、isCorrect: false を返してください。「回答が見当たりません」と指摘してください。
 1. 画像に何も書かれていない，または白紙に近い場合は必ず不正解とする。
 2. その場合は以下のJSONのみを出力して終了する：
-   {"isCorrect": false, "hasProcessError": false, "recognizedAnswer": "", "feedback": "メモ帳に記述がない場合は分析ができないので，解答はメモ帳に書いてくださいね！"}
+   {"isCorrect": false, "hasProcessError": false, "recognizedAnswer": "", "feedback": "記述が見当たりません。解答は解答欄またはメモ帳に書いてくださいね。"}
 3. 最終答案が正解と一致している場合のみ isCorrect を true とする。
    - 有理化で同じ，同値変形，積の順序違いなどは正解扱い。
    - 途中式に誤りがあるかどうかは isCorrect ではなく hasProcessError で判定し，
@@ -1370,7 +1455,13 @@
                                     {
                                         inline_data: {
                                             mime_type: "image/png",
-                                            data: imageData
+                                            data: answerImage // 1枚目: 解答欄
+                                        }
+                                    },
+                                    {
+                                        inline_data: {
+                                            mime_type: "image/png",
+                                            data: memoImage // 2枚目: 計算用紙
                                         }
                                     }
                                 ]
@@ -1488,7 +1579,7 @@
                 }
             }
 
-            
+
 
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = (selectedAnswer === currentQuestion.answer);
@@ -1517,7 +1608,7 @@
 
             // ★ AI分析ボタンを追加 (不正解時のみ)
             if (!isCorrect) {
-                feedbackEl.innerHTML += `<button class="ai-btn" onclick="analyzeError()">🤖 AIカガワ先生に聞く (v2)</button><small> (メモを分析します)<small><br>`;
+                feedbackEl.innerHTML += `<button class="ai-btn" onclick="checkAnswerWithAI()">🤖 AIカガワ先生に聞く (v2)</button><small> (メモを分析します)<small><br>`;
 
                 // 間違えた問題を記録
                 if (!incorrectQuestions.includes(currentQuestion)) {
@@ -1750,7 +1841,7 @@
         }
 
         // --- キャンバス機能 ---
-                // --- 逋ｽ邏吝愛螳・---
+        // --- 逋ｽ邏吝愛螳・---
         function isCanvasBlank(canvas) {
             const context = canvas.getContext('2d', { willReadFrequently: true });
             const pixelBuffer = new Uint32Array(
@@ -1760,96 +1851,20 @@
         }
 
         // --- 繧ｭ繝｣繝ｳ繝舌せ讖溯・ ---
-        function initCanvas() {
-            canvas = document.getElementById('memo-pad');
-            ctx = canvas.getContext('2d', { willReadFrequently: true });
-            // イベントリスナーのセットアップ
-            resizeCanvas();
-            // resizeCanvasは初期サイズ設定を行う
-            window.addEventListener('resize', resizeCanvas);
-            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-
-            if (window.PointerEvent) {
-                // Pointer Events (モダンブラウザ・タブレット向け)
-                canvas.addEventListener('pointerdown', (e) => {
-                    e.preventDefault();
-                    if (isPenOnlyMode && e.pointerType === 'touch') {
-                        return;
-                    }
-                    canvas.setPointerCapture(e.pointerId);
-                    startDrawing(e);
-                });
-
-                canvas.addEventListener('pointermove', (e) => {
-                    e.preventDefault();
-                    if (isPenOnlyMode && e.pointerType === 'touch') {
-                        return;
-                    }
-
-                    // 補間イベント（Coalesced Events）の処理
-                    // これにより、描画ポイントが増え、線が滑らかになります
-                    if (e.getCoalescedEvents) {
-                        const events = e.getCoalescedEvents();
-                        for (const event of events) {
-                            draw(event);
-                        }
-                    } else {
-                        draw(e);
-                    }
-                    updateCursor(e);
-                });
-
-                canvas.addEventListener('pointerup', (e) => {
-                    e.preventDefault();
-                    canvas.releasePointerCapture(e.pointerId);
-                    stopDrawing();
-                    updateCursor(e);
-                });
-                canvas.addEventListener('pointerenter', (e) => {
-                    if (currentTool === 'eraser') {
-                        document.getElementById('eraser-cursor').style.display = 'block';
-                    }
-                });
-                canvas.addEventListener('pointerleave', (e) => {
-                    document.getElementById('eraser-cursor').style.display = 'none';
-                });
-                canvas.addEventListener('pointercancel', (e) => {
-                    canvas.releasePointerCapture(e.pointerId);
-                    stopDrawing();
-                });
-            } else {
-                // フォールバック (古いブラウザ用)
-                canvas.addEventListener('mousedown', startDrawing);
-                canvas.addEventListener('mousemove', draw);
-                canvas.addEventListener('mouseup', stopDrawing);
-                canvas.addEventListener('mouseout', stopDrawing);
-
-                canvas.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    if (isPenOnlyMode) return;
-                    const touch = e.touches[0];
-                    const mouseEvent = new MouseEvent("mousedown", { clientX: touch.clientX, clientY: touch.clientY });
-                    canvas.dispatchEvent(mouseEvent);
-                }, { passive: false });
-
-                canvas.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                    if (isPenOnlyMode) return;
-                    // Touch events do not support coalesced events in the same way directly here
-                    const touch = e.touches[0];
-                    const mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
-                    canvas.dispatchEvent(mouseEvent);
-                }, { passive: false });
-
-                canvas.addEventListener('touchend', () => {
-                    if (isPenOnlyMode) return;
-                    canvas.dispatchEvent(new MouseEvent("mouseup", {}));
-                });
-            }
+        function initCanvases() {
+            setupDrawingCanvas(document.getElementById('memo-pad'), true);
+            setupDrawingCanvas(document.getElementById('answer-pad'), false);
+            window.addEventListener('resize', resizeCanvases);
+            resizeCanvases(); // 初期サイズ設定
         }
 
-        function resizeCanvas() {
-            const container = document.getElementById('memo-container');
+        function resizeCanvases() {
+            resizeCanvasElement(document.getElementById('memo-pad'));
+            resizeCanvasElement(document.getElementById('answer-pad'));
+        }
+
+        function resizeCanvasElement(canvas) {
+            if (!canvas) return;
             const dpr = window.devicePixelRatio || 1;
 
             // 現在の描画内容を一時保存
@@ -1862,6 +1877,7 @@
             }
 
             // コンテナのサイズを取得
+            const container = canvas.parentElement;
             const rect = container.getBoundingClientRect();
 
             // キャンバスの実サイズをDPIに合わせて設定
@@ -1871,6 +1887,8 @@
             // CSSサイズはコンテナに合わせる
             canvas.style.width = `${rect.width}px`;
             canvas.style.height = `${rect.height}px`;
+
+            const ctx = canvas.getContext('2d');
 
             // コンテキストのスケールを設定
             // これにより、以後の描画座標（CSSピクセル単位）が自動的にDPIに合わせて拡大される
@@ -1886,15 +1904,20 @@
         }
 
         function startDrawing(e) {
-            isDrawing = true;
+            const canvas = e.target;
+            if (!canvas.ctx) return;
+            canvas.isDrawing = true;
             draw(e);
         }
 
         function draw(e) {
-            if (!isDrawing) return;
+            const canvas = e.target;
+            if (!canvas.isDrawing || !canvas.ctx) return;
+
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
+            const ctx = canvas.ctx;
 
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round'; // 角を丸くする
@@ -1919,26 +1942,95 @@
             ctx.moveTo(x, y);
         }
 
-        function stopDrawing() {
-            isDrawing = false;
-            ctx.beginPath();
-            saveMemoState();
+        function stopDrawing(e) {
+            const canvas = e.target;
+            if (!canvas) return;
+            canvas.isDrawing = false;
+            // beginPath は ctx に対して行う必要がある
+            if (canvas.ctx) canvas.ctx.beginPath();
+
+            if (canvas.id === 'memo-pad') {
+                saveMemoState();
+            }
+        }
+
+        function clearAnswerPad() {
+            const canvas = document.getElementById('answer-pad');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // キャンバスごとの設定
+        function setupDrawingCanvas(canvas, enableHistory) {
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            canvas.ctx = ctx; // 要素に紐付け
+            canvas.isDrawing = false; // 状態も紐付け
+
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            if (window.PointerEvent) {
+                canvas.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    if (isPenOnlyMode && e.pointerType === 'touch') return;
+                    canvas.setPointerCapture(e.pointerId);
+                    startDrawing(e);
+                });
+                canvas.addEventListener('pointermove', (e) => {
+                    e.preventDefault();
+                    if (isPenOnlyMode && e.pointerType === 'touch') return;
+                    if (e.getCoalescedEvents) {
+                        const events = e.getCoalescedEvents();
+                        for (const event of events) draw(event);
+                    } else {
+                        draw(e);
+                    }
+                    if (canvas.id === 'memo-pad') updateCursor(e);
+                });
+                canvas.addEventListener('pointerup', (e) => {
+                    e.preventDefault();
+                    canvas.releasePointerCapture(e.pointerId);
+                    stopDrawing(e);
+                    if (canvas.id === 'memo-pad') updateCursor(e);
+                });
+                canvas.addEventListener('pointerenter', (e) => {
+                    if (canvas.id === 'memo-pad' && currentTool === 'eraser') {
+                        document.getElementById('eraser-cursor').style.display = 'block';
+                    }
+                });
+                canvas.addEventListener('pointerleave', (e) => {
+                    document.getElementById('eraser-cursor').style.display = 'none';
+                });
+                canvas.addEventListener('pointercancel', (e) => {
+                    canvas.releasePointerCapture(e.pointerId);
+                    stopDrawing(e);
+                });
+            } else {
+                // Fallback
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseout', stopDrawing);
+            }
         }
 
         function updateCursor(e) {
             const cursor = document.getElementById('eraser-cursor');
-            if (currentTool === 'eraser') {
+            const canvas = e.target;
+            if (currentTool === 'eraser' && canvas.id === 'memo-pad') {
                 cursor.style.display = 'block';
-                // Cursor position logic (simple following)
                 const rect = canvas.getBoundingClientRect();
-                cursor.style.left = (e.clientX - rect.left - 10) + 'px'; // Center roughly (assuming 20px cursor)
-                cursor.style.top = (e.clientY - rect.top - 10) + 'px';
+                cursor.style.left = (e.clientX - rect.left) + 'px'; // Center roughly (assuming 20px cursor)
+                cursor.style.top = (e.clientY - rect.top) + 'px';
             } else {
                 cursor.style.display = 'none';
             }
         }
 
         function saveMemoState() {
+            const canvas = document.getElementById('memo-pad');
+            const ctx = canvas.ctx;
+            if (!ctx) return;
+
             // 履歴は最大10件まで
             if (memoHistory.length >= 10) {
                 memoHistory.shift();
@@ -1947,6 +2039,10 @@
         }
 
         function undoMemo() {
+            const canvas = document.getElementById('memo-pad');
+            const ctx = canvas.ctx;
+            if (!ctx) return;
+
             if (memoHistory.length > 0) {
                 const lastState = memoHistory.pop();
                 ctx.putImageData(lastState, 0, 0);
@@ -1968,6 +2064,8 @@
         }
 
         function clearMemo() {
+            const canvas = document.getElementById('memo-pad');
+            const ctx = canvas.getContext('2d'); // or canvas.ctx
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
@@ -2090,11 +2188,14 @@
             // ペンの色を変更
             currentPenColor = isDarkMode ? '#fff' : '#000';
 
-            // キャンバスの色反転
-            invertCanvas();
+            // キャンバスの色反転 (両方)
+            invertCanvas(document.getElementById('memo-pad'));
+            invertCanvas(document.getElementById('answer-pad'));
         }
 
-        function invertCanvas() {
+        function invertCanvas(canvas) {
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
 
@@ -2116,8 +2217,8 @@
             }
             ctx.putImageData(imageData, 0, 0);
 
-            // 履歴も反転させる必要があるが、今回は簡易的に履歴をクリアする
-            memoHistory = [];
+            // 履歴も本来は反転させるべきだが、簡易的にクリア等はしないでおく
+            // 必要なら memoHistory を走査して反転
         }
 
         // --- レジューム機能 ---
@@ -2155,7 +2256,7 @@
                 startTime: startTime,
                 timestamp: Date.now()
             };
-            localStorage.setItem('quiz_progress_M1-1-4-1', JSON.stringify(data));
+            localStorage.setItem('quiz_progress_M1-1-4-13', JSON.stringify(data));
         }
 
         function restoreProgress(data) {
@@ -2170,7 +2271,7 @@
         }
 
         function clearProgress() {
-            localStorage.removeItem('quiz_progress_M1-1-4-1');
+            localStorage.removeItem('quiz_progress_M1-1-4-13');
         }
 
         // --- フルスクリーン機能 ---
@@ -2390,7 +2491,7 @@
                 leftPanel.style.width = `${leftWidthPercent}vw`;
                 rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
                 rightPanel.style.width = `${100 - leftWidthPercent}vw`;
-                resizeCanvas();
+                // resizeCanvas(); // 描画中のリサイズ負荷軽減のため、ドラッグ中はリサイズしない
             }
         });
 
@@ -2422,7 +2523,7 @@
                 leftPanel.style.width = `${leftWidthPercent}vw`;
                 rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
                 rightPanel.style.width = `${100 - leftWidthPercent}vw`;
-                resizeCanvas();
+                // resizeCanvas(); // 描画中のリサイズ負荷軽減のため、ドラッグ中はリサイズしない
             }
         }, { passive: false });
 
@@ -2446,7 +2547,7 @@
     </div>
     <!-- Version Info -->
     <script>
-        (function(){
+        (function () {
             const APP_VERSION = "v1.1.0";
             if (!document.getElementById('app-version')) {
                 const vDiv = document.createElement('div');
@@ -2469,9 +2570,3 @@
 </body>
 
 </html>
-
-
-
-
-
-

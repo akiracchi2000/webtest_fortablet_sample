@@ -585,6 +585,7 @@
             border-radius: 5px;
             font-weight: bold;
             transition: background 0.3s;
+            touch-action: manipulation;
         }
 
         #image-preview-modal .close-btn {
@@ -875,7 +876,7 @@
                 // 左パネル、モーダル、またはツールバー内の要素（ボタンなど）での操作は許可
                 if (!e.target.closest('#left-panel') &&
                     !e.target.closest('.modal-content') &&
-                    !e.target.closest('#memo-toolbar')) {
+                    !e.target.closest('#image-preview-modal') && !e.target.closest('#memo-toolbar')) {
                     e.preventDefault();
                 }
             }, { passive: false });
@@ -1027,7 +1028,7 @@
             updateProgressAndScore();
             saveProgress(); // 進行状況を保存
 
-            
+
 
             const currentQuestion = quizData[currentQuestionIndex];
             questionNumberEl.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
@@ -1570,7 +1571,7 @@
                 }
             }
 
-            
+
 
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = (selectedAnswer === currentQuestion.answer);
@@ -1599,7 +1600,7 @@
 
             // ★ AI分析ボタンを追加 (不正解時のみ)
             if (!isCorrect) {
-                feedbackEl.innerHTML += `<button class="ai-btn" onclick="analyzeError()">🤖 AIカガワ先生に聞く (v2)</button><small> (メモを分析します)<small><br>`;
+                feedbackEl.innerHTML += `<button class="ai-btn" onclick="checkAnswerWithAI()">🤖 AIカガワ先生に聞く (v2)</button><small> (メモを分析します)<small><br>`;
 
                 // 間違えた問題を記録
                 if (!incorrectQuestions.includes(currentQuestion)) {
@@ -1832,7 +1833,7 @@
         }
 
         // --- キャンバス機能 ---
-                // --- 逋ｽ邏吝愛螳・---
+        // --- 逋ｽ邏吝愛螳・---
         function isCanvasBlank(canvas) {
             const context = canvas.getContext('2d', { willReadFrequently: true });
             const pixelBuffer = new Uint32Array(
@@ -2350,7 +2351,7 @@
         });
 
         // --- AI分析 ---
-        async function analyzeError() {
+        async function analyzeError_OLD() {
             const modal = document.getElementById('ai-modal');
             const content = document.getElementById('ai-content');
             modal.style.display = 'flex';
@@ -2547,7 +2548,7 @@
                 leftPanel.style.width = `${leftWidthPercent}vw`;
                 rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
                 rightPanel.style.width = `${100 - leftWidthPercent}vw`;
-                resizeCanvas();
+                // resizeCanvas(); // 描画中のリサイズ負荷軽減のため、ドラッグ中はリサイズしない
             }
         });
 
@@ -2579,7 +2580,7 @@
                 leftPanel.style.width = `${leftWidthPercent}vw`;
                 rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
                 rightPanel.style.width = `${100 - leftWidthPercent}vw`;
-                resizeCanvas();
+                // resizeCanvas(); // 描画中のリサイズ負荷軽減のため、ドラッグ中はリサイズしない
             }
         }, { passive: false });
 
@@ -2590,6 +2591,8 @@
                 resizeCanvas();
             }
         });
+
+
 
     </script>
     <!-- Image Preview Modal -->
@@ -2603,7 +2606,7 @@
     </div>
     <!-- Version Info -->
     <script>
-        (function(){
+        (function () {
             const APP_VERSION = "v1.1.0";
             if (!document.getElementById('app-version')) {
                 const vDiv = document.createElement('div');
@@ -2626,9 +2629,3 @@
 </body>
 
 </html>
-
-
-
-
-
-

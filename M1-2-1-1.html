@@ -585,6 +585,7 @@
             border-radius: 5px;
             font-weight: bold;
             transition: background 0.3s;
+            touch-action: manipulation;
         }
 
         #image-preview-modal .close-btn {
@@ -908,7 +909,7 @@
                 // 左パネル、モーダル、またはツールバー内の要素（ボタンなど）での操作は許可
                 if (!e.target.closest('#left-panel') &&
                     !e.target.closest('.modal-content') &&
-                    !e.target.closest('#memo-toolbar')) {
+                    !e.target.closest('#image-preview-modal') && !e.target.closest('#memo-toolbar')) {
                     e.preventDefault();
                 }
             }, { passive: false });
@@ -1599,7 +1600,7 @@
 
             // ★ AI分析ボタンを追加 (不正解時のみ)
             if (!isCorrect) {
-                feedbackEl.innerHTML += `<button class="ai-btn" onclick="analyzeError()">🤖 AIカガワ先生に聞く (v2)</button><small> (メモを分析します)<small><br>`;
+                feedbackEl.innerHTML += `<button class="ai-btn" onclick="checkAnswerWithAI()">🤖 AIカガワ先生に聞く (v2)</button><small> (メモを分析します)<small><br>`;
 
                 // 間違えた問題を記録
                 if (!incorrectQuestions.includes(currentQuestion)) {
@@ -2474,7 +2475,7 @@
                 leftPanel.style.width = `${leftWidthPercent}vw`;
                 rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
                 rightPanel.style.width = `${100 - leftWidthPercent}vw`;
-                resizeCanvas();
+                // resizeCanvas(); // 描画中のリサイズ負荷軽減のため、ドラッグ中はリサイズしない
             }
         });
 
@@ -2506,7 +2507,7 @@
                 leftPanel.style.width = `${leftWidthPercent}vw`;
                 rightPanel.style.flex = `0 0 ${100 - leftWidthPercent}vw`;
                 rightPanel.style.width = `${100 - leftWidthPercent}vw`;
-                resizeCanvas();
+                // resizeCanvas(); // 描画中のリサイズ負荷軽減のため、ドラッグ中はリサイズしない
             }
         }, { passive: false });
 
