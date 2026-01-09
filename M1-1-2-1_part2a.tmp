@@ -1,0 +1,413 @@
+        // --- グローバル変数 ---
+        let quizData = [];
+        let incorrectQuestions = []; // 間違えた問題を格納
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let startTime; // 開始時間
+        let isSoundOn = true; // 効果音ON/OFF
+        let isDarkMode = false; // ダークモードON/OFF
+        let isResumeOn = false; // レジューム機能ON/OFF (デフォルトOFF)
+        let currentPenColor = '#000'; // 現在のペンの色
+        const synth = window.speechSynthesis;
+        let currentUtterance = null;
+        let audioCtx = null; // グローバルAudioContext
+
+        // --- キャンバス関連 ---
+        // --- AIのJSONを安全にパース（\subset などの不正エスケープを自動修復） ---
+        function parseAIJsonWithRepair(rawText) {
+            if (!rawText) throw new Error("Empty AI response");
+
+            const trimmed = rawText.trim();
+
+            // 余計な前後文が混ざっても最初の { から最後の } を拾う
+            const match = trimmed.match(/\{[\s\S]*\}/);
+            let jsonStr = match ? match[0] : trimmed;
+
+            // まず素直にパース
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e1) {
+                // JSONとして無効なバックスラッシュだけを \\ に修復
+                // 例: "\subset" -> "\\subset"
+                let repaired = jsonStr.replace(
+                    /\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g,
+                    '\\\\'
+                );
+
+                try {
+                    return JSON.parse(repaired);
+                } catch (e2) {
+                    // 最終保険：全部の \ を \\ に（多少荒いが止血になる）
+                    repaired = jsonStr.replace(/\\/g, '\\\\');
+                    return JSON.parse(repaired);
+                }
+            }
+        }
+
+        // --- キャンバス関連 ---
+        // let canvas; // 削除 (各関数内で取得)
+        // let ctx;    // 削除 (各関数内で取得)
+        // let isDrawing = false; // 削除 (キャンバスごとに管理)
+        let currentTool = 'pen'; // 'pen' or 'eraser'
+        let memoHistory = []; // Undo用履歴 (メインメモ用)
+        let isPenOnlyMode = true; // ペンのみモード（パームリジェクション）
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initAudioContext(); // オーディオコンテキストの初期化準備
+            initCanvases(); // 複数キャンバス初期化
+            setTimeout(resizeCanvases, 100); // レイアウト確定後に再調整
+            initQuiz();
+            // ダークモード設定を読み込む
+            const savedDarkMode = localStorage.getItem('darkMode');
+            if (savedDarkMode === 'true') {
+                isDarkMode = true;
+                document.body.classList.add('dark-mode');
+                document.getElementById('dark-mode-toggle').textContent = '☀️';
+                currentPenColor = '#fff'; // ペンの色を白に設定
+            }
+
+            // レジューム設定を読み込む (一時的に無効化)
+            // const savedResume = localStorage.getItem('resumeOn');
+            // if (savedResume !== null) {
+            //     isResumeOn = (savedResume === 'true');
+            // }
+            updateResumeButton();
+
+            // 全体スクロール防止（左パネルとモーダル以外）
+            document.addEventListener('touchmove', function (e) {
+                // 左パネル、モーダル、またはツールバー内の要素（ボタンなど）での操作は許可
+                if (!e.target.closest('#left-panel') &&
+                    !e.target.closest('.modal-content') &&
+                    !e.target.closest('#image-preview-modal') && !e.target.closest('#memo-toolbar')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+
+            // --- 積極的なオーディオプリロード（遅延対策） ---
+            document.addEventListener('touchstart', function (e) {
+                if (e.target.closest('.option-btn') || e.target.closest('#next-btn') || e.target.closest('#results-btn')) {
+                    if (isSoundOn) {
+                        try {
+                            const AudioContext = window.AudioContext || window.webkitAudioContext;
+                            if (!audioCtx && AudioContext) {
+                                audioCtx = new AudioContext();
+                            }
+                            if (audioCtx && audioCtx.state === 'suspended') {
+                                audioCtx.resume();
+                            }
+                        } catch (err) {
+                            console.error("Audio warmup failed:", err);
+                        }
+                    }
+                }
+            }, { passive: true });
+        });
+
+        // --- クイズ初期化 ---
+        function initQuiz() {
+            // KaTeX設定
+            const katexDelimiters = [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ];
+            const renderMath = () => {
+                if (window.renderMathInElement) {
+                    renderMathInElement(document.body, { delimiters: katexDelimiters, throwOnError: false });
+                } else {
+                    setTimeout(renderMath, 100);
+                }
+            };
+            renderMath();
+
+            // データ読み込み (window.QUIZ_DATA from M1-1-1-1QD.js) (注意: ここは呼び出し元のHTMLで読み込まれた変数を使う。M1-1-2-1QD.jsがQUIZ_DATAを定義しているはず)
+            let allData = [];
+            if (window.QUIZ_DATA) {
+                allData = window.QUIZ_DATA;
+            } else if (typeof allQuizData !== 'undefined') {
+                allData = allQuizData; // フォールバック
+            }
+
+            if (!allData || allData.length === 0) {
+                document.getElementById('question-text').innerText = "問題データが見つかりません。";
+                return;
+            }
+
+            // レジューム機能：保存されたデータがあるか確認
+            const urlParams = new URLSearchParams(window.location.search);
+            const isReset = urlParams.get('reset') === 'true';
+
+            if (isReset) {
+                // index.htmlから来た場合などはリセット（確認なしで最初から）
+                // URLからパラメータを削除して、リロード時はレジュームが効くようにする
+                const newUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState(null, '', newUrl);
+            } else if (isResumeOn) {
+                const savedData = localStorage.getItem('quiz_progress_M1-1-2-1');
+                if (savedData) {
+                    if (confirm("前回の続きから始めますか？")) {
+                        restoreProgress(JSON.parse(savedData));
+                        return;
+                    } else {
+                        localStorage.removeItem('quiz_progress_M1-1-2-1'); // キャンセルしたら削除
+                    }
+                }
+            }
+
+            // シャッフルして10問抽出
+            const shuffled = [...allData].sort(() => 0.5 - Math.random());
+            quizData = shuffled.slice(0, 10);
+
+            startTime = Date.now(); // タイマー開始
+            loadQuestion();
+
+
+        }
+
+        // --- クイズロジック ---
+        function loadQuestion() {
+            const quizContainer = document.getElementById('quiz-container');
+            const resultsContainer = document.getElementById('results-container');
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+            const optionsContainer = document.getElementById('options-container');
+            const showOptionsBtn = document.getElementById('show-options-btn');
+            const questionNumberEl = document.getElementById('question-number');
+            const questionTextEl = document.getElementById('question-text');
+
+            if (currentQuestionIndex >= quizData.length) return;
+
+            // リセット
+            feedbackEl.style.display = 'none';
+            nextBtn.style.display = 'none';
+            resultsBtn.style.display = 'none';
+            document.getElementById('answer-btn').style.display = 'block';
+            document.getElementById('analyzing-indicator').style.display = 'none';
+
+            // メモは消さない（ユーザーが前の計算を残したいかもしれないので）
+            clearMemo();
+            clearAnswerPad(); // 解答欄クリア
+
+            // メモの「問題を表示」をリセット
+            document.getElementById('memo-question-overlay').style.display = 'none';
+            document.getElementById('btn-toggle-question').classList.remove('active');
+
+            updateProgressAndScore();
+            saveProgress(); // 進行状況を保存
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionNumberEl.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
+            questionTextEl.innerHTML = currentQuestion.question;
+
+            // メモパッド上の問題文更新
+            document.getElementById('memo-question-overlay').innerHTML = `<strong>問題 ${currentQuestionIndex + 1}:</strong><br>${currentQuestion.question}`;
+
+            renderAllMath();
+        }
+
+
+        // --- 不正解時の分岐（もう一度解く／正解を教えて） ---
+        let pendingAIResult = null; // { questionIndex, recognizedAnswer, feedback }
+
+        // --- 励ましコメント（気持ちよさUP） ---
+        const ENCOURAGEMENTS = [
+            "OK！今の気づきを活かしてもう一度いこう。",
+            "ナイス判断。ここでやり直せるのが強い。",
+            "大丈夫。1回目で気づけたのが収穫！",
+            "落ち着いていけば必ず取れる。",
+            "今のミスは伸びしろ。次で回収しよう。",
+            "いいね。ここからが本番。",
+            "書き直してみよう。答えに近づいてるよ。"
+        ];
+
+        function showEncouragement() {
+            const el = document.getElementById("encouragement-under-question");
+            if (!el) return;
+            const msg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+            el.textContent = msg;
+            el.style.display = "block";
+        }
+
+        function hideEncouragement() {
+            const el = document.getElementById("encouragement-under-question");
+            if (!el) return;
+            el.style.display = "none";
+            el.textContent = "";
+        }
+
+        function showWrongDecisionUI(currentQuestion, result) {
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+            const answerBtn = document.getElementById('answer-btn');
+
+            nextBtn.style.display = 'none';
+            resultsBtn.style.display = 'none';
+            answerBtn.style.display = 'none';
+
+            pendingAIResult = {
+                questionIndex: currentQuestionIndex,
+                recognizedAnswer: result.recognizedAnswer || '',
+                feedback: result.feedback || ''
+            };
+
+            feedbackEl.className = 'incorrect-feedback';
+            feedbackEl.innerHTML = `
+                <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                <span style="color: var(--incorrect-color);"><strong>今回は不正解でした。</strong></span><br>
+                あなたの解答: ${pendingAIResult.recognizedAnswer || '(読み取り不可)'}<br>
+                <div class="wrong-decision-area">
+                    <button class="tool-btn ai-btn wrong-decision-btn" onclick="retryCurrentQuestion()">🔁 もう一度解く</button>
+                    <button class="tool-btn ai-btn wrong-decision-btn" onclick="revealCorrectWithAI()">✅ 正解を教えて！AIカガワ先生</button>
+                </div>
+                <div class="wrong-decision-note">※「もう一度解く」を選ぶと，メモを消して解き直せます。</div>
+            `;
+            feedbackEl.style.display = 'block';
+            renderAllMath();
+        }
+
+        function retryCurrentQuestion() {
+            pendingAIResult = null;
+
+            clearMemo();
+
+
+            const feedbackEl = document.getElementById('feedback');
+            const answerBtn = document.getElementById('answer-btn');
+            const indicator = document.getElementById('analyzing-indicator');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+
+            feedbackEl.style.display = 'none';
+            indicator.style.display = 'none';
+            nextBtn.style.display = 'none';
+            resultsBtn.style.display = 'none';
+
+            answerBtn.textContent = "🤖AIカガワ先生🤖に添削してもらう";
+            answerBtn.style.display = 'block';
+
+            showEncouragement();
+        }
+
+        function revealCorrectWithAI() {
+            if (!pendingAIResult) return;
+
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+            const resultsBtn = document.getElementById('results-btn');
+
+            const q = quizData[pendingAIResult.questionIndex] || quizData[currentQuestionIndex];
+
+            if (!incorrectQuestions.includes(q)) {
+                incorrectQuestions.push(q);
+            }
+
+            let html = `
+                <div class="ai-banner">🤖AIカガワ先生🤖の解答check✅</div><br>
+                <span style="color: var(--incorrect-color);"><strong>今回は不正解でした。</strong></span><br>
+                あなたの解答: ${pendingAIResult.recognizedAnswer || '(読み取り不可)'}<br>
+                <strong>正解: ${q.answer}</strong><br><br>
+            `;
+
+            if (pendingAIResult.feedback) {
+                html += `${pendingAIResult.feedback}<br>`;
+            }
+
+            html += `<hr><div class="explanation-banner">解説</div><br>${q.rationale || ""}`;
+
+            feedbackEl.className = 'incorrect-feedback';
+            feedbackEl.innerHTML = html;
+            feedbackEl.style.display = 'block';
+            renderAllMath();
+
+            if (pendingAIResult.questionIndex < quizData.length - 1) {
+                nextBtn.style.display = 'block';
+                resultsBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'none';
+                resultsBtn.style.display = 'block';
+            }
+
+            pendingAIResult = null;
+
+            saveProgress();
+            updateProgressAndScore();
+        }
+
+        // --- キャンバス画像取得用ヘルパー (AIお助け用: 白背景・黒文字・クロッピング) ---
+        function getCanvasImageBase64(canvasElement, scale = 1) {
+            const width = canvasElement.width;
+            const height = canvasElement.height;
+            const ctx = canvasElement.getContext('2d');
+
+            // 1. 元のピクセルデータを取得
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+
+            let minX = width, minY = height, maxX = 0, maxY = 0;
+            let hasPixels = false;
+
+            // 2. ピクセル操作 & バウンディングボックス検出
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    const alpha = data[i + 3];
+
+                    if (alpha > 50) { // 描画あり
+                        data[i] = 0;     // R -> 黒
+                        data[i + 1] = 0; // G -> 黒
+                        data[i + 2] = 0; // B -> 黒
+                        data[i + 3] = 255; // 完全不透明
+
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        hasPixels = true;
+                    } else {
+                        data[i + 3] = 0; // 透明
+                    }
+                }
+            }
+
+            if (!hasPixels) {
+                // 白紙の場合はそのまま返す（後続の判定で弾かれるはず）
+                return canvasElement.toDataURL('image/png').split(',')[1];
+            }
+
+            // 3. 作業用キャンバスを作る（黒文字のみ）
+            const workCanvas = document.createElement('canvas');
+            workCanvas.width = width;
+            workCanvas.height = height;
+            const workCtx = workCanvas.getContext('2d');
+            workCtx.putImageData(imageData, 0, 0);
+
+            // 4. 切り抜き範囲の計算（パディング追加）
+            const padding = 20;
+            const cropX = Math.max(0, minX - padding);
+            const cropY = Math.max(0, minY - padding);
+            const cropWidth = Math.min(width, maxX + padding) - cropX;
+            const cropHeight = Math.min(height, maxY + padding) - cropY;
+
+            // 5. 提出用キャンバスを作る（切り抜いたサイズ）
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = cropWidth * scale;
+            exportCanvas.height = cropHeight * scale;
+            const exportCtx = exportCanvas.getContext('2d');
+
+            // 背景を白で塗りつぶす
+            exportCtx.fillStyle = '#FFFFFF';
+            exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            // 切り抜いて描画
+            exportCtx.drawImage(
+                workCanvas,
+                cropX, cropY, cropWidth, cropHeight, // 元画像の範囲
+                0, 0, exportCanvas.width, exportCanvas.height // 出力先の範囲
+            );
+
+            return exportCanvas.toDataURL('image/png').split(',')[1];
+        }

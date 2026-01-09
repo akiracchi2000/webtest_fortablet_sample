@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第2節-1 (x+a)(x+b)の展開のテスト (ランダム10題)</title>
+
+    <!-- KaTeX（数式表示ライブラリ） -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- クイズデータ読み込み -->
+    <script src="M1-1-2-1QD.js"></script>
+
+    <style>
+        /* 共通スタイル */
+        :root {
+            --bg-color: #f0f2f5;
+            --text-color: #333;
+            --panel-bg: #ffffff;
+            --border-color: #ccc;
+            --header-bg: #007bff;
+            --header-text: #fff;
+            --btn-bg: #fff;
+            --btn-text: #333;
+            --btn-hover: #dee2e6;
+            --btn-active-bg: #007bff;
+            --btn-active-text: #fff;
+            --memo-bg: #ffffff;
+            --overlay-bg: rgba(255, 255, 255, 0.9);
+            --correct-color: #007bff;
+            --incorrect-color: #dc3545;
+            --correct-bg: #d4edda;
+            --incorrect-bg: #f8d7da;
+            --link-color: #007bff;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --panel-bg: #1e1e1e;
+            --border-color: #444;
+            --header-bg: #1a1a1a;
+            --header-text: #e0e0e0;
+            --btn-bg: #2d2d2d;
+            --btn-text: #e0e0e0;
+            --btn-hover: #3d3d3d;
+            --btn-active-bg: #bb86fc;
+            --btn-active-text: #000;
+            --memo-bg: #121212;
+            --overlay-bg: rgba(30, 30, 30, 0.9);
+            --correct-color: #66b0ff;
+            --incorrect-color: #ff6b6b;
+            --correct-bg: #1e4620;
+            --incorrect-bg: #4c1d1d;
+            --link-color: #8ab4f8;
+        }
+
+        html,
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            overscroll-behavior: none;
+            touch-action: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- 左パネル（クイズ） --- */
+        #left-panel {
+            flex: 0 0 50vw;
+            width: 50vw;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            background-color: var(--panel-bg);
+            transition: background-color 0.3s;
+            overscroll-behavior: none;
+            touch-action: pan-y;
+            border-right: none;
+        }
+
+        /* --- リサイザー（境界線） --- */
+        #resizer {
+            width: 10px;
+            background-color: var(--border-color);
+            cursor: col-resize;
+            z-index: 100;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        #resizer:hover,
+        #resizer.active {
+            background-color: #007bff;
+        }
+
+        #resizer::after {
+            content: "⋮";
+            color: #666;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        /* --- 右パネル（メモパッド） --- */
+        #right-panel {
+            flex: 0 0 50vw;
+            width: 50vw;
+            height: 100%;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            /* スクロールバーによる余白防止 */
+            background-color: var(--panel-bg);
+            transition: background-color 0.3s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            touch-action: none;
+            overscroll-behavior: none;
+        }
+
+        #memo-toolbar {
+            height: 50px;
+            background: var(--panel-bg);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 15px;
+            border-top: 1px solid var(--border-color);
+            padding-bottom: env(safe-area-inset-bottom);
+            height: auto;
+            min-height: 50px;
+            touch-action: manipulation;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        #memo-container {
+            flex: 1;
+            position: relative;
+            cursor: crosshair;
+            background: var(--memo-bg);
+            /* 変数を使用 */
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            overflow: hidden;
+            touch-action: none;
+            transition: background-color 0.3s;
+        }
+
+        #memo-pad {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        #memo-question-overlay {
+            position: absolute;
+            top: calc(10px + env(safe-area-inset-top));
+            left: 10px;
+            right: 10px;
+            background: var(--overlay-bg);
+            color: var(--text-color);
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            pointer-events: none;
+            /* ペン入力を邪魔しないように */
+            display: none;
+            z-index: 10;
+            font-size: 0.9em;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        #eraser-cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #555;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            display: none;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .tool-btn {
+            background: var(--btn-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: var(--btn-text);
+            touch-action: manipulation;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .tool-btn:hover:not(:disabled) {
+            background: var(--btn-hover);
+        }
+
+        .tool-btn.active {
+            background: var(--btn-active-bg);
+            color: var(--btn-active-text);
+            border-color: var(--btn-active-bg);
+        }
+
+        /* --- クイズ用スタイル (既存のスタイルを調整) --- */
+        header {
+            background-color: var(--header-bg);
+            color: var(--header-text);
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        header h1 {
+            margin: 0;
+            color: inherit;
+            /* 親要素のcolorを継承 */
+            font-size: 1.5em;
+        }
+
+        #quiz-container {
+            min-height: 300px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            transition: background-color 0.3s;
+        }
+
+        #progress {
+            width: 0%;
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease-in-out;
+        }
+
+        #question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        #question-number {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #score {
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        #question-text {
+            font-size: 1.2em;
+            margin: 15px 0 25px 0;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        #options-container {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        #options-container.options-vertical {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            background-color: var(--panel-bg);
+            cursor: pointer;
+            font-size: 1.0em;
+            transition: all 0.3s;
+            width: 100%;
+            text-align: left;
+            color: var(--text-color);
+            touch-action: manipulation;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: var(--btn-hover);
+            border-color: #007bff;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .option-btn.correct {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            font-weight: bold;
+        }
+
+        .option-btn.incorrect {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .option-btn.incorrect.selected {
+            opacity: 1;
+            border-width: 3px;
+        }
+
+        #show-options-btn {
+            display: none;
+            margin: 20px auto;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #17a2b8;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #show-options-btn:hover {
+            background-color: #138496;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            border: 2px solid;
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #feedback.correct-feedback {
+            background-color: var(--correct-bg);
+            border-color: var(--correct-color);
+            color: var(--text-color);
+        }
+
+        #feedback.incorrect-feedback {
+            background-color: var(--incorrect-bg);
+            border-color: var(--incorrect-color);
+            color: var(--text-color);
+        }
+
+        .close-modal:hover,
+        .close-modal:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* リンクのスタイル */
+        a {
+            color: var(--link-color);
+        }
+
+        .speak-button {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            margin-left: 8px;
+            padding: 2px 5px;
+        }
+
+        #next-btn,
+        #results-btn {
+            display: none;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            float: right;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+            touch-action: manipulation;
+        }
+
+        #next-btn:hover,
+        #results-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #results-container {
+            text-align: center;
+            font-size: 1.4em;
+            display: none;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        #results-container h2 {
+            color: #007bff;
+        }
+
+        #homepage-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background-color: #6c757d;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+        }
+
+        #homepage-link:hover {
+            background-color: #5a6268;
+        }
+
+        /* AI分析ボタン */
+        .ai-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .ai-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.4);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        /* AIバナー（ヘッダー用） */
+        .ai-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .explanation-banner {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+        }
+
+        /* モーダル */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            max-height: 80vh;
+            overflow-y: auto;
+            overscroll-behavior: none;
+            touch-action: pan-y;
+            text-align: left;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: relative;
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #999;
+        }
+
+        /* Image Preview Modal */
+        #image-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #image-preview-modal img {
+            max-width: 90%;
+            max-height: 70%;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        #image-preview-modal .modal-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        #image-preview-modal button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+            touch-action: manipulation;
+        }
+
+        #image-preview-modal .close-btn {
+            background: #6c757d;
+            color: #fff;
+        }
+
+        #image-preview-modal .share-btn {
+            background: #007bff;
+            color: #fff;
+        }
+
+        #image-preview-modal .save-hint {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1em;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        /* ===== 追加：不正解時の2択（やり直す／正解を教えて） ===== */
+        .wrong-decision-area {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .wrong-decision-btn {
+            padding: 10px 18px;
+            font-size: 1em;
+        }
+
+        .wrong-decision-note {
+            margin-top: 8px;
+            font-size: 0.85em;
+            opacity: 0.8;
+            text-align: center;
+
+        }
+
+        /* ===== 追加：励ましコメント（気持ちよさUP） ===== */
+        #encouragement-under-question {
+            margin: 12px auto 0 auto;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px dashed var(--border-color);
+            background: var(--panel-bg);
+            font-size: 0.98em;
+            text-align: center;
+            max-width: 95%;
+            opacity: 0.92;
+        }
+
+        /* ===== 解答入力欄 (手書き) ===== */
+        #answer-input-container {
+            padding: 10px;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        #answer-pad-wrapper {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            border: 1px solid var(--border-color);
+            background: var(--memo-bg);
+            /* ダークモード対応 */
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        #answer-pad {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+
+        .answer-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .answer-label {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 左パネル：クイズ -->
+    <div id="left-panel">
+        <header>
+            <h1>第2節-1 (x+a)(x+b)の展開</h1>
+            <div>
+                <!-- <button id="fullscreen-toggle" class="tool-btn" onclick="toggleFullscreen()"
+                    style="padding: 5px 10px; font-size: 1.2em;" title="フルスクリーン／フルスクリーン解除">⛶</button> -->
+                <button id="dark-mode-toggle" class="tool-btn" onclick="toggleDarkMode()"
+                    style="padding: 5px 10px; font-size: 1.2em;" title="ダークモード／ライトモード">🌙</button>
+                <button id="resume-toggle" class="tool-btn" onclick="toggleResume()"
+                    style="padding: 5px 10px; font-size: 1.2em; display: none;" title="途中保存機能のON/OFF">📂</button>
+                <button id="sound-toggle" class="tool-btn" onclick="toggleSound()"
+                    style="padding: 5px 10px; font-size: 1.2em;" title="効果音の有／無">🔊</button>
+            </div>
+        </header>
+        <main>
+            <div id="quiz-container">
+                <div id="progress-bar">
+                    <div id="progress"></div>
+                </div>
+                <div id="question-header">
+                    <span id="question-number"></span>
+                    <span id="score"></span>
+                </div>
+                <h2 id="question-text"></h2>
+
+                <div id="encouragement-under-question" style="display:none;"></div>
+
+                <button id="answer-btn" class="tool-btn ai-btn"
+                    style="display:block; margin: 20px auto; padding: 12px 30px; font-size: 1.2em;"
+                    onclick="checkAnswerWithAI()">🤖AIカガワ先生🤖に添削してもらう</button>
+                <div id="analyzing-indicator" style="display:none; text-align:center; margin: 10px 0;">
+                    <span style="font-size: 2em;">🤖</span> 採点中...
+                </div>
+
+                <div id="options-container" style="display:none;"></div>
+
+                <div id="feedback"></div>
+
+                <button id="next-btn">次の問題へ</button>
+                <button id="results-btn">結果を見る</button>
+            </div>
+
+            <div id="results-container">
+                <h2>テスト終了！</h2>
+                <p id="score-text"></p>
+                <p id="final-message"></p>
+
+                <!-- 結果送信フォーム -->
+                <!-- 結果送信フォーム -->
+                <div
+                    style="margin: 20px 0; padding: 15px; background: var(--panel-bg); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <p style="margin-bottom: 10px; font-size: 0.9em;">※名前とGAS URLはトップページで設定してください。</p>
+                    <button class="tool-btn" onclick="sendResults()" style="background-color: #28a745; color: white;">📤
+                        先生に送信</button>
+                    <p id="send-status" style="margin-top: 5px; font-size: 0.9em; color: var(--text-color);"></p>
+                </div>
+
+                <button id="retry-btn" style="display:none; margin: 10px auto; background-color: #ffc107; color: #000;"
+                    class="tool-btn" onclick="retryIncorrect()">🔥 間違えた問題だけリトライ</button>
+                <br>
+                <a href="index.html" id="homepage-link">トップページに戻る</a>
+            </div>
+        </main>
+        <footer>
+            <p>&copy; 2025 [香川亮]</p>
+        </footer>
+    </div>
+
+    <!-- リサイザー -->
+    <div id="resizer"></div>
+
+    <!-- 右パネル：メモパッド -->
+    <div id="right-panel">
+        <div id="answer-input-container">
+            <div class="answer-tools">
+                <span class="answer-label">解答欄 (手書き):</span>
+                <button class="tool-btn" style="padding: 2px 8px; font-size: 0.8em;"
+                    onclick="clearAnswerPad()">🗑️</button>
+            </div>
+            <div id="answer-pad-wrapper">
+                <canvas id="answer-pad"></canvas>
+            </div>
+        </div>
+        <div id="memo-container">
+            <div id="memo-question-overlay"></div>
+            <div id="eraser-cursor"></div>
+            <canvas id="memo-pad"></canvas>
+        </div>
+        <div id="memo-toolbar">
+            <button class="tool-btn active" id="btn-pen" onclick="setTool('pen')">✏️ ペン</button>
+            <button class="tool-btn" id="btn-pen-red" onclick="setTool('pen-red')">🔴 赤ペン</button>
+            <button class="tool-btn" id="btn-eraser" onclick="setTool('eraser')">🧽 消しゴム</button>
+            <button class="tool-btn active" id="btn-pen-only" onclick="togglePenOnly()">🖊️ ペンのみ</button>
+            <button class="tool-btn" onclick="undoMemo()">↩️ 元に戻す</button>
+            <span style="margin: 0 10px; color: #ccc;">|</span>
+            <button class="tool-btn" id="btn-toggle-question" onclick="toggleQuestionOverlay()">📖 問題を表示</button>
+            <button class="tool-btn" onclick="saveMemo()">💾 画像保存</button>
+            <button class="tool-btn" onclick="clearMemo()">🗑️ メモを消去</button>
+        </div>
+    </div>
+
+    <!-- AI分析モーダル -->
+    <div id="ai-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAiModal()">&times;</span>
+            <h3>🤖 AIカガワ先生の分析</h3>
+            <div id="ai-content">
+                <p>分析中...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>

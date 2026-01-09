@@ -1,0 +1,3 @@
+●出力される記号が裸のままになる場合
+
+const BARE_MATH_COMMANDS の中に追加する

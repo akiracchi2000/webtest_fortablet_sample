@@ -1,0 +1,35 @@
+    </script>
+    <!-- Image Preview Modal -->
+    <div id="image-preview-modal">
+        <img id="preview-image" src="" alt="Memo Preview">
+        <p class="save-hint">画像を長押しして「写真」に保存してください</p>
+        <div class="modal-controls">
+            <button id="preview-share-btn" class="share-btn">共有 / 他のアプリで開く</button>
+            <button class="close-btn" onclick="closeImagePreview()">閉じる</button>
+        </div>
+    </div>
+    <!-- Version Info -->
+    <script>
+        (function () {
+            const APP_VERSION = "v1.1.0";
+            if (!document.getElementById('app-version')) {
+                const vDiv = document.createElement('div');
+                vDiv.id = 'app-version';
+                vDiv.textContent = APP_VERSION;
+                Object.assign(vDiv.style, {
+                    position: 'fixed',
+                    bottom: '5px',
+                    right: '10px',
+                    fontSize: '12px',
+                    color: 'rgba(0,0,0,0.3)',
+                    pointerEvents: 'none',
+                    zIndex: '9999',
+                    fontFamily: 'sans-serif'
+                });
+                document.body.appendChild(vDiv);
+            }
+        })();
+    </script>
+</body>
+
+</html>
