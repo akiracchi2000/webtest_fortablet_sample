@@ -206,8 +206,7 @@ window.QUIZ_DATA = [
       "5"
     ],
     "answer": "7",
-    "rationale": "<strong>解説: </strong>$x^2+y^2 = (x+y)^2 - 2xy = 3^2 - 2\\cdot 1 = 7$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 1
+    "rationale": "<strong>解説: </strong>$x^2+y^2 = (x+y)^2 - 2xy = 3^2 - 2\\cdot 1 = 7$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+y=4, xy=1$ のとき、$x^2+y^2$ の値を求めよ。",
@@ -218,8 +217,7 @@ window.QUIZ_DATA = [
       "14"
     ],
     "answer": "14",
-    "rationale": "<strong>解説: </strong>$x^2+y^2 = (x+y)^2 - 2xy = 4^2 - 2\\cdot 1 = 14$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 3
+    "rationale": "<strong>解説: </strong>$x^2+y^2 = (x+y)^2 - 2xy = 4^2 - 2\\cdot 1 = 14$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+y=5, xy=1$ のとき、$x^2+y^2$ の値を求めよ。",
@@ -230,8 +228,7 @@ window.QUIZ_DATA = [
       "24"
     ],
     "answer": "23",
-    "rationale": "<strong>解説: </strong>$x^2+y^2 = (x+y)^2 - 2xy = 5^2 - 2\\cdot 1 = 23$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 1
+    "rationale": "<strong>解説: </strong>$x^2+y^2 = (x+y)^2 - 2xy = 5^2 - 2\\cdot 1 = 23$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+y=2\\sqrt{3}, xy=1$ のとき、$x^2+y^2$ の値を求めよ。",
@@ -242,8 +239,7 @@ window.QUIZ_DATA = [
       "12"
     ],
     "answer": "10",
-    "rationale": "<strong>解説: </strong>$x^2+y^2 = (x+y)^2 - 2xy = (2\\sqrt{3})^2 - 2\\cdot 1 = 10$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 1
+    "rationale": "<strong>解説: </strong>$x^2+y^2 = (x+y)^2 - 2xy = (2\\sqrt{3})^2 - 2\\cdot 1 = 10$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+\\frac{1}{x}=3$ のとき、$(x-\\frac{1}{x})^2$ の値を求めよ。",
@@ -301,70 +297,70 @@ window.QUIZ_DATA = [
     "rationale": "<strong>解説: </strong>$(x-\\frac{1}{x})^2 = (x+\\frac{1}{x})^2 - 4 = (2\\sqrt{2})^2 - 4 = 8 - 4 = 4$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
-    "question": "$x+\\frac{1}{x}=2$ のとき、$x^3+\\frac{1}{x^3}$ の値を求めよ。",
+    "question": "$x+\\frac{1}{x}=2$ のとき、$x^2+\\frac{1}{x^2}$ の値を求めよ。",
+    "options": [
+      "2",
+      "6",
+      "0",
+      "4"
+    ],
+    "answer": "2",
+    "rationale": "<strong>解説: </strong>$(x+\\frac{1}{x})^2 = x^2 + 2 + \\frac{1}{x^2}$ なので、$x^2+\\frac{1}{x^2} = (x+\\frac{1}{x})^2 - 2$ です。<br>$2^2 - 2 = 2$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "$x+\\frac{1}{x}=3$ のとき、$x^2+\\frac{1}{x^2}$ の値を求めよ。",
+    "options": [
+      "7",
+      "5",
+      "9",
+      "11"
+    ],
+    "answer": "7",
+    "rationale": "<strong>解説: </strong>$(x+\\frac{1}{x})^2 = x^2 + 2 + \\frac{1}{x^2}$ なので、$x^2+\\frac{1}{x^2} = (x+\\frac{1}{x})^2 - 2$ です。<br>$3^2 - 2 = 7$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "$x+\\frac{1}{x}=4$ のとき、$x^2+\\frac{1}{x^2}$ の値を求めよ。",
+    "options": [
+      "18",
+      "16",
+      "14",
+      "12"
+    ],
+    "answer": "14",
+    "rationale": "<strong>解説: </strong>$(x+\\frac{1}{x})^2 = x^2 + 2 + \\frac{1}{x^2}$ なので、$x^2+\\frac{1}{x^2} = (x+\\frac{1}{x})^2 - 2$ です。<br>$4^2 - 2 = 14$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "$x+\\frac{1}{x}=5$ のとき、$x^2+\\frac{1}{x^2}$ の値を求めよ。",
+    "options": [
+      "25",
+      "21",
+      "23",
+      "27"
+    ],
+    "answer": "23",
+    "rationale": "<strong>解説: </strong>$(x+\\frac{1}{x})^2 = x^2 + 2 + \\frac{1}{x^2}$ なので、$x^2+\\frac{1}{x^2} = (x+\\frac{1}{x})^2 - 2$ です。<br>$5^2 - 2 = 23$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "$x+\\frac{1}{x}=\\sqrt{3}$ のとき、$x^2+\\frac{1}{x^2}$ の値を求めよ。",
+    "options": [
+      "2",
+      "1",
+      "5",
+      "3"
+    ],
+    "answer": "1",
+    "rationale": "<strong>解説: </strong>$x^2+\\frac{1}{x^2} = (\\sqrt{3})^2 - 2 = 3 - 2 = 1$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "$x-\\frac{1}{x}=2$ のとき、$x^2+\\frac{1}{x^2}$ の値を求めよ。",
     "options": [
       "4",
       "8",
-      "6",
-      "2"
-    ],
-    "answer": "2",
-    "rationale": "<strong>解説: </strong>$x^3+\\frac{1}{x^3} = (x+\\frac{1}{x})^3 - 3(x+\\frac{1}{x})$ です。<br>値を代入して計算します。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
-  },
-  {
-    "question": "$x+\\frac{1}{x}=3$ のとき、$x^3+\\frac{1}{x^3}$ の値を求めよ。",
-    "options": [
-      "27",
-      "18",
-      "9",
-      "24"
-    ],
-    "answer": "18",
-    "rationale": "<strong>解説: </strong>$x^3+\\frac{1}{x^3} = (x+\\frac{1}{x})^3 - 3(x+\\frac{1}{x})$ です。<br>値を代入して計算します。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
-  },
-  {
-    "question": "$x+\\frac{1}{x}=4$ のとき、$x^3+\\frac{1}{x^3}$ の値を求めよ。",
-    "options": [
-      "61",
-      "64",
-      "52",
-      "56"
-    ],
-    "answer": "52",
-    "rationale": "<strong>解説: </strong>$x^3+\\frac{1}{x^3} = (x+\\frac{1}{x})^3 - 3(x+\\frac{1}{x})$ です。<br>値を代入して計算します。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
-  },
-  {
-    "question": "$x+\\frac{1}{x}=5$ のとき、$x^3+\\frac{1}{x^3}$ の値を求めよ。",
-    "options": [
-      "120",
-      "110",
-      "115",
-      "125"
-    ],
-    "answer": "110",
-    "rationale": "<strong>解説: </strong>$x^3+\\frac{1}{x^3} = (x+\\frac{1}{x})^3 - 3(x+\\frac{1}{x})$ です。<br>値を代入して計算します。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
-  },
-  {
-    "question": "$x+\\frac{1}{x}=\\sqrt{3}$ のとき、$x^3+\\frac{1}{x^3}$ の値を求めよ。",
-    "options": [
-      "9\\sqrt{3}",
-      "3\\sqrt{3}",
-      "6\\sqrt{3}",
-      "0"
-    ],
-    "answer": "0",
-    "rationale": "<strong>解説: </strong>$x^3+\\frac{1}{x^3} = (x+\\frac{1}{x})^3 - 3(x+\\frac{1}{x})$ です。<br>値を代入して計算します。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
-  },
-  {
-    "question": "$x-\\frac{1}{x}=2$ のとき、$x^3-\\frac{1}{x^3}$ の値を求めよ。",
-    "options": [
-      "12",
-      "14",
-      "8",
+      "2",
       "6"
     ],
-    "answer": "14",
-    "rationale": "<strong>解説: </strong>$x^3-\\frac{1}{x^3} = (x-\\frac{1}{x})^3 + 3(x-\\frac{1}{x})$ です。<br>$2^3 + 3(2) = 14$ です。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+    "answer": "6",
+    "rationale": "<strong>解説: </strong>$(x-\\frac{1}{x})^2 = x^2 - 2 + \\frac{1}{x^2}$ なので、$x^2+\\frac{1}{x^2} = (x-\\frac{1}{x})^2 + 2$ です。<br>$2^2 + 2 = 6$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x-\\frac{1}{x}=3$ のとき、$x^2+\\frac{1}{x^2}$ の値を求めよ。",
@@ -408,8 +404,7 @@ window.QUIZ_DATA = [
       "1"
     ],
     "answer": "5",
-    "rationale": "<strong>解説: </strong>$(x+\\frac{2}{x})^2 = x^2 + 2x\\cdot \\frac{2}{x} + \\frac{4}{x^2} = x^2 + 4 + \\frac{4}{x^2}$ です。<br>よって、$3^2 - 4 = 5$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 1
+    "rationale": "<strong>解説: </strong>$(x+\\frac{2}{x})^2 = x^2 + 2x\\cdot \\frac{2}{x} + \\frac{4}{x^2} = x^2 + 4 + \\frac{4}{x^2}$ です。<br>よって、$3^2 - 4 = 5$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+\\frac{2}{x}=4$ のとき、$x^2+\\frac{4}{x^2}$ の値を求めよ。",
@@ -420,8 +415,7 @@ window.QUIZ_DATA = [
       "8"
     ],
     "answer": "12",
-    "rationale": "<strong>解説: </strong>$(x+\\frac{2}{x})^2 = x^2 + 2x\\cdot \\frac{2}{x} + \\frac{4}{x^2} = x^2 + 4 + \\frac{4}{x^2}$ です。<br>よって、$4^2 - 4 = 12$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 1
+    "rationale": "<strong>解説: </strong>$(x+\\frac{2}{x})^2 = x^2 + 2x\\cdot \\frac{2}{x} + \\frac{4}{x^2} = x^2 + 4 + \\frac{4}{x^2}$ です。<br>よって、$4^2 - 4 = 12$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+\\frac{2}{x}=5$ のとき、$x^2+\\frac{4}{x^2}$ の値を求めよ。",
@@ -432,8 +426,7 @@ window.QUIZ_DATA = [
       "25"
     ],
     "answer": "21",
-    "rationale": "<strong>解説: </strong>$(x+\\frac{2}{x})^2 = x^2 + 2x\\cdot \\frac{2}{x} + \\frac{4}{x^2} = x^2 + 4 + \\frac{4}{x^2}$ です。<br>よって、$5^2 - 4 = 21$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 2
+    "rationale": "<strong>解説: </strong>$(x+\\frac{2}{x})^2 = x^2 + 2x\\cdot \\frac{2}{x} + \\frac{4}{x^2} = x^2 + 4 + \\frac{4}{x^2}$ です。<br>よって、$5^2 - 4 = 21$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+\\frac{3}{x}=4$ のとき、$x^2+\\frac{9}{x^2}$ の値を求めよ。",
@@ -444,8 +437,7 @@ window.QUIZ_DATA = [
       "10"
     ],
     "answer": "10",
-    "rationale": "<strong>解説: </strong>$(x+\\frac{3}{x})^2 = x^2 + 2x\\cdot \\frac{3}{x} + \\frac{9}{x^2} = x^2 + 6 + \\frac{9}{x^2}$ です。<br>よって、$4^2 - 6 = 10$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 3
+    "rationale": "<strong>解説: </strong>$(x+\\frac{3}{x})^2 = x^2 + 2x\\cdot \\frac{3}{x} + \\frac{9}{x^2} = x^2 + 6 + \\frac{9}{x^2}$ です。<br>よって、$4^2 - 6 = 10$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+\\frac{3}{x}=5$ のとき、$x^2+\\frac{9}{x^2}$ の値を求めよ。",
@@ -456,8 +448,7 @@ window.QUIZ_DATA = [
       "22"
     ],
     "answer": "19",
-    "rationale": "<strong>解説: </strong>$(x+\\frac{3}{x})^2 = x^2 + 2x\\cdot \\frac{3}{x} + \\frac{9}{x^2} = x^2 + 6 + \\frac{9}{x^2}$ です。<br>よって、$5^2 - 6 = 19$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 1
+    "rationale": "<strong>解説: </strong>$(x+\\frac{3}{x})^2 = x^2 + 2x\\cdot \\frac{3}{x} + \\frac{9}{x^2} = x^2 + 6 + \\frac{9}{x^2}$ です。<br>よって、$5^2 - 6 = 19$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+\\frac{3}{x}=6$ のとき、$x^2+\\frac{9}{x^2}$ の値を求めよ。",
@@ -468,8 +459,7 @@ window.QUIZ_DATA = [
       "30"
     ],
     "answer": "30",
-    "rationale": "<strong>解説: </strong>$(x+\\frac{3}{x})^2 = x^2 + 2x\\cdot \\frac{3}{x} + \\frac{9}{x^2} = x^2 + 6 + \\frac{9}{x^2}$ です。<br>よって、$6^2 - 6 = 30$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 3
+    "rationale": "<strong>解説: </strong>$(x+\\frac{3}{x})^2 = x^2 + 2x\\cdot \\frac{3}{x} + \\frac{9}{x^2} = x^2 + 6 + \\frac{9}{x^2}$ です。<br>よって、$6^2 - 6 = 30$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+\\frac{4}{x}=5$ のとき、$x^2+\\frac{16}{x^2}$ の値を求めよ。",
@@ -480,8 +470,7 @@ window.QUIZ_DATA = [
       "21"
     ],
     "answer": "17",
-    "rationale": "<strong>解説: </strong>$(x+\\frac{4}{x})^2 = x^2 + 2x\\cdot \\frac{4}{x} + \\frac{16}{x^2} = x^2 + 8 + \\frac{16}{x^2}$ です。<br>よって、$5^2 - 8 = 17$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 2
+    "rationale": "<strong>解説: </strong>$(x+\\frac{4}{x})^2 = x^2 + 2x\\cdot \\frac{4}{x} + \\frac{16}{x^2} = x^2 + 8 + \\frac{16}{x^2}$ です。<br>よって、$5^2 - 8 = 17$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x-\\frac{2}{x}=3$ のとき、$x^2+\\frac{4}{x^2}$ の値を求めよ。",
@@ -492,8 +481,7 @@ window.QUIZ_DATA = [
       "5"
     ],
     "answer": "13",
-    "rationale": "<strong>解説: </strong>$(x-\\frac{2}{x})^2 = x^2 - 2x\\cdot \\frac{2}{x} + \\frac{4}{x^2} = x^2 - 4 + \\frac{4}{x^2}$ です。<br>よって、$3^2 + 4 = 13$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 0
+    "rationale": "<strong>解説: </strong>$(x-\\frac{2}{x})^2 = x^2 - 2x\\cdot \\frac{2}{x} + \\frac{4}{x^2} = x^2 - 4 + \\frac{4}{x^2}$ です。<br>よって、$3^2 + 4 = 13$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x-\\frac{3}{x}=2$ のとき、$x^2+\\frac{9}{x^2}$ の値を求めよ。",
@@ -504,8 +492,7 @@ window.QUIZ_DATA = [
       "7"
     ],
     "answer": "10",
-    "rationale": "<strong>解説: </strong>$(x-\\frac{3}{x})^2 = x^2 - 2x\\cdot \\frac{3}{x} + \\frac{9}{x^2} = x^2 - 6 + \\frac{9}{x^2}$ です。<br>よって、$2^2 + 6 = 10$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 2
+    "rationale": "<strong>解説: </strong>$(x-\\frac{3}{x})^2 = x^2 - 2x\\cdot \\frac{3}{x} + \\frac{9}{x^2} = x^2 - 6 + \\frac{9}{x^2}$ です。<br>よって、$2^2 + 6 = 10$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x-\\frac{5}{x}=4$ のとき、$x^2+\\frac{25}{x^2}$ の値を求めよ。",
@@ -516,8 +503,7 @@ window.QUIZ_DATA = [
       "16"
     ],
     "answer": "26",
-    "rationale": "<strong>解説: </strong>$(x-\\frac{5}{x})^2 = x^2 - 2x\\cdot \\frac{5}{x} + \\frac{25}{x^2} = x^2 - 10 + \\frac{25}{x^2}$ です。<br>よって、$4^2 + 10 = 26$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
-    "answerIndex": 2
+    "rationale": "<strong>解説: </strong>$(x-\\frac{5}{x})^2 = x^2 - 2x\\cdot \\frac{5}{x} + \\frac{25}{x^2} = x^2 - 10 + \\frac{25}{x^2}$ です。<br>よって、$4^2 + 10 = 26$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
   },
   {
     "question": "$x+\\frac{1}{x}=3$ のとき、$x^4+\\frac{1}{x^4}$ の値を求めよ。",
@@ -528,7 +514,8 @@ window.QUIZ_DATA = [
       "49"
     ],
     "answer": "47",
-    "rationale": "<strong>解説: </strong>まず $x^2+\\frac{1}{x^2}$ を求めると $7$ です。<br>さらにこれを2乗して2を引くと、$7^2 - 2 = 47$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+    "rationale": "<strong>解説: </strong>まず $x^2+\\frac{1}{x^2}=\\left( x+\\frac1x\\right)^2-2=3^2-2=7$です。<br>これより，<br>$x^4+\\frac{1}{x^4}=\\left( x^2+\\frac1{x^2}\\right)^2-2=7^2-2=47$となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "answerIndex": 2
   },
   {
     "question": "$x+\\frac{1}{x}=2\\sqrt{2}$ のとき、$x^4+\\frac{1}{x^4}$ の値を求めよ。",
@@ -539,7 +526,8 @@ window.QUIZ_DATA = [
       "36"
     ],
     "answer": "34",
-    "rationale": "<strong>解説: </strong>まず $x^2+\\frac{1}{x^2}$ を求めると $6$ です。<br>さらにこれを2乗して2を引くと、$6^2 - 2 = 34$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+    "rationale": "<strong>解説: </strong>まず $x^2+\\frac{1}{x^2}=\\left( x+\\frac1x\\right)^2-2=\\left( 2\\sqrt2\\right)^2-2=6$です。<br>これより，<br>$x^4+\\frac{1}{x^4}=\\left( x^2+\\frac1{x^2}\\right)^2-2=6^2-2=34$となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "answerIndex": 2
   },
   {
     "question": "$x+\\frac{1}{x}=\\sqrt{5}$ のとき、$x^4+\\frac{1}{x^4}$ の値を求めよ。",
@@ -550,7 +538,8 @@ window.QUIZ_DATA = [
       "5"
     ],
     "answer": "7",
-    "rationale": "<strong>解説: </strong>まず $x^2+\\frac{1}{x^2}$ を求めると $3$ です。<br>さらにこれを2乗して2を引くと、$3^2 - 2 = 7$ となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+    "rationale": "<strong>解説: </strong>まず $x^2+\\frac{1}{x^2}=\\left( x+\\frac1x\\right)^2-2=\\left( \\sqrt5\\right)^2-2=3$です。<br>これより，<br>$x^4+\\frac{1}{x^4}=\\left( x^2+\\frac1{x^2}\\right)^2-2=3^2-2=7$となります。<button class='speak-button' onclick='speakRationale(this)'>🔊</button><br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63159' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "answerIndex": 2
   },
   {
     "question": "$2x+\\frac{1}{x}=3$ のとき、$4x^2+\\frac{1}{x^2}$ の値を求めよ。",
