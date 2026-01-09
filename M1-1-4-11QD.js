@@ -1,414 +1,784 @@
-// --- 画像パスの定義 (定義済み) ---
-const g_V_0_0 = "g_V_0_0.png";
-const g_V_0_0_k2 = "g_V_0_0_k2.png";
-const g_V_0_1 = "g_V_0_1.png";
-const g_V_0_n1 = "g_V_0_n1.png";
-const g_V_1_0 = "g_V_1_0.png";
-const g_V_1_0_k2 = "g_V_1_0_k2.png";
-const g_V_1_1 = "g_V_1_1.png";
-const g_V_1_n1 = "g_V_1_n1.png";
-const g_V_2_0 = "g_V_2_0.png";
-const g_V_2_n1 = "g_V_2_n1.png";
-const g_V_n1_0 = "g_V_n1_0.png";
-const g_V_n1_0_k2 = "g_V_n1_0_k2.png";
-const g_V_n1_2 = "g_V_n1_2.png";
-const g_V_n1_n1 = "g_V_n1_n1.png";
-const g_V_n2_0 = "g_V_n2_0.png";
-
-const g_M_0_0 = "g_M_0_0.png";
-const g_M_0_0_k2 = "g_M_0_0_k2.png";
-const g_M_0_1 = "g_M_0_1.png";
-const g_M_1_0 = "g_M_1_0.png";
-const g_M_1_0_k2 = "g_M_1_0_k2.png";
-const g_M_2_0 = "g_M_2_0.png";
-const g_M_n1_0 = "g_M_n1_0.png";
-const g_M_n2_0 = "g_M_n2_0.png";
-
-const g_P_0_0_2 = "g_P_0_0_2.png";
-const g_P_0_1_3 = "g_P_0_1_3.png";
-const g_P_0_2_4 = "g_P_0_2_4.png";
-const g_P_0_4_2 = "g_P_0_4_2.png";
-const g_P_0_n1_3 = "g_P_0_n1_3.png";
-const g_P_0_n2_0 = "g_P_0_n2_0.png";
-const g_P_1_n1_3 = "g_P_1_n1_3.png";
-const g_P_2_1_n1 = "g_P_2_1_n1.png";
-
-const g_U_0_2_2 = "g_U_0_2_2.png";
-const g_U_1_3_2 = "g_U_1_3_2.png";
-const g_U_n1_1_2 = "g_U_n1_1_2.png";
-const g_U_n2_0_2 = "g_U_n2_0_2.png";
-
-const g_Z_1_3_n2_2 = "g_Z_1_3_n2_2.png";
-const g_Z_n1_1_n2_2 = "g_Z_n1_1_n2_2.png";
-const g_Z_n2_0_n2_2 = "g_Z_n2_0_n2_2.png";
-
-// 解説動画リンク用定数
-const VIDEO_LINK = "<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>";
-
 window.QUIZ_DATA = [
-    // --- タイプ1: 基本的な平行移動 (y = |x-a| + b) ---
-    // 問題 1
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-1|$$",
-        options: [g_V_1_0, g_V_n1_0, g_M_1_0, g_V_0_1],
-        answer: g_V_1_0,
-        rationale: "$x \\ge 1$ のとき $y=x-1$。<br>$x < 1$ のとき $y=-(x-1)=-x+1$。<br>よって $x=1$ で折れ曲がるV字型グラフ（頂点 $(1, 0)$）が正解です。" + VIDEO_LINK
-    },
-    // 問題 2
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x+1|$$",
-        options: [g_V_1_0, g_V_n1_0, g_V_0_1, g_M_n1_0],
-        answer: g_V_n1_0,
-        rationale: "$y = |x-(-1)|$ と変形できます。これは $y=|x|$ を $x$ 軸方向に $-1$ 平行移動したものです。<br>よって $x=-1$ で折れ曲がるV字型グラフ（頂点 $(-1, 0)$）が正解です。" + VIDEO_LINK
-    },
-    // 問題 3
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-2|$$",
-        options: [g_V_2_0, g_V_n2_0, g_V_1_0, g_M_2_0],
-        answer: g_V_2_0,
-        rationale: "$y = |x|$ のグラフを $x$ 軸方向に $2$ 平行移動したものです。<br>よって頂点 $(2, 0)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 4
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x+2|$$",
-        options: [g_V_2_0, g_V_n2_0, g_V_n1_0, g_M_0_0],
-        answer: g_V_n2_0,
-        rationale: "$y = |x-(-2)|$ と変形できます。<br>これは $y = |x|$ のグラフを $x$ 軸方向に $-2$ 平行移動したものです。<br>よって頂点 $(-2, 0)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 5
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x| + 1$$",
-        options: [g_V_0_1, g_V_1_0, g_V_0_n1, g_V_1_1],
-        answer: g_V_0_1,
-        rationale: "$y = |x|$ のグラフを $y$ 軸方向に $1$ 平行移動したものです。<br>よって頂点 $(0, 1)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 6
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x| - 1$$",
-        options: [g_V_0_1, g_V_0_n1, g_V_1_n1, g_M_0_1],
-        answer: g_V_0_n1,
-        rationale: "$y = |x|$ のグラフを $y$ 軸方向に $-1$ 平行移動したものです。<br>よって頂点 $(0, -1)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 7
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-1| + 1$$",
-        options: [g_V_1_1, g_V_1_0, g_V_n1_n1, g_V_0_1],
-        answer: g_V_1_1,
-        rationale: "$y = |x|$ のグラフを $x$ 軸方向に $1$、$y$ 軸方向に $1$ 平行移動したグラフです。<br>よって頂点 $(1, 1)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 8
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-1| - 1$$",
-        options: [g_V_1_n1, g_V_1_1, g_V_n1_n1, g_V_2_n1],
-        answer: g_V_1_n1,
-        rationale: "$y = |x|$ のグラフを $x$ 軸方向に $1$、$y$ 軸方向に $-1$ 平行移動したグラフです。<br>よって頂点 $(1, -1)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 9
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x+1| - 1$$",
-        options: [g_V_n1_n1, g_V_1_n1, g_V_n1_0, g_V_0_n1],
-        answer: g_V_n1_n1,
-        rationale: "$y = |x|$ のグラフを $x$ 軸方向に $-1$、$y$ 軸方向に $-1$ 平行移動したグラフです。<br>よって頂点 $(-1, -1)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 10
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x+1| + 2$$",
-        options: [g_V_n1_2, g_V_n1_n1, g_V_1_1, g_V_0_1],
-        answer: g_V_n1_2,
-        rationale: "$y = |x|$ のグラフを $x$ 軸方向に $-1$、$y$ 軸方向に $2$ 平行移動したグラフです。<br>よって頂点 $(-1, 2)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-
-    // --- タイプ2: 反転と山型グラフ (y = -|x-a| + b) ---
-    // 問題 11
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = -|x|$$",
-        options: [g_M_0_0, g_V_0_0, g_M_0_1, g_M_1_0],
-        answer: g_M_0_0,
-        rationale: "$y = |x|$ のグラフを $x$ 軸に関して対称移動したものです。<br>V字型がひっくり返るため、頂点 $(0, 0)$ の山型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 12
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = -|x-1|$$",
-        options: [g_M_1_0, g_M_n1_0, g_V_1_0, g_M_0_0],
-        answer: g_M_1_0,
-        rationale: "$y = -|x|$ のグラフを $x$ 軸方向に $1$ 平行移動したものです。<br>よって頂点 $(1, 0)$ の山型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 13
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = -|x+1|$$",
-        options: [g_M_n1_0, g_M_1_0, g_V_n1_0, g_M_0_0],
-        answer: g_M_n1_0,
-        rationale: "$y = -|x|$ のグラフを $x$ 軸方向に $-1$ 平行移動したものです。<br>よって頂点 $(-1, 0)$ の山型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 14
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = -|x| + 1$$",
-        options: [g_M_0_1, g_M_0_0, g_V_0_1, g_M_1_0],
-        answer: g_M_0_1,
-        rationale: "$y = -|x|$（山型）のグラフを $y$ 軸方向に $1$ 平行移動したものです。<br>よって頂点 $(0, 1)$ の山型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 15
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = -|x-2|$$",
-        options: [g_M_2_0, g_M_1_0, g_V_2_0, g_P_2_1_n1],
-        answer: g_M_2_0,
-        rationale: "$y = -|x|$ のグラフを $x$ 軸方向に $2$ 平行移動したものです。<br>よって頂点 $(2, 0)$ の山型グラフが正解です。" + VIDEO_LINK
-    },
-    
-    // --- タイプ3: 係数がつく変形 (y = k|x-a|) ---
-    // 問題 16
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |2x|$$",
-        options: [g_V_0_0_k2, g_V_0_0, g_M_0_0_k2, g_P_0_0_2],
-        answer: g_V_0_0_k2,
-        rationale: "$y = |2x| = 2|x|$ と変形できます。<br>基本の $y=|x|$（傾き$\pm 1$）に比べて、傾きが $\pm 2$ と急になります。<br>よって頂点 $(0, 0)$ で傾き $2$ の細いV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 17
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |2x-2|$$",
-        options: [g_V_1_0_k2, g_V_1_0, g_V_2_0, g_M_1_0_k2],
-        answer: g_V_1_0_k2,
-        rationale: "$y = |2(x-1)| = 2|x-1|$ と変形できます。<br>これは $y=2|x|$ のグラフを $x$ 軸方向に $1$ 平行移動したものです。<br>よって頂点 $(1, 0)$ で、傾きが $\pm 2$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 18
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |2x+2|$$",
-        options: [g_V_n1_0_k2, g_V_n1_0, g_V_n2_0, g_M_n1_0],
-        answer: g_V_n1_0_k2,
-        rationale: "$y = |2(x+1)| = 2|x+1|$ と変形できます。<br>これは $y=2|x|$ のグラフを $x$ 軸方向に $-1$ 平行移動したものです。<br>よって頂点 $(-1, 0)$ で、傾きが $\pm 2$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 19
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = -|2x|$$",
-        options: [g_M_0_0_k2, g_M_0_0, g_V_0_0_k2, g_M_1_0_k2],
-        answer: g_M_0_0_k2,
-        rationale: "$y = -2|x|$ です。<br>頂点は $(0, 0)$ で、下に開いた（山型の）傾き $\pm 2$ のグラフになります。<br>よって選択肢1が正解です。" + VIDEO_LINK
-    },
-    // 問題 20
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = -|2x-2|$$",
-        options: [g_M_1_0_k2, g_M_1_0, g_V_1_0_k2, g_M_0_0_k2],
-        answer: g_M_1_0_k2,
-        rationale: "$y = -|2(x-1)| = -2|x-1|$ です。<br>これは $y=-2|x|$（山型・傾き$\pm 2$）を $x$ 軸方向に $1$ 平行移動したものです。<br>よって頂点 $(1, 0)$ の山型グラフが正解です。" + VIDEO_LINK
-    },
-
-    // --- タイプ4: 中身の符号反転・複雑な平行移動 ---
-    // 問題 21
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |-x|$$",
-        options: [g_V_0_0, g_M_0_0, g_V_0_1, g_V_0_n1],
-        answer: g_V_0_0,
-        rationale: "絶対値の性質として $|-A| = |A|$ が成り立ちます。<br>よって $y = |-x| = |x|$ となり、式は変わりません。<br>したがって、原点 $(0, 0)$ を頂点とする基本的なV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 22
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |-x+1|$$",
-        options: [g_V_1_0, g_V_n1_0, g_M_1_0, g_V_1_1],
-        answer: g_V_1_0,
-        rationale: "絶対値の中のマイナスをくくり出すと、$|-x+1| = |-(x-1)|$ となります。<br>$|-A|=|A|$ の性質より、これは $y = |x-1|$ と等しくなります。<br>よって、基本の $y=|x|$ を $x$ 軸方向に $1$ 平行移動したグラフ（頂点 $(1,0)$）が正解です。" + VIDEO_LINK
-    },
-    // 問題 23
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-2|-1$$",
-        options: [g_V_2_n1, g_V_2_0, g_V_n2_0, g_V_1_n1],
-        answer: g_V_2_n1,
-        rationale: "$y = |x|$ のグラフを $x$ 軸方向に $2$、$y$ 軸方向に $-1$ 平行移動したものです。<br>よって頂点 $(2, -1)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 24
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = 2 - |x-2|$$",
-        options: [g_P_2_1_n1, g_M_2_0, g_V_2_0, g_P_0_2_4],
-        answer: g_P_2_1_n1,
-        rationale: "式を整理すると $y = -|x-2| + 2$ です。<br>これは $y=-|x|$（山型）を $x$ 軸方向に $2$、$y$ 軸方向に $2$ 平行移動したものです。<br>よって頂点 $(2, 2)$ の山型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 25
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |-x-1|$$",
-        options: [g_V_n1_0, g_V_1_0, g_M_n1_0, g_V_0_n1],
-        answer: g_V_n1_0,
-        rationale: "絶対値の中のマイナスをくくり出すと、$|-x-1| = |-(x+1)|$ となります。<br>$|-A|=|A|$ の性質より、これは $y = |x+1|$ と等しくなります。<br>よって、基本の $y=|x|$ を $x$ 軸方向に $-1$ 平行移動したグラフ（頂点 $(-1,0)$）が正解です。" + VIDEO_LINK
-    },
-
-    // --- タイプ5: 直線との和 (折れ線グラフ) y = |x| + kx ---
-    // 問題 26
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x| + 2x$$",
-        options: [g_P_0_1_3, g_P_0_n1_3, g_V_0_0_k2, g_V_0_0],
-        answer: g_P_0_1_3,
-        rationale: "絶対値を外して考えます。<br>$x \\ge 0$ のとき $y=x+2x = 3x$（傾き3）。<br>$x < 0$ のとき $y=-x+2x = x$（傾き1）。<br>よって原点で折れ曲がり、右側の傾きが3、左側の傾きが1となるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 27
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = 2|x| + x$$",
-        options: [g_P_0_n1_3, g_P_0_1_3, g_V_0_0_k2, g_P_0_0_2],
-        answer: g_P_0_n1_3,
-        rationale: "絶対値を外して考えます。<br>$x \\ge 0$ のとき $y=2x+x = 3x$（傾き3）。<br>$x < 0$ のとき $y=-2x+x = -x$（傾き-1）。<br>よって原点で折れ曲がり、右側の傾きが3、左側の傾きが-1となるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 28
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x| + x$$",
-        options: [g_P_0_0_2, g_P_0_n2_0, g_V_0_0, g_V_1_0],
-        answer: g_P_0_0_2,
-        rationale: "絶対値を外して考えます。<br>$x \\ge 0$ のとき $y=x+x = 2x$（傾き2）。<br>$x < 0$ のとき $y=-x+x = 0$（傾き0）。<br>よって $x<0$ で $x$ 軸に重なり（$y=0$）、$x \\ge 0$ で傾き2となるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 29
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x| - x$$",
-        options: [g_P_0_n2_0, g_P_0_0_2, g_M_0_0, g_V_0_0],
-        answer: g_P_0_n2_0,
-        rationale: "絶対値を外して考えます。<br>$x \\ge 0$ のとき $y=x-x = 0$（傾き0）。<br>$x < 0$ のとき $y=-x-x = -2x$（傾き-2）。<br>よって $x \\ge 0$ で $x$ 軸に重なり（$y=0$）、$x < 0$ で傾き-2となるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 30
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = 3x + |x|$$",
-        options: [g_P_0_2_4, g_P_0_4_2, g_V_0_0_k2, g_P_0_1_3],
-        answer: g_P_0_2_4,
-        rationale: "絶対値を外して考えます。<br>$x \\ge 0$ のとき $y=3x+x = 4x$（傾き4）。<br>$x < 0$ のとき $y=3x-x = 2x$（傾き2）。<br>よって原点で折れ曲がり、右側の傾きが4、左側の傾きが2となるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 31
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = 3x - |x|$$",
-        options: [g_P_0_4_2, g_P_0_2_4, g_V_0_0_k2, g_P_0_1_3],
-        answer: g_P_0_4_2,
-        rationale: "絶対値を外して考えます。<br>$x \\ge 0$ のとき $y=3x-x = 2x$（傾き2）。<br>$x < 0$ のとき $y=3x-(-x) = 4x$（傾き4）。<br>よって原点で折れ曲がり、右側の傾きが2、左側の傾きが4となるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 32
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = 2|x-1| + x - 1$$",
-        options: [g_P_1_n1_3, g_V_1_0, g_V_1_1, g_P_0_1_3],
-        answer: g_P_1_n1_3,
-        rationale: "$x-1$ の符号で場合分けをします。<br>$x \\ge 1$ のとき $y=2(x-1)+x-1 = 3x-3$（傾き3）。<br>$x < 1$ のとき $y=-2(x-1)+x-1 = -x+1$（傾き-1）。<br>よって $x=1$ で折れ曲がり、右側の傾きが3、左側の傾きが-1となるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 33
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = x + |x| + x$$",
-        options: [g_P_0_1_3, g_V_0_0_k2, g_P_0_0_2, g_V_0_0],
-        answer: g_P_0_1_3,
-        rationale: "式を整理すると $y = |x| + 2x$ となります。<br>$x \\ge 0$ のとき $y = x + 2x = 3x$（傾き3）。<br>$x < 0$ のとき $y = -x + 2x = x$（傾き1）。<br>よって、原点で折れ曲がり、右側が傾き3、左側が傾き1となるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 34
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x| + |x|$$",
-        options: [g_V_0_0_k2, g_V_0_0, g_P_0_0_2, g_M_0_0],
-        answer: g_V_0_0_k2,
-        rationale: "式を整理すると $y = 2|x|$ となります。<br>これは傾きが $\pm 2$ のV字型グラフを表します。<br>よって原点を頂点とする、標準より細い（傾き2の）V字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 35
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = \\sqrt{x^2}$$",
-        options: [g_V_0_0, g_P_0_0_2, g_M_0_0, g_V_1_0],
-        answer: g_V_0_0,
-        rationale: "数学の定義として $\\sqrt{x^2} = |x|$ です。<br>（たとえば $x=-3$ のとき $\\sqrt{(-3)^2}=\\sqrt{9}=3=|-3|$）<br>したがって、式は $y=|x|$ と等しいため、原点を頂点とする標準的なV字型グラフが正解です。" + VIDEO_LINK
-    },
-
-    // --- タイプ6: 絶対値の和 (平底型・バスタブ型) ---
-    // 問題 36
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-1| + |x-3|$$",
-        options: [g_U_1_3_2, g_Z_1_3_n2_2, g_V_2_0, g_V_1_1],
-        answer: g_U_1_3_2,
-        rationale: "絶対値の中身が0になる $x=1$ と $x=3$ が折れ曲がる点です。<br>$1 \\le x < 3$ のとき、$y=(x-1)-(x-3)=2$ となり、一定の値をとります。<br>よって $x=1$ と $3$ の間で底が平らになるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 37
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x+1| + |x-1|$$",
-        options: [g_U_n1_1_2, g_Z_n1_1_n2_2, g_V_0_0, g_V_0_1],
-        answer: g_U_n1_1_2,
-        rationale: "絶対値の中身が0になる $x=-1$ と $x=1$ が折れ曲がる点です。<br>$-1 \\le x < 1$ のとき、$y=(x+1)-(x-1)=2$ となり、一定の値をとります。<br>よって $x=-1$ と $1$ の間で底が平らになるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 38
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x| + |x-2|$$",
-        options: [g_U_0_2_2, g_U_n2_0_2, g_V_1_0, g_Z_n2_0_n2_2],
-        answer: g_U_0_2_2,
-        rationale: "絶対値の中身が0になる $x=0$ と $x=2$ が折れ曲がる点です。<br>$0 \\le x < 2$ のとき、$y=x-(x-2)=2$ となり、一定の値をとります。<br>よって $x=0$ と $2$ の間で底が平らになるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 39
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x+2| + |x|$$",
-        options: [g_U_n2_0_2, g_U_0_2_2, g_Z_n2_0_n2_2, g_V_n1_0],
-        answer: g_U_n2_0_2,
-        rationale: "絶対値の中身が0になる $x=-2$ と $x=0$ が折れ曲がる点です。<br>$-2 \\le x < 0$ のとき、$y=-x+(x+2)=2$ となり、一定の値をとります。<br>よって $x=-2$ と $0$ の間で底が平らになるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 40
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-3| + |x-1|$$",
-        options: [g_U_1_3_2, g_U_n1_1_2, g_V_2_0, g_Z_1_3_n2_2],
-        answer: g_U_1_3_2,
-        rationale: "足し算の順序を入れ替えても式は $y = |x-1| + |x-3|$ と同じです。<br>したがって、区間の境目は $x=1$ と $3$ です。<br>$1 \\le x < 3$ のとき $y=(x-1)-(x-3)=2$ となるため、$x=1$ と $3$ の間で底が平らになるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 41
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-1| + |x+1|$$",
-        options: [g_U_n1_1_2, g_U_0_2_2, g_V_0_0, g_Z_n1_1_n2_2],
-        answer: g_U_n1_1_2,
-        rationale: "足し算の順序を入れ替えると $y = |x+1| + |x-1|$ となります。<br>区間の境目は $x=-1$ と $1$ です。<br>$-1 \\le x < 1$ のとき $y=(x+1)-(x-1)=2$ となるため、$x=-1$ と $1$ の間で底が平らになるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 42
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-2| + |x|$$",
-        options: [g_U_0_2_2, g_U_n2_0_2, g_V_1_0, g_Z_n2_0_n2_2],
-        answer: g_U_0_2_2,
-        rationale: "足し算の順序を入れ替えると $y = |x| + |x-2|$ となります。<br>区間の境目は $x=0$ と $2$ です。<br>$0 \\le x < 2$ のとき $y=x-(x-2)=2$ となるため、$x=0$ と $2$ の間で底が平らになるグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 43
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x| + |x+2|$$",
-        options: [g_U_n2_0_2, g_U_0_2_2, g_V_n1_0, g_Z_n2_0_n2_2],
-        answer: g_U_n2_0_2,
-        rationale: "足し算の順序を入れ替えると $y = |x+2| + |x|$ となります。<br>区間の境目は $x=-2$ と $0$ です。<br>$-2 \\le x < 0$ のとき $y=-x+(x+2)=2$ となるため、$x=-2$ と $0$ の間で底が平らになるグラフが正解です。" + VIDEO_LINK
-    },
-
-    // --- タイプ7: 絶対値の差 (Z型・階段型) ---
-    // 問題 44
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x-1| - |x-3|$$",
-        options: [g_Z_1_3_n2_2, g_U_1_3_2, g_V_2_0, g_M_1_0],
-        answer: g_Z_1_3_n2_2,
-        rationale: "絶対値の中身が0になる $x=1$ と $x=3$ で場合分けします。<br>$x < 1$ のとき $y=-(x-1)-(-(x-3))=-2$（一定）。<br>$1 \\le x < 3$ のとき $y=(x-1)-(-(x-3))=2x-4$（傾き2）。<br>$x \\ge 3$ のとき $y=(x-1)-(x-3)=2$（一定）。<br>よって左側で $y=-2$、右側で $y=2$ となり、その間を斜めに結ぶZ型のグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 45
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x+1| - |x-1|$$",
-        options: [g_Z_n1_1_n2_2, g_U_n1_1_2, g_V_0_0, g_M_0_0],
-        answer: g_Z_n1_1_n2_2,
-        rationale: "絶対値の中身が0になる $x=-1$ と $x=1$ で場合分けします。<br>$x < -1$ のとき $y=-(x+1)-(-(x-1))=-2$（一定）。<br>$-1 \\le x < 1$ のとき $y=(x+1)-(-(x-1))=2x$（傾き2）。<br>$x \\ge 1$ のとき $y=(x+1)-(x-1)=2$（一定）。<br>よって左側で $y=-2$、右側で $y=2$ となるZ型のグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 46
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |x+2| - |x|$$",
-        options: [g_Z_n2_0_n2_2, g_U_n2_0_2, g_V_n1_0, g_V_0_0],
-        answer: g_Z_n2_0_n2_2,
-        rationale: "絶対値の中身が0になる $x=-2$ と $x=0$ で場合分けします。<br>$x < -2$ のとき $y=-(x+2)-(-x)=-2$（一定）。<br>$-2 \\le x < 0$ のとき $y=(x+2)-(-x)=2x+2$（傾き2）。<br>$x \\ge 0$ のとき $y=(x+2)-x=2$（一定）。<br>よって左側で $y=-2$、右側で $y=2$ となるZ型のグラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 47
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = -(|x-3| - |x-1|)$$",
-        options: [g_Z_1_3_n2_2, g_U_1_3_2, g_V_2_0, g_Z_n1_1_n2_2],
-        answer: g_Z_1_3_n2_2,
-        rationale: "マイナスを展開すると $y = -|x-3| + |x-1| = |x-1| - |x-3|$ となります。<br>これは区間 $x=1$ と $3$ で変化する関数です。<br>$x < 1$ で $y=-2$、$x \\ge 3$ で $y=2$ となるため、左が低く右が高いZ型のグラフ（選択肢1）が正解です。" + VIDEO_LINK
-    },
-
-    // --- 総仕上げ・応用 ---
-    // 問題 48
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |-x-2|$$",
-        options: [g_V_n2_0, g_V_2_0, g_V_n1_0, g_M_n2_0],
-        answer: g_V_n2_0,
-        rationale: "絶対値の中のマイナスをくくり出すと、$|-x-2| = |-(x+2)|$ となります。<br>$|-A|=|A|$ より、これは $y = |x+2|$ と等しい式です。<br>よって $y=|x|$ を $x$ 軸方向に $-2$ 平行移動した、頂点 $(-2, 0)$ のV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 49
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = \\sqrt{4x^2}$$",
-        options: [g_V_0_0_k2, g_V_0_0, g_M_0_0, g_M_0_0_k2],
-        answer: g_V_0_0_k2,
-        rationale: "根号の中を整理すると $\\sqrt{4x^2} = \\sqrt{(2x)^2}$ です。<br>$\\sqrt{A^2} = |A|$ の性質を使うと、式は $y = |2x| = 2|x|$ となります。<br>よって原点を頂点とする、傾き $\pm 2$ の細いV字型グラフが正解です。" + VIDEO_LINK
-    },
-    // 問題 50
-    {
-        question: "次の関数のグラフをかけ。<br>$$y = |3x+3| - |x+1|$$",
-        options: [g_V_n1_0_k2, g_V_n1_0, g_V_0_0, g_V_1_0_k2],
-        answer: g_V_n1_0_k2,
-        rationale: "共通因数をくくり出すと、$|3(x+1)| - |x+1|$ となります。<br>$|3|=3$ なので $y = 3|x+1| - |x+1| = 2|x+1|$ と簡単にできます。<br>これは頂点が $(-1, 0)$ で傾きが $\pm 2$ のV字型グラフを表します。" + VIDEO_LINK
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-1|$$",
+    "options": [
+      "g_V_1_0.png",
+      "g_V_n1_0.png",
+      "g_M_1_0.png",
+      "g_V_0_1.png"
+    ],
+    "answer": "g_V_1_0.png",
+    "rationale": "絶対値の中身 $x-1$ の符号で場合分けをします。<br>(i) $x-1 \\geqq 0$ つまり $x \\geqq 1$ のとき<br>$y=x-1$<br>(ii) $x-1 < 0$ つまり $x < 1$ のとき<br>$y=-(x-1)=-x+1$<br>よって，$x=1$ で折れ曲がる，頂点 $(1, 0)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸方向に $1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(x - 1)) < 0.3
     }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x+1|$$",
+    "options": [
+      "g_V_1_0.png",
+      "g_V_n1_0.png",
+      "g_V_0_1.png",
+      "g_M_n1_0.png"
+    ],
+    "answer": "g_V_n1_0.png",
+    "rationale": "絶対値の中身 $x+1$ の符号で場合分けをします。<br>(i) $x+1 \\geqq 0$ つまり $x \\geqq -1$ のとき<br>$y=x+1$<br>(ii) $x+1 < 0$ つまり $x < -1$ のとき<br>$y=-(x+1)=-x-1$<br>よって，$x=-1$ で折れ曲がる，頂点 $(-1, 0)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸方向に $-1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: -1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(x + 1)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-2|$$",
+    "options": [
+      "g_V_2_0.png",
+      "g_V_n2_0.png",
+      "g_V_1_0.png",
+      "g_M_2_0.png"
+    ],
+    "answer": "g_V_2_0.png",
+    "rationale": "絶対値の中身 $x-2$ の符号で場合分けをします。<br>(i) $x-2 \\geqq 0$ つまり $x \\geqq 2$ のとき<br>$y=x-2$<br>(ii) $x-2 < 0$ つまり $x < 2$ のとき<br>$y=-(x-2)=-x+2$<br>よって，$x=2$ で折れ曲がる，頂点 $(2, 0)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸方向に $2$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 2, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(x - 2)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x+2|$$",
+    "options": [
+      "g_V_2_0.png",
+      "g_V_n2_0.png",
+      "g_V_n1_0.png",
+      "g_M_0_0.png"
+    ],
+    "answer": "g_V_n2_0.png",
+    "rationale": "絶対値の中身 $x+2$ の符号で場合分けをします。<br>(i) $x+2 \\geqq 0$ つまり $x \\geqq -2$ のとき<br>$y=x+2$<br>(ii) $x+2 < 0$ つまり $x < -2$ のとき<br>$y=-(x+2)=-x-2$<br>よって，$x=-2$ で折れ曲がる，頂点 $(-2, 0)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸方向に $-2$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: -2, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(x + 2)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x| + 1$$",
+    "options": [
+      "g_V_0_1.png",
+      "g_V_1_0.png",
+      "g_V_0_n1.png",
+      "g_V_1_1.png"
+    ],
+    "answer": "g_V_0_1.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=x+1$<br>(ii) $x < 0$ のとき<br>$y=-x+1$<br>よって，$x=0$ で折れ曲がる，頂点 $(0, 1)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $y$ 軸方向に $1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 1 }],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x) + 1)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x| - 1$$",
+    "options": [
+      "g_V_0_1.png",
+      "g_V_0_n1.png",
+      "g_V_1_n1.png",
+      "g_M_0_1.png"
+    ],
+    "answer": "g_V_0_n1.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=x-1$<br>(ii) $x < 0$ のとき<br>$y=-x-1$<br>よって，$x=0$ で折れ曲がる，頂点 $(0, -1)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $y$ 軸方向に $-1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-1| + 1$$",
+    "options": [
+      "g_V_1_1.png",
+      "g_V_1_0.png",
+      "g_V_n1_n1.png",
+      "g_V_0_1.png"
+    ],
+    "answer": "g_V_1_1.png",
+    "rationale": "絶対値の中身 $x-1$ の符号で場合分けをします。<br>(i) $x-1 \\geqq 0$ つまり $x \\geqq 1$ のとき<br>$y=(x-1)+1=x$<br>(ii) $x-1 < 0$ つまり $x < 1$ のとき<br>$y=-(x-1)+1=-x+2$<br>よって，$x=1$ で折れ曲がる，頂点 $(1, 1)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸方向に $1$，$y$ 軸方向に $1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-1| - 1$$",
+    "options": [
+      "g_V_1_n1.png",
+      "g_V_1_1.png",
+      "g_V_n1_n1.png",
+      "g_V_2_n1.png"
+    ],
+    "answer": "g_V_1_n1.png",
+    "rationale": "絶対値の中身 $x-1$ の符号で場合分けをします。<br>(i) $x-1 \\geqq 0$ つまり $x \\geqq 1$ のとき<br>$y=(x-1)-1=x-2$<br>(ii) $x-1 < 0$ つまり $x < 1$ のとき<br>$y=-(x-1)-1=-x$<br>よって，$x=1$ で折れ曲がる，頂点 $(1, -1)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸方向に $1$，$y$ 軸方向に $-1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x+1| - 1$$",
+    "options": [
+      "g_V_n1_n1.png",
+      "g_V_1_n1.png",
+      "g_V_n1_0.png",
+      "g_V_0_n1.png"
+    ],
+    "answer": "g_V_n1_n1.png",
+    "rationale": "絶対値の中身 $x+1$ の符号で場合分けをします。<br>(i) $x+1 \\geqq 0$ つまり $x \\geqq -1$ のとき<br>$y=(x+1)-1=x$<br>(ii) $x+1 < 0$ つまり $x < -1$ のとき<br>$y=-(x+1)-1=-x-2$<br>よって，$x=-1$ で折れ曲がる，頂点 $(-1, -1)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸方向に $-1$，$y$ 軸方向に $-1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x+1| + 2$$",
+    "options": [
+      "g_V_n1_2.png",
+      "g_V_n1_n1.png",
+      "g_V_1_1.png",
+      "g_V_0_1.png"
+    ],
+    "answer": "g_V_n1_2.png",
+    "rationale": "絶対値の中身 $x+1$ の符号で場合分けをします。<br>(i) $x+1 \\geqq 0$ つまり $x \\geqq -1$ のとき<br>$y=(x+1)+2=x+3$<br>(ii) $x+1 < 0$ つまり $x < -1$ のとき<br>$y=-(x+1)+2=-x+1$<br>よって，$x=-1$ で折れ曲がる，頂点 $(-1, 2)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸方向に $-1$，$y$ 軸方向に $2$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>"
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = -|x|$$",
+    "options": [
+      "g_M_0_0.png",
+      "g_V_0_0.png",
+      "g_M_0_1.png",
+      "g_M_1_0.png"
+    ],
+    "answer": "g_M_0_0.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=-x$<br>(ii) $x < 0$ のとき<br>$y=-(-x)=x$<br>よって，原点 $(0, 0)$ を頂点とする山型のグラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸に関して対称移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (-Math.abs(x))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = -|x-1|$$",
+    "options": [
+      "g_M_1_0.png",
+      "g_M_n1_0.png",
+      "g_V_1_0.png",
+      "g_M_0_0.png"
+    ],
+    "answer": "g_M_1_0.png",
+    "rationale": "絶対値の中身 $x-1$ の符号で場合分けをします。<br>(i) $x-1 \\geqq 0$ つまり $x \\geqq 1$ のとき<br>$y=-(x-1)=-x+1$<br>(ii) $x-1 < 0$ つまり $x < 1$ のとき<br>$y=-(-(x-1))=x-1$<br>よって，頂点 $(1, 0)$ の山型のグラフになります。<br><br>【別解】<br>$y=-|x|$（山型）のグラフを $x$ 軸方向に $1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (-Math.abs(x - 1))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = -|x+1|$$",
+    "options": [
+      "g_M_n1_0.png",
+      "g_M_1_0.png",
+      "g_V_n1_0.png",
+      "g_M_0_0.png"
+    ],
+    "answer": "g_M_n1_0.png",
+    "rationale": "絶対値の中身 $x+1$ の符号で場合分けをします。<br>(i) $x+1 \\geqq 0$ つまり $x \\geqq -1$ のとき<br>$y=-(x+1)=-x-1$<br>(ii) $x+1 < 0$ つまり $x < -1$ のとき<br>$y=-(-(x+1))=x+1$<br>よって，頂点 $(-1, 0)$ の山型のグラフになります。<br><br>【別解】<br>$y=-|x|$（山型）のグラフを $x$ 軸方向に $-1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: -1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (-Math.abs(x + 1))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = -|x| + 1$$",
+    "options": [
+      "g_M_0_1.png",
+      "g_M_0_0.png",
+      "g_V_0_1.png",
+      "g_M_1_0.png"
+    ],
+    "answer": "g_M_0_1.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=-x+1$<br>(ii) $x < 0$ のとき<br>$y=-(-x)+1=x+1$<br>よって，頂点 $(0, 1)$ の山型のグラフになります。<br><br>【別解】<br>$y=-|x|$（山型）のグラフを $y$ 軸方向に $1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 1 }],
+      "isValidPoint": (x, y) => Math.abs(y - (-Math.abs(x) + 1)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = -|x-2|$$",
+    "options": [
+      "g_M_2_0.png",
+      "g_M_1_0.png",
+      "g_V_2_0.png",
+      "g_P_2_1_n1.png"
+    ],
+    "answer": "g_M_2_0.png",
+    "rationale": "絶対値の中身 $x-2$ の符号で場合分けをします。<br>(i) $x-2 \\geqq 0$ つまり $x \\geqq 2$ のとき<br>$y=-(x-2)=-x+2$<br>(ii) $x-2 < 0$ つまり $x < 2$ のとき<br>$y=-(-(x-2))=x-2$<br>よって，頂点 $(2, 0)$ の山型のグラフになります。<br><br>【別解】<br>$y=-|x|$（山型）のグラフを $x$ 軸方向に $2$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 2, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (-Math.abs(x - 2))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |2x|$$",
+    "options": [
+      "g_V_0_0_k2.png",
+      "g_V_0_0.png",
+      "g_M_0_0_k2.png",
+      "g_P_0_0_2.png"
+    ],
+    "answer": "g_V_0_0_k2.png",
+    "rationale": "絶対値の中身 $2x$ の符号で場合分けをします。<br>(i) $2x \\geqq 0$ つまり $x \\geqq 0$ のとき<br>$y=2x$<br>(ii) $2x < 0$ つまり $x < 0$ のとき<br>$y=-2x$<br>よって，原点 $(0, 0)$ で折れ曲がる，傾き $\\pm 2$ の急なV字型グラフになります。<br><br>【別解】<br>$y=2|x|$ と変形できるので，基本の $y=|x|$ を $y$ 軸方向に $2$ 倍に引き伸ばしたグラフと考えられます。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(2 * x)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |2x-2|$$",
+    "options": [
+      "g_V_1_0_k2.png",
+      "g_V_1_0.png",
+      "g_V_2_0.png",
+      "g_M_1_0_k2.png"
+    ],
+    "answer": "g_V_1_0_k2.png",
+    "rationale": "絶対値の中身 $2x-2$ の符号で場合分けをします。<br>(i) $2x-2 \\geqq 0$ つまり $x \\geqq 1$ のとき<br>$y=2x-2$<br>(ii) $2x-2 < 0$ つまり $x < 1$ のとき<br>$y=-(2x-2)=-2x+2$<br>よって，$(1,0)$ で折れ曲がる，傾き $\\pm 2$ のV字型グラフになります。<br><br>【別解】<br>$y=2|x-1|$ と変形し，$y=2|x|$ のグラフを $x$ 軸方向に $1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(2 * x - 2)) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |2x+2|$$",
+    "options": [
+      "g_V_n1_0_k2.png",
+      "g_V_n1_0.png",
+      "g_V_n2_0.png",
+      "g_M_n1_0.png"
+    ],
+    "answer": "g_V_n1_0_k2.png",
+    "rationale": "絶対値の中身 $2x+2$ の符号で場合分けをします。<br>(i) $2x+2 \\geqq 0$ つまり $x \\geqq -1$ のとき<br>$y=2x+2$<br>(ii) $2x+2 < 0$ つまり $x < -1$ のとき<br>$y=-(2x+2)=-2x-2$<br>よって，$(-1,0)$ で折れ曲がる，傾き $\\pm 2$ のV字型グラフになります。<br><br>【別解】<br>$y=2|x+1|$ と変形し，$y=2|x|$ のグラフを $x$ 軸方向に $-1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: -1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(2 * x + 2)) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = -|2x|$$",
+    "options": [
+      "g_M_0_0_k2.png",
+      "g_M_0_0.png",
+      "g_V_0_0_k2.png",
+      "g_M_1_0_k2.png"
+    ],
+    "answer": "g_M_0_0_k2.png",
+    "rationale": "絶対値の中身 $2x$ の符号で場合分けをします。<br>(i) $2x \\geqq 0$ のとき<br>$y=-2x$<br>(ii) $2x < 0$ のとき<br>$y=-(-2x)=2x$<br>よって，原点 $(0, 0)$ を頂点とする，傾き $\\pm 2$ の山型グラフになります。<br><br>【別解】<br>$y=-2|x|$ と変形し，$y=-2x$ と $y=2x$ を組み合わせた形と考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (-Math.abs(2 * x))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = -|2x-2|$$",
+    "options": [
+      "g_M_1_0_k2.png",
+      "g_M_1_0.png",
+      "g_V_1_0_k2.png",
+      "g_M_0_0_k2.png"
+    ],
+    "answer": "g_M_1_0_k2.png",
+    "rationale": "絶対値の中身 $2x-2$ の符号で場合分けをします。<br>(i) $2x-2 \\geqq 0$ つまり $x \\geqq 1$ のとき<br>$y=-(2x-2)=-2x+2$<br>(ii) $2x-2 < 0$ つまり $x < 1$ のとき<br>$y=-(-(2x-2))=2x-2$<br>よって，頂点 $(1, 0)$ の山型グラフになります。<br><br>【別解】<br>$y=-2|x-1|$ と変形し，$y=-2|x|$ のグラフを $x$ 軸方向に $1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (-Math.abs(2 * x - 2))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |-x|$$",
+    "options": [
+      "g_V_0_0.png",
+      "g_M_0_0.png",
+      "g_V_0_1.png",
+      "g_V_0_n1.png"
+    ],
+    "answer": "g_V_0_0.png",
+    "rationale": "$|-A|=|A|$ の性質より，$y=|-x|=|x|$ と同じ式になります。<br>よって，<br>(i) $x \\geqq 0$ のとき $y=x$<br>(ii) $x < 0$ のとき $y=-x$<br>となり，原点 $(0, 0)$ を頂点とする基本的なV字型グラフになります。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(-x)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |-x+1|$$",
+    "options": [
+      "g_V_1_0.png",
+      "g_V_n1_0.png",
+      "g_M_1_0.png",
+      "g_V_1_1.png"
+    ],
+    "answer": "g_V_1_0.png",
+    "rationale": "$|-A|=|A|$ の性質より，$|-x+1|=|-(x-1)|=|x-1|$ と変形できます。<br>したがって，中身の $x-1$ で場合分けをします。<br>(i) $x-1 \\geqq 0$ つまり $x \\geqq 1$ のとき $y=x-1$<br>(ii) $x-1 < 0$ つまり $x < 1$ のとき $y=-x+1$<br>よって，頂点 $(1, 0)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ を $x$ 軸方向に $1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(-x + 1)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-2|-1$$",
+    "options": [
+      "g_V_2_n1.png",
+      "g_V_2_0.png",
+      "g_V_n2_0.png",
+      "g_V_1_n1.png"
+    ],
+    "answer": "g_V_2_n1.png",
+    "rationale": "絶対値の中身 $x-2$ の符号で場合分けをします。<br>(i) $x-2 \\geqq 0$ つまり $x \\geqq 2$ のとき<br>$y=(x-2)-1=x-3$<br>(ii) $x-2 < 0$ つまり $x < 2$ のとき<br>$y=-(x-2)-1=-x+1$<br>よって，頂点 $(2, -1)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ のグラフを $x$ 軸方向に $2$，$y$ 軸方向に $-1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 2, y: -1 }],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x - 2) - 1)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = 2 - |x-2|$$",
+    "options": [
+      "g_P_2_1_n1.png",
+      "g_M_2_0.png",
+      "g_V_2_0.png",
+      "g_P_0_2_4.png"
+    ],
+    "answer": "g_P_2_1_n1.png",
+    "rationale": "式を $y = -|x-2| + 2$ と整理して，絶対値の中身 $x-2$ で場合分けをします。<br>(i) $x \\geqq 2$ のとき<br>$y=-(x-2)+2=-x+4$<br>(ii) $x < 2$ のとき<br>$y=-(-(x-2))+2=x$<br>よって，頂点 $(2, 2)$ の山型グラフになります。<br><br>【別解】<br>$y=-|x|$（山型）を $x$ 軸方向に $2$，$y$ 軸方向に $2$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 2, y: 2 }],
+      "isValidPoint": (x, y) => Math.abs(y - (2 - Math.abs(x - 2))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |-x-1|$$",
+    "options": [
+      "g_V_n1_0.png",
+      "g_V_1_0.png",
+      "g_M_n1_0.png",
+      "g_V_0_n1.png"
+    ],
+    "answer": "g_V_n1_0.png",
+    "rationale": "$|-A|=|A|$ の性質より，$|-x-1|=|-(x+1)|=|x+1|$ と変形できます。<br>したがって，中身の $x+1$ で場合分けをします。<br>(i) $x \\geqq -1$ のとき $y=x+1$<br>(ii) $x < -1$ のとき $y=-x-1$<br>よって，頂点 $(-1, 0)$ のV字型グラフになります。<br><br>【別解】<br>$y=|x|$ を $x$ 軸方向に $-1$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: -1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(-x - 1)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x| + 2x$$",
+    "options": [
+      "g_P_0_1_3.png",
+      "g_P_0_n1_3.png",
+      "g_V_0_0_k2.png",
+      "g_V_0_0.png"
+    ],
+    "answer": "g_P_0_1_3.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=x+2x=3x$<br>(ii) $x < 0$ のとき<br>$y=-x+2x=x$<br>よって，原点で折れ曲がり，右側は傾き $3$，左側は傾き $1$ となるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x) + 2 * x)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = 2|x| + x$$",
+    "options": [
+      "g_P_0_n1_3.png",
+      "g_P_0_1_3.png",
+      "g_V_0_0_k2.png",
+      "g_P_0_0_2.png"
+    ],
+    "answer": "g_P_0_n1_3.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=2x+x=3x$<br>(ii) $x < 0$ のとき<br>$y=-2x+x=-x$<br>よって，原点で折れ曲がり，右側は傾き $3$，左側は傾き $-1$ となるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (2 * Math.abs(x) + x)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x| + x$$",
+    "options": [
+      "g_P_0_0_2.png",
+      "g_P_0_n2_0.png",
+      "g_V_0_0.png",
+      "g_V_1_0.png"
+    ],
+    "answer": "g_P_0_0_2.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=x+x=2x$<br>(ii) $x < 0$ のとき<br>$y=-x+x=0$<br>よって，$x < 0$ では $x$ 軸に重なり（$y=0$），$x \\geqq 0$ で傾き $2$ の直線となるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x) + x)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x| - x$$",
+    "options": [
+      "g_P_0_n2_0.png",
+      "g_P_0_0_2.png",
+      "g_M_0_0.png",
+      "g_V_0_0.png"
+    ],
+    "answer": "g_P_0_n2_0.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=x-x=0$<br>(ii) $x < 0$ のとき<br>$y=-x-x=-2x$<br>よって，$x \\geqq 0$ では $x$ 軸に重なり（$y=0$），$x < 0$ で傾き $-2$ の直線となるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x) - x)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = 3x + |x|$$",
+    "options": [
+      "g_P_0_2_4.png",
+      "g_P_0_4_2.png",
+      "g_V_0_0_k2.png",
+      "g_P_0_1_3.png"
+    ],
+    "answer": "g_P_0_2_4.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=3x+x=4x$<br>(ii) $x < 0$ のとき<br>$y=3x-x=2x$<br>よって，原点で折れ曲がり，右側は傾き $4$，左側は傾き $2$ となるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (3 * x + Math.abs(x))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = 3x - |x|$$",
+    "options": [
+      "g_P_0_4_2.png",
+      "g_P_0_2_4.png",
+      "g_V_0_0_k2.png",
+      "g_P_0_1_3.png"
+    ],
+    "answer": "g_P_0_4_2.png",
+    "rationale": "絶対値の中身 $x$ の符号で場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=3x-x=2x$<br>(ii) $x < 0$ のとき<br>$y=3x-(-x)=4x$<br>よって，原点で折れ曲がり，右側は傾き $2$，左側は傾き $4$ となるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (3 * x - Math.abs(x))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = 2|x-1| + x - 1$$",
+    "options": [
+      "g_P_1_n1_3.png",
+      "g_V_1_0.png",
+      "g_V_1_1.png",
+      "g_P_0_1_3.png"
+    ],
+    "answer": "g_P_1_n1_3.png",
+    "rationale": "絶対値の中身 $x-1$ の符号で場合分けをします。<br>(i) $x-1 \\geqq 0$ つまり $x \\geqq 1$ のとき<br>$y=2(x-1)+x-1=3x-3$<br>(ii) $x-1 < 0$ つまり $x < 1$ のとき<br>$y=-2(x-1)+x-1=-x+1$<br>よって，$(1,0)$ で折れ曲がり，右側の傾きが $3$，左側の傾きが $-1$ となるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (2 * Math.abs(x - 1) + x - 1)) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = x + |x| + x$$",
+    "options": [
+      "g_P_0_1_3.png",
+      "g_V_0_0_k2.png",
+      "g_P_0_0_2.png",
+      "g_V_0_0.png"
+    ],
+    "answer": "g_P_0_1_3.png",
+    "rationale": "式を $y = |x| + 2x$ と整理してから場合分けをします。<br>(i) $x \\geqq 0$ のとき<br>$y=x+2x=3x$<br>(ii) $x < 0$ のとき<br>$y=-x+2x=x$<br>よって，原点で折れ曲がり，右側の傾きが $3$，左側の傾きが $1$ となるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x) + 2 * x)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x| + |x|$$",
+    "options": [
+      "g_V_0_0_k2.png",
+      "g_V_0_0.png",
+      "g_P_0_0_2.png",
+      "g_M_0_0.png"
+    ],
+    "answer": "g_V_0_0_k2.png",
+    "rationale": "式は $y=2|x|$ と同じです。<br>(i) $x \\geqq 0$ のとき $y=2x$<br>(ii) $x < 0$ のとき $y=-2x$<br>よって，原点を頂点とする，傾き $\\pm 2$ のV字型グラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (2 * Math.abs(x))) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = \\\\sqrt{x^2}$$",
+    "options": [
+      "g_V_0_0.png",
+      "g_P_0_0_2.png",
+      "g_M_0_0.png",
+      "g_V_1_0.png"
+    ],
+    "answer": "g_V_0_0.png",
+    "rationale": "定義として $\\sqrt{x^2} = |x|$ です。よって $y=|x|$ のグラフを描きます。<br>(i) $x \\geqq 0$ のとき $y=x$<br>(ii) $x < 0$ のとき $y=-x$<br>したがって，原点を頂点とする標準的なV字型グラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(x)) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-1| + |x-3|$$",
+    "options": [
+      "g_U_1_3_2.png",
+      "g_Z_1_3_n2_2.png",
+      "g_V_2_0.png",
+      "g_V_1_1.png"
+    ],
+    "answer": "g_U_1_3_2.png",
+    "rationale": "絶対値の中身が $0$ になる $x=1$ と $x=3$ を境目にして，3つの区間に場合分けします。<br>(i) $x < 1$ のとき<br>$y=-(x-1)-(x-3)=-2x+4$<br>(ii) $1 \\leqq x < 3$ のとき<br>$y=(x-1)-(x-3)=2$ （定数）<br>(iii) $x \\geqq 3$ のとき<br>$y=(x-1)+(x-3)=2x-4$<br>よって，$x=1$ と $3$ の間で底が平らになる（$y=2$）グラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: 1, y: 2 },
+        { x: 3, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x - 1) + Math.abs(x - 3))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x+1| + |x-1|$$",
+    "options": [
+      "g_U_n1_1_2.png",
+      "g_Z_n1_1_n2_2.png",
+      "g_V_0_0.png",
+      "g_V_0_1.png"
+    ],
+    "answer": "g_U_n1_1_2.png",
+    "rationale": "$x=-1$ と $x=1$ を境目に場合分けします。<br>(i) $x < -1$ のとき<br>$y=-(x+1)-(x-1)=-2x$<br>(ii) $-1 \\leqq x < 1$ のとき<br>$y=(x+1)-(x-1)=2$<br>(iii) $x \\geqq 1$ のとき<br>$y=(x+1)+(x-1)=2x$<br>よって，$x=-1$ と $1$ の間で底が平らになるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: -1, y: 2 },
+        { x: 1, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x + 1) + Math.abs(x - 1))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x| + |x-2|$$",
+    "options": [
+      "g_U_0_2_2.png",
+      "g_U_n2_0_2.png",
+      "g_V_1_0.png",
+      "g_Z_n2_0_n2_2.png"
+    ],
+    "answer": "g_U_0_2_2.png",
+    "rationale": "$x=0$ と $x=2$ を境目に場合分けします。<br>(i) $x < 0$ のとき<br>$y=-x-(x-2)=-2x+2$<br>(ii) $0 \\leqq x < 2$ のとき<br>$y=x-(x-2)=2$<br>(iii) $x \\geqq 2$ のとき<br>$y=x+(x-2)=2x-2$<br>よって，$x=0$ と $2$ の間で底が平らになるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: 0, y: 2 },
+        { x: 2, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x) + Math.abs(x - 2))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x+2| + |x|$$",
+    "options": [
+      "g_U_n2_0_2.png",
+      "g_U_0_2_2.png",
+      "g_Z_n2_0_n2_2.png",
+      "g_V_n1_0.png"
+    ],
+    "answer": "g_U_n2_0_2.png",
+    "rationale": "$x=-2$ と $x=0$ を境目に場合分けします。<br>(i) $x < -2$ のとき<br>$y=-(x+2)-x=-2x-2$<br>(ii) $-2 \\leqq x < 0$ のとき<br>$y=(x+2)-x=2$<br>(iii) $x \\geqq 0$ のとき<br>$y=(x+2)+x=2x+2$<br>よって，$x=-2$ と $0$ の間で底が平らになるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: -2, y: 2 },
+        { x: 0, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x + 2) + Math.abs(x))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-3| + |x-1|$$",
+    "options": [
+      "g_U_1_3_2.png",
+      "g_U_n1_1_2.png",
+      "g_V_2_0.png",
+      "g_Z_1_3_n2_2.png"
+    ],
+    "answer": "g_U_1_3_2.png",
+    "rationale": "$y = |x-1| + |x-3|$ と順序を入れ替えて考えます。<br>$x=1$ と $x=3$ を境目に場合分けします。<br>(i) $x < 1$ のとき $y=-2x+4$<br>(ii) $1 \\leqq x < 3$ のとき $y=(x-1)-(x-3)=2$<br>(iii) $x \\geqq 3$ のとき $y=2x-4$<br>よって，$x=1$ と $3$ の間で底が平らになるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: 1, y: 2 },
+        { x: 3, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x - 3) + Math.abs(x - 1))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-1| + |x+1|$$",
+    "options": [
+      "g_U_n1_1_2.png",
+      "g_U_0_2_2.png",
+      "g_V_0_0.png",
+      "g_Z_n1_1_n2_2.png"
+    ],
+    "answer": "g_U_n1_1_2.png",
+    "rationale": "$y = |x+1| + |x-1|$ と整理し，$x=-1$ と $x=1$ を境目に場合分けします。<br>(i) $x < -1$ のとき $y=-2x$<br>(ii) $-1 \\leqq x < 1$ のとき $y=(x+1)-(x-1)=2$<br>(iii) $x \\geqq 1$ のとき $y=2x$<br>よって，$x=-1$ と $1$ の間で底が平らになるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: -1, y: 2 },
+        { x: 1, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x - 1) + Math.abs(x + 1))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-2| + |x|$$",
+    "options": [
+      "g_U_0_2_2.png",
+      "g_U_n2_0_2.png",
+      "g_V_1_0.png",
+      "g_Z_n2_0_n2_2.png"
+    ],
+    "answer": "g_U_0_2_2.png",
+    "rationale": "$y = |x| + |x-2|$ と整理し，$x=0$ と $x=2$ を境目に場合分けします。<br>(i) $x < 0$ のとき $y=-2x+2$<br>(ii) $0 \\leqq x < 2$ のとき $y=x-(x-2)=2$<br>(iii) $x \\geqq 2$ のとき $y=2x-2$<br>よって，$x=0$ と $2$ の間で底が平らになるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: 0, y: 2 },
+        { x: 2, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x - 2) + Math.abs(x))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x| + |x+2|$$",
+    "options": [
+      "g_U_n2_0_2.png",
+      "g_U_0_2_2.png",
+      "g_V_n1_0.png",
+      "g_Z_n2_0_n2_2.png"
+    ],
+    "answer": "g_U_n2_0_2.png",
+    "rationale": "$y = |x+2| + |x|$ と整理し，$x=-2$ と $x=0$ を境目に場合分けします。<br>(i) $x < -2$ のとき $y=-2x-2$<br>(ii) $-2 \\leqq x < 0$ のとき $y=(x+2)-x=2$<br>(iii) $x \\geqq 0$ のとき $y=2x+2$<br>よって，$x=-2$ と $0$ の間で底が平らになるグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: -2, y: 2 },
+        { x: 0, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x) + Math.abs(x + 2))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x-1| - |x-3|$$",
+    "options": [
+      "g_Z_1_3_n2_2.png",
+      "g_U_1_3_2.png",
+      "g_V_2_0.png",
+      "g_M_1_0.png"
+    ],
+    "answer": "g_Z_1_3_n2_2.png",
+    "rationale": "$x=1$ と $x=3$ を境目に場合分けします。<br>(i) $x < 1$ のとき<br>$y=-(x-1)-(-(x-3))=-2$（定数）<br>(ii) $1 \\leqq x < 3$ のとき<br>$y=(x-1)-(-(x-3))=2x-4$（傾き2）<br>(iii) $x \\geqq 3$ のとき<br>$y=(x-1)-(x-3)=2$（定数）<br>よって，左側で $y=-2$，右側で $y=2$ となり，その間を斜めに結ぶZ型のグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: 1, y: -2 },
+        { x: 3, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x - 1) - Math.abs(x - 3))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x+1| - |x-1|$$",
+    "options": [
+      "g_Z_n1_1_n2_2.png",
+      "g_U_n1_1_2.png",
+      "g_V_0_0.png",
+      "g_M_0_0.png"
+    ],
+    "answer": "g_Z_n1_1_n2_2.png",
+    "rationale": "$x=-1$ と $x=1$ を境目に場合分けします。<br>(i) $x < -1$ のとき<br>$y=-(x+1)-(-(x-1))=-2$<br>(ii) $-1 \\leqq x < 1$ のとき<br>$y=(x+1)-(-(x-1))=2x$<br>(iii) $x \\geqq 1$ のとき<br>$y=(x+1)-(x-1)=2$<br>よって，左側で $y=-2$，右側で $y=2$ となるZ型のグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: -1, y: -2 },
+        { x: 1, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x + 1) - Math.abs(x - 1))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |x+2| - |x|$$",
+    "options": [
+      "g_Z_n2_0_n2_2.png",
+      "g_U_n2_0_2.png",
+      "g_V_n1_0.png",
+      "g_V_0_0.png"
+    ],
+    "answer": "g_Z_n2_0_n2_2.png",
+    "rationale": "$x=-2$ と $x=0$ を境目に場合分けします。<br>(i) $x < -2$ のとき<br>$y=-(x+2)-(-x)=-2$<br>(ii) $-2 \\leqq x < 0$ のとき<br>$y=(x+2)-(-x)=2x+2$<br>(iii) $x \\geqq 0$ のとき<br>$y=(x+2)-x=2$<br>よって，左側で $y=-2$，右側で $y=2$ となるZ型のグラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: -2, y: -2 },
+        { x: 0, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(x + 2) - Math.abs(x))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = -(|x-3| - |x-1|)$$",
+    "options": [
+      "g_Z_1_3_n2_2.png",
+      "g_U_1_3_2.png",
+      "g_V_2_0.png",
+      "g_Z_n1_1_n2_2.png"
+    ],
+    "answer": "g_Z_1_3_n2_2.png",
+    "rationale": "マイナスを展開して $y = |x-1| - |x-3|$ と変形し，$x=1$ と $x=3$ を境目に場合分けします。<br>(i) $x < 1$ のとき $y=-2$<br>(ii) $1 \\leqq x < 3$ のとき $y=2x-4$<br>(iii) $x \\geqq 3$ のとき $y=2$<br>よって，左側が低く右側が高いZ型のグラフ（選択肢1）が正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [
+        { x: 1, y: -2 },
+        { x: 3, y: 2 }
+      ],
+      "isValidPoint": (x, y) => Math.abs(y - (-(Math.abs(x - 3) - Math.abs(x - 1)))) < 0.3
+    },
+    "answerIndex": 0
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |-x-2|$$",
+    "options": [
+      "g_V_n2_0.png",
+      "g_V_2_0.png",
+      "g_V_n1_0.png",
+      "g_M_n2_0.png"
+    ],
+    "answer": "g_V_n2_0.png",
+    "rationale": "$|-x-2|=|-(x+2)|=|x+2|$ と変形し，中身の $x+2$ で場合分けをします。<br>(i) $x \\geqq -2$ のとき $y=x+2$<br>(ii) $x < -2$ のとき $y=-x-2$<br>よって，頂点 $(-2, 0)$ のV字型グラフが正解です。<br><br>【別解】<br>$y=|x|$ を $x$ 軸方向に $-2$ 平行移動したものと考えてもよいです。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: -2, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(-x - 2)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = \\sqrt{4x^2}$$",
+    "options": [
+      "g_V_0_0_k2.png",
+      "g_V_0_0.png",
+      "g_M_0_0.png",
+      "g_M_0_0_k2.png"
+    ],
+    "answer": "g_V_0_0_k2.png",
+    "rationale": "$\\sqrt{4x^2} = \\sqrt{(2x)^2} = |2x|$ です。<br>中身の $2x$ で場合分けをします。<br>(i) $x \\geqq 0$ のとき $y=2x$<br>(ii) $x < 0$ のとき $y=-2x$<br>よって，原点を頂点とする，傾き $\\pm 2$ の細いV字型グラフが正解です。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: 0, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - Math.abs(2 * x)) < 0.3
+    }
+  },
+  {
+    "question": "次の関数のグラフをかけ。<br>$$y = |3x+3| - |x+1|$$",
+    "options": [
+      "g_V_n1_0_k2.png",
+      "g_V_n1_0.png",
+      "g_V_0_0.png",
+      "g_V_1_0_k2.png"
+    ],
+    "answer": "g_V_n1_0_k2.png",
+    "rationale": "$y = 3|x+1| - |x+1| = 2|x+1|$ と簡単にできます。<br>中身の $x+1$ で場合分けをします。<br>(i) $x \\geqq -1$ のとき $y=2(x+1)=2x+2$<br>(ii) $x < -1$ のとき $y=-2(x+1)=-2x-2$<br>よって，頂点が $(-1, 0)$ で傾きが $\\pm 2$ のV字型グラフを表します。<br> <strong>↓「学びエイド」の解説動画で確認</strong> <br><a href='https://www.manabi-aid.jp/lesson/id/7710/63157' target='_blank'>解説動画を見る</a><br><small>（※学びエイドのログインが必要です）</small>",
+    "graphTarget": {
+      "requiredPoints": [{ x: -1, y: 0 }],
+      "isValidPoint": (x, y) => Math.abs(y - (Math.abs(3 * x + 3) - Math.abs(x + 1))) < 0.3
+    }
+  }
 ];
